@@ -1,22 +1,43 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+export interface IPaymentRecord {
+  amount: number;
+  hoursWorked: number;
+  period: {
+    start: Date;
+    end: Date;
+  };
+  createdAt: Date;
+  notes?: string;
+}
+
 export interface IUser {
   _id: string;
-  email: string;
+  firebaseUid?: string;
   name: string;
-  password?: string;
-  role: 'user' | 'admin';
+  email: string;
+  imgProfile?: string;
+  role: 'user' | 'admin' | 'seller' | 'cashier';
+  telefono?: string;
+  domicilio?: string;
+  tipoDocumento?: string;
+  nroDocumento?: string;
+  porcentajeComision?: number;
+  precioHora?: number;
+  horasAcumuladas?: number;
+  ultimaLiquidacion?: Date;
+  historialPagos?: IPaymentRecord[];
+  activo: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema = new Schema<IUser>(
   {
-    email: {
+    firebaseUid: {
       type: String,
-      required: [true, 'Email is required'],
       unique: true,
-      lowercase: true,
+      sparse: true,
       trim: true,
     },
     name: {
@@ -24,14 +45,86 @@ const UserSchema = new Schema<IUser>(
       required: [true, 'Name is required'],
       trim: true,
     },
-    password: {
+    email: {
       type: String,
-      select: false,
+      required: [true, 'Email is required'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    imgProfile: {
+      type: String,
+      trim: true,
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'seller', 'cashier'],
       default: 'user',
+    },
+    telefono: {
+      type: String,
+      trim: true,
+    },
+    domicilio: {
+      type: String,
+      trim: true,
+    },
+    tipoDocumento: {
+      type: String,
+      trim: true,
+    },
+    nroDocumento: {
+      type: String,
+      trim: true,
+    },
+    porcentajeComision: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    precioHora:{
+      type: Number,
+      min: 0,
+    },
+    horasAcumuladas: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    ultimaLiquidacion: {
+      type: Date,
+    },
+    historialPagos: [{
+      amount: {
+        type: Number,
+        required: true,
+      },
+      hoursWorked: {
+        type: Number,
+        required: true,
+      },
+      period: {
+        start: {
+          type: Date,
+          required: true,
+        },
+        end: {
+          type: Date,
+          required: true,
+        },
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+      notes: {
+        type: String,
+        trim: true,
+      },
+    }],
+    activo: {
+      type: Boolean,
+      default: true,
     },
   },
   {

@@ -6,6 +6,8 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 export interface TokenPayload {
   userId: string;
   email: string;
+  role: string;
+  firebaseUid: string;
   [key: string]: any;
 }
 
@@ -15,6 +17,9 @@ export function signToken(payload: TokenPayload): string {
     expiresIn: JWT_EXPIRES_IN,
   });
 }
+
+// Alias for compatibility
+export const generateToken = signToken;
 
 export function verifyToken(token: string): TokenPayload | null {
   try {

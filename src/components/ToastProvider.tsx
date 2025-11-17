@@ -9,13 +9,20 @@ export default function ToastProvider() {
       position="top-right"
       autoClose={3000}
       hideProgressBar={false}
-      newestOnTop={false}
+      newestOnTop={true}
       closeOnClick
       rtl={false}
       pauseOnFocusLoss
       draggable
       pauseOnHover
-      theme="light"
+      theme="colored"
+      style={{
+        zIndex: 9999,
+      }}
+      toastStyle={{
+        borderRadius: '0.75rem',
+        fontFamily: 'inherit',
+      }}
     />
   );
 }

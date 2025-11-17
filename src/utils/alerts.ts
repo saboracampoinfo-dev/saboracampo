@@ -58,3 +58,18 @@ export const showLoadingAlert = (message: string = 'Cargando...') => {
 export const closeAlert = () => {
   Swal.close();
 };
+
+export const confirmDelete = async (message: string = '¿Estás seguro de eliminar este elemento?'): Promise<boolean> => {
+  const result = await Swal.fire({
+    icon: 'warning',
+    title: '¿Estás seguro?',
+    text: message,
+    showCancelButton: true,
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280',
+  });
+
+  return result.isConfirmed;
+};

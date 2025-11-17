@@ -25,3 +25,7 @@ export const adminDb = () => {
   initAdmin();
   return getFirestore();
 };
+
+// Export auth instance directly for convenience
+initAdmin();
+export const auth = getAuth();
