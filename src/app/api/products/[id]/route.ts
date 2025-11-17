@@ -3,15 +3,20 @@ import connectDB from '@/lib/mongodb';
 import Product from '@/models/Product';
 import mongoose from 'mongoose';
 
+// Tipo de contexto esperado por Next 16
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 // GET - Obtener un producto por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params; // 👈 antes era: const { id } = params;
 
     // Validar ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -49,12 +54,12 @@ export async function GET(
 // PUT - Actualizar producto
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     // Validar ID
@@ -136,12 +141,12 @@ export async function PUT(
 // PATCH - Actualización parcial (para cambios rápidos como stock, activo, destacado)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     // Validar ID
@@ -182,12 +187,12 @@ export async function PATCH(
 // DELETE - Eliminar producto
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
 
     // Validar ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
