@@ -32,7 +32,6 @@ interface HorarioAtencion {
 
 interface Notificaciones {
   emailActivo: boolean;
-  smsActivo: boolean;
   whatsappActivo: boolean;
 }
 
@@ -579,15 +578,6 @@ export default function ConfiguracionManager() {
                   <span className="text-sm text-gray-700">Notificaciones por Email</span>
                 </label>
 
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="checkbox"
-                    checked={configuracion.notificaciones?.smsActivo}
-                    onChange={(e) => updateNestedField('notificaciones', 'smsActivo', e.target.checked)}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                  />
-                  <span className="text-sm text-gray-700">Notificaciones por SMS</span>
-                </label>
 
                 <label className="flex items-center space-x-3">
                   <input

@@ -73,7 +73,7 @@ export default function DashboardAdmin() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-4">
-              <a href="/dashboardVendedor" className="text-light-500 hover:text-primary transition-colors font-medium text-sm">
+              {/* <a href="/dashboardVendedor" className="text-light-500 hover:text-primary transition-colors font-medium text-sm">
                 Ver como Vendedor
               </a>
               <a href="/dashboardCajero" className="text-light-500 hover:text-primary transition-colors font-medium text-sm">
@@ -81,7 +81,7 @@ export default function DashboardAdmin() {
               </a>
               <a href="/dashboardCliente" className="text-light-500 hover:text-primary transition-colors font-medium text-sm">
                 Ver como Cliente
-              </a>
+              </a> */}
               <span className="text-white font-medium text-sm">{user?.name}</span>
               <button
                 onClick={handleLogout}
@@ -171,7 +171,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                📊 Dashboard
+                📊 Mis Datos
               </button>
               <button
                 onClick={() => setActiveTab('usuarios')}
@@ -240,7 +240,7 @@ export default function DashboardAdmin() {
           {activeTab === 'dashboard' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
               <h2 className="text-3xl font-bold mb-2 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Panel de Administración</h2>
-              <p className="text-dark-600 dark:text-dark-400 mb-6">Control total del sistema</p>
+              <p className="text-dark-600 dark:text-dark-400 mb-6">Mis Datos</p>
               <div className="space-y-3 mb-8">
                 <div className="flex items-start">
                   <span className="text-primary font-semibold w-32">Nombre:</span>
@@ -255,7 +255,7 @@ export default function DashboardAdmin() {
                   <span className="px-3 py-1 bg-dark-100 dark:bg-dark-700 text-dark-900 dark:text-light-500 rounded-full text-sm font-medium inline-block">{user?.role}</span>
                 </div>
               </div>
-
+{/* 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
                   onClick={() => setActiveTab('usuarios')}
@@ -285,9 +285,9 @@ export default function DashboardAdmin() {
                   <h3 className="font-bold text-dark-900 dark:text-light-500 text-lg mb-2">💰 Ventas</h3>
                   <p className="text-sm text-dark-700 dark:text-dark-300">Ver reportes y estadísticas</p>
                 </button>
-              </div>
+              </div> */}
 
-              <div className="mt-6">
+              {/* <div className="mt-6">
                 <button
                   onClick={() => setActiveTab('liquidaciones')}
                   className="w-full bg-warning-50 dark:bg-warning-900 p-6 rounded-lg border-l-4 border-warning hover:shadow-lg transition-all hover:scale-105 text-left"
@@ -304,7 +304,7 @@ export default function DashboardAdmin() {
                   <h3 className="font-bold text-warning-900 dark:text-warning-200 text-lg mb-2">⚙️ Configuración</h3>
                   <p className="text-sm text-warning-700 dark:text-warning-300">Gestionar configuración del sistema</p>
                 </button>
-              </div>
+              </div> */}
             </div>
           )}
 

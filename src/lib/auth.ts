@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from './jwt';
 
 export function getTokenFromCookies(req: NextRequest): string | null {
-  return req.cookies.get('token')?.value || null;
+  return req.cookies.get('auth-token')?.value || null;
 }
 
 export function setTokenCookie(res: NextResponse, token: string): void {
-  res.cookies.set('token', token, {
+  res.cookies.set('auth-token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -16,7 +16,7 @@ export function setTokenCookie(res: NextResponse, token: string): void {
 }
 
 export function removeTokenCookie(res: NextResponse): void {
-  res.cookies.delete('token');
+  res.cookies.delete('auth-token');
 }
 
 export async function authenticateRequest(req: NextRequest) {
