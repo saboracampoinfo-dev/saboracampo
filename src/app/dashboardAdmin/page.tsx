@@ -128,7 +128,7 @@ export default function DashboardAdmin() {
                 <div className="px-3 py-2 text-white font-medium text-sm border-b border-dark-700 mb-2">
                   {user?.name}
                 </div>
-                <a
+                {/* <a
                   href="/dashboardVendedor"
                   className="block px-3 py-2 rounded-md text-light-500 hover:bg-dark-800 hover:text-primary font-medium text-sm transition-colors"
                 >
@@ -145,7 +145,7 @@ export default function DashboardAdmin() {
                   className="block px-3 py-2 rounded-md text-light-500 hover:bg-dark-800 hover:text-primary font-medium text-sm transition-colors"
                 >
                   Ver como Cliente
-                </a>
+                </a> */}
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 rounded-md text-error-light hover:bg-error-dark/10 font-medium text-sm transition-colors"
