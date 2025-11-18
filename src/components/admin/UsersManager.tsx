@@ -23,7 +23,7 @@ export default function UsersManager() {
     name: '',
     email: '',
     password: '',
-    role: 'cliente',
+    role: 'user',
     precioHora: 0
   });
 
@@ -61,7 +61,7 @@ export default function UsersManager() {
         name: '',
         email: '',
         password: '',
-        role: 'cliente',
+        role: 'user',
         precioHora: 0
       });
     }
@@ -75,7 +75,7 @@ export default function UsersManager() {
       name: '',
       email: '',
       password: '',
-      role: 'cliente',
+      role: 'user',
       precioHora: 0
     });
   };
@@ -264,13 +264,13 @@ export default function UsersManager() {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
                 >
-                  <option value="cliente">Cliente</option>
-                  <option value="cajero">Cajero</option>
-                  <option value="vendedor">Vendedor</option>
+                  <option value="user">Cliente</option>
+                  <option value="cashier">Cajero</option>
+                  <option value="seller">Vendedor</option>
                   <option value="admin">Administrador</option>
                 </select>
               </div>
-              {(formData.role === 'vendedor' || formData.role === 'cajero' || formData.role === 'seller' || formData.role === 'cashier') && (
+              {(formData.role === 'seller' || formData.role === 'cashier' || formData.role === 'seller' || formData.role === 'cashier') && (
                 <div>
                   <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                     Precio por Hora (AR$)
