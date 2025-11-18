@@ -7,13 +7,14 @@ import SucursalesManager from '@/components/admin/SucursalesManager';
 import ProductsManager from '@/components/admin/ProductsManager';
 import VentasManager from '@/components/admin/VentasManager';
 import LiquidacionesManager from '@/components/admin/LiquidacionesManager';
+import ConfiguracionManager from '@/components/admin/ConfiguracionManager';
 
 export default function DashboardAdmin() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion'>('liquidaciones');
 
   useEffect(() => {
     fetchUser();
@@ -222,6 +223,16 @@ export default function DashboardAdmin() {
               >
                 💵 Liquidaciones
               </button>
+            <button
+                onClick={() => setActiveTab('configuracion')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'configuracion'
+                    ? 'bg-warning text-white shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                ⚙️ Configuración
+              </button>
             </div>
           </div>
 
@@ -285,6 +296,15 @@ export default function DashboardAdmin() {
                   <p className="text-sm text-warning-700 dark:text-warning-300">Gestionar pagos de vendedores y cajeros por horas trabajadas</p>
                 </button>
               </div>
+            <div className="mt-6">
+                <button
+                  onClick={() => setActiveTab('configuracion')}
+                  className="w-full bg-warning-50 dark:bg-warning-900 p-6 rounded-lg border-l-4 border-warning hover:shadow-lg transition-all hover:scale-105 text-left"
+                >
+                  <h3 className="font-bold text-warning-900 dark:text-warning-200 text-lg mb-2">⚙️ Configuración</h3>
+                  <p className="text-sm text-warning-700 dark:text-warning-300">Gestionar configuración del sistema</p>
+                </button>
+              </div>
             </div>
           )}
 
@@ -315,6 +335,11 @@ export default function DashboardAdmin() {
           {activeTab === 'liquidaciones' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
               <LiquidacionesManager />
+            </div>
+          )}
+            {activeTab === 'configuracion' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+              <ConfiguracionManager />
             </div>
           )}
         </div>
