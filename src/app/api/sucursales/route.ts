@@ -11,13 +11,14 @@ export async function GET(request: NextRequest) {
     const estado = searchParams.get('estado');
     const ciudad = searchParams.get('ciudad');
 
-    let query: Record<string, unknown> = {};
+    const query: Record<string, unknown> = {};
 
     if (estado) {
-      query.estado = estado;
+      query.estado = estado; // 'activa' | 'inactiva' | 'mantenimiento'
     }
 
     if (ciudad) {
+      // búsqueda por ciudad (case-insensitive)
       query['direccion.ciudad'] = new RegExp(ciudad, 'i');
     }
 
@@ -47,8 +48,24 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // Validar datos requeridos
-    if (!body.nombre || !body.direccion || !body.contacto || !body.horarios || !body.imagenes) {
+    // Validar datos requeridos mínimos según el schema
+    if (
+      !body.nombre ||
+      !body.direccion ||
+      !body.direccion.calle ||
+      !body.direccion.numero ||
+      !body.direccion.ciudad ||
+      !body.direccion.provincia ||
+      !body.direccion.codigoPostal ||
+      !body.contacto ||
+      !body.contacto.telefono ||
+      !body.contacto.email ||
+      !body.horarios ||
+      !body.horarios.semanal ||
+      !body.horarios.finDeSemana ||
+      !body.imagenes ||
+      !body.imagenes.principal
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -56,6 +73,24 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Normalización ligera (por si vienen como string)
+    if (body.capacidad !== undefined && body.capacidad !== null) {
+      body.capacidad = Number(body.capacidad);
+    }
+
+    if (body.direccion?.coordenadas) {
+      if (body.direccion.coordenadas.latitud !== undefined) {
+        body.direccion.coordenadas.latitud = Number(
+          body.direccion.coordenadas.latitud
+        );
+      }
+      if (body.direccion.coordenadas.longitud !== undefined) {
+        body.direccion.coordenadas.longitud = Number(
+          body.direccion.coordenadas.longitud
+        );
+      }
     }
 
     // Crear nueva sucursal
@@ -69,16 +104,17 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error al crear sucursal:', error);
 
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
-      const validationError = error as { errors: Record<string, { message: string }> };
+    if (error?.name === 'ValidationError' && error.errors) {
       return NextResponse.json(
         {
           success: false,
           error: 'Error de validación',
-          details: Object.values(validationError.errors).map((err) => err.message),
+          details: Object.values(error.errors).map(
+            (err: any) => err.message
+          ),
         },
         { status: 400 }
       );

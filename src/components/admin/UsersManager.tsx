@@ -87,8 +87,14 @@ export default function UsersManager() {
       const url = editingUser ? `/api/users?id=${editingUser._id}` : '/api/users';
       const method = editingUser ? 'PUT' : 'POST';
       
+      // Preparar el body según si es edición o creación
       const body = editingUser 
-        ? { name: formData.name, role: formData.role, ...(formData.password && { password: formData.password }) }
+        ? { 
+            name: formData.name, 
+            role: formData.role,
+            precioHora: formData.precioHora,
+            ...(formData.password && { password: formData.password }) 
+          }
         : formData;
 
       const response = await fetch(url, {
@@ -270,7 +276,7 @@ export default function UsersManager() {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
-              {(formData.role === 'seller' || formData.role === 'cashier' || formData.role === 'seller' || formData.role === 'cashier') && (
+              {(formData.role === 'seller' || formData.role === 'cashier') && (
                 <div>
                   <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                     Precio por Hora (AR$)

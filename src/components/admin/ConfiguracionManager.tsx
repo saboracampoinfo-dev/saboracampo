@@ -35,6 +35,18 @@ interface Notificaciones {
   whatsappActivo: boolean;
 }
 
+interface WhatsAppContacto {
+  numero: string;
+  codigoPais: string;
+  textoPredefinido?: string;
+  activo: boolean;
+}
+
+interface WhatsAppConfig {
+  administracion?: WhatsAppContacto;
+  ventas?: WhatsAppContacto;
+}
+
 interface Configuracion {
   _id?: string;
   nombreEmpresa: string;
@@ -48,6 +60,7 @@ interface Configuracion {
   telefonoVentas: string;
   telefonoSoporte?: string;
   telefonoWhatsApp?: string;
+  whatsapp?: WhatsAppConfig;
   redesSociales: RedesSociales;
   direccion?: Direccion;
   horarioAtencion?: HorarioAtencion;
@@ -66,7 +79,7 @@ export default function ConfiguracionManager() {
   const [configuracion, setConfiguracion] = useState<Configuracion | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'contacto' | 'redes' | 'horarios' | 'avanzado'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'contacto' | 'whatsapp' | 'redes' | 'horarios' | 'avanzado'>('general');
 
   useEffect(() => {
     cargarConfiguracion();
@@ -92,6 +105,20 @@ export default function ConfiguracionManager() {
             viernes: '9:00 AM - 6:00 PM',
             sabado: '10:00 AM - 2:00 PM',
             domingo: 'Cerrado'
+          },
+          whatsapp: config.whatsapp || {
+            administracion: {
+              numero: '2235032141',
+              codigoPais: '54',
+              textoPredefinido: 'Hola, me gustaría contactar con administración.',
+              activo: true
+            },
+            ventas: {
+              numero: '2231234567',
+              codigoPais: '54',
+              textoPredefinido: 'Hola, me interesa saber más sobre productos o servicios.',
+              activo: true
+            }
           },
           notificaciones: config.notificaciones || {
             emailActivo: true,
@@ -177,6 +204,7 @@ export default function ConfiguracionManager() {
           {[
             { id: 'general', label: 'General' },
             { id: 'contacto', label: 'Contacto' },
+            { id: 'whatsapp', label: 'WhatsApp' },
             { id: 'redes', label: 'Redes Sociales' },
             { id: 'horarios', label: 'Horarios' },
             { id: 'avanzado', label: 'Avanzado' },
@@ -463,6 +491,163 @@ export default function ConfiguracionManager() {
                     value={configuracion.direccion?.pais || ''}
                     onChange={(e) => updateNestedField('direccion', 'pais', e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: WhatsApp */}
+        {activeTab === 'whatsapp' && (
+          <div className="space-y-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-gray-700">
+                💬 Configura los números de WhatsApp para el botón flotante de contacto.
+              </p>
+            </div>
+
+            {/* WhatsApp Administración */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">📋 Administración</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="whatsapp-admin-activo"
+                    checked={configuracion.whatsapp?.administracion?.activo || false}
+                    onChange={(e) => updateNestedField('whatsapp', 'administracion', {
+                      ...configuracion.whatsapp?.administracion,
+                      activo: e.target.checked
+                    })}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="whatsapp-admin-activo" className="ml-2 block text-sm text-gray-700">
+                    Activar botón de Administración
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Código de País
+                    </label>
+                    <input
+                      type="text"
+                      value={configuracion.whatsapp?.administracion?.codigoPais || '54'}
+                      onChange={(e) => updateNestedField('whatsapp', 'administracion', {
+                        ...configuracion.whatsapp?.administracion,
+                        codigoPais: e.target.value
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="54"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Número de WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={configuracion.whatsapp?.administracion?.numero || ''}
+                      onChange={(e) => updateNestedField('whatsapp', 'administracion', {
+                        ...configuracion.whatsapp?.administracion,
+                        numero: e.target.value
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="2235032141"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Texto Predefinido
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={configuracion.whatsapp?.administracion?.textoPredefinido || ''}
+                    onChange={(e) => updateNestedField('whatsapp', 'administracion', {
+                      ...configuracion.whatsapp?.administracion,
+                      textoPredefinido: e.target.value
+                    })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Hola, me gustaría contactar con administración."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* WhatsApp Ventas */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">💰 Ventas</h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center mb-4">
+                  <input
+                    type="checkbox"
+                    id="whatsapp-ventas-activo"
+                    checked={configuracion.whatsapp?.ventas?.activo || false}
+                    onChange={(e) => updateNestedField('whatsapp', 'ventas', {
+                      ...configuracion.whatsapp?.ventas,
+                      activo: e.target.checked
+                    })}
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="whatsapp-ventas-activo" className="ml-2 block text-sm text-gray-700">
+                    Activar botón de Ventas
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Código de País
+                    </label>
+                    <input
+                      type="text"
+                      value={configuracion.whatsapp?.ventas?.codigoPais || '54'}
+                      onChange={(e) => updateNestedField('whatsapp', 'ventas', {
+                        ...configuracion.whatsapp?.ventas,
+                        codigoPais: e.target.value
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="54"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Número de WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={configuracion.whatsapp?.ventas?.numero || ''}
+                      onChange={(e) => updateNestedField('whatsapp', 'ventas', {
+                        ...configuracion.whatsapp?.ventas,
+                        numero: e.target.value
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="2231234567"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Texto Predefinido
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={configuracion.whatsapp?.ventas?.textoPredefinido || ''}
+                    onChange={(e) => updateNestedField('whatsapp', 'ventas', {
+                      ...configuracion.whatsapp?.ventas,
+                      textoPredefinido: e.target.value
+                    })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Hola, me interesa saber más sobre productos o servicios."
                   />
                 </div>
               </div>

@@ -18,6 +18,22 @@ export interface IConfiguracion extends Document {
   telefonoSoporte?: string;
   telefonoWhatsApp?: string;
   
+  // WhatsApp - Configuración detallada
+  whatsapp?: {
+    administracion?: {
+      numero: string;
+      codigoPais: string;
+      textoPredefinido?: string;
+      activo: boolean;
+    };
+    ventas?: {
+      numero: string;
+      codigoPais: string;
+      textoPredefinido?: string;
+      activo: boolean;
+    };
+  };
+  
   // Redes Sociales
   redesSociales: {
     facebook?: string;
@@ -135,6 +151,42 @@ const ConfiguracionSchema: Schema = new Schema(
     telefonoWhatsApp: {
       type: String,
       trim: true
+    },
+    
+    // WhatsApp - Configuración detallada
+    whatsapp: {
+      type: {
+        administracion: {
+          type: {
+            numero: { type: String, required: true },
+            codigoPais: { type: String, default: '54' },
+            textoPredefinido: { type: String, default: 'Hola, me gustaría contactar con administración.' },
+            activo: { type: Boolean, default: true }
+          }
+        },
+        ventas: {
+          type: {
+            numero: { type: String, required: true },
+            codigoPais: { type: String, default: '54' },
+            textoPredefinido: { type: String, default: 'Hola, me interesa saber más sobre productos o servicios.' },
+            activo: { type: Boolean, default: true }
+          }
+        }
+      },
+      default: {
+        administracion: {
+          numero: '2235032141',
+          codigoPais: '54',
+          textoPredefinido: 'Hola, me gustaría contactar con administración.',
+          activo: true
+        },
+        ventas: {
+          numero: '2231234567',
+          codigoPais: '54',
+          textoPredefinido: 'Hola, me interesa saber más sobre productos o servicios.',
+          activo: true
+        }
+      }
     },
     
     // Redes Sociales

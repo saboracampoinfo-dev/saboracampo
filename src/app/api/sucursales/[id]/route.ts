@@ -1,19 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/lib/mongodb';
 import Sucursal from '@/models/Sucursal';
 
 type Params = {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 };
+
+// Helper para validar ObjectId
+function isValidObjectId(id: string) {
+  return mongoose.Types.ObjectId.isValid(id);
+}
 
 // GET - Obtener sucursal por ID
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     await connectDB();
 
-    const { id } = await params;
+    const { id } = params;
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ID de sucursal inválido',
+        },
+        { status: 400 }
+      );
+    }
 
     const sucursal = await Sucursal.findById(id);
 
@@ -48,8 +64,37 @@ export async function PUT(request: NextRequest, { params }: Params) {
   try {
     await connectDB();
 
-    const { id } = await params;
+    const { id } = params;
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ID de sucursal inválido',
+        },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
+
+    // Normalización ligera igual que en POST
+    if (body.capacidad !== undefined && body.capacidad !== null) {
+      body.capacidad = Number(body.capacidad);
+    }
+
+    if (body.direccion?.coordenadas) {
+      if (body.direccion.coordenadas.latitud !== undefined) {
+        body.direccion.coordenadas.latitud = Number(
+          body.direccion.coordenadas.latitud
+        );
+      }
+      if (body.direccion.coordenadas.longitud !== undefined) {
+        body.direccion.coordenadas.longitud = Number(
+          body.direccion.coordenadas.longitud
+        );
+      }
+    }
 
     const sucursalActualizada = await Sucursal.findByIdAndUpdate(
       id,
@@ -75,16 +120,17 @@ export async function PUT(request: NextRequest, { params }: Params) {
       message: 'Sucursal actualizada exitosamente',
       data: sucursalActualizada,
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error al actualizar sucursal:', error);
 
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
-      const validationError = error as { errors: Record<string, { message: string }> };
+    if (error?.name === 'ValidationError' && error.errors) {
       return NextResponse.json(
         {
           success: false,
           error: 'Error de validación',
-          details: Object.values(validationError.errors).map((err) => err.message),
+          details: Object.values(error.errors).map(
+            (err: any) => err.message
+          ),
         },
         { status: 400 }
       );
@@ -105,7 +151,17 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     await connectDB();
 
-    const { id } = await params;
+    const { id } = params;
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ID de sucursal inválido',
+        },
+        { status: 400 }
+      );
+    }
 
     const sucursalEliminada = await Sucursal.findByIdAndDelete(id);
 
