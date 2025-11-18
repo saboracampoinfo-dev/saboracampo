@@ -31,6 +31,8 @@ interface PaymentRecord {
   };
   createdAt: string;
   notes?: string;
+  metodoPago?: 'efectivo' | 'transferencia';
+  nroComprobante?: string;
 }
 
 export default function LiquidacionesManager() {
@@ -52,7 +54,9 @@ export default function LiquidacionesManager() {
 
   const [liquidacionForm, setLiquidacionForm] = useState({
     periodo: '7',
-    notas: ''
+    notas: '',
+    metodoPago: 'efectivo' as 'efectivo' | 'transferencia',
+    nroComprobante: ''
   });
 
   const [compraForm, setCompraForm] = useState({
@@ -174,7 +178,7 @@ export default function LiquidacionesManager() {
     const montoNeto = montoBruto - compras;
 
     const confirmed = await confirmDelete(
-      `¿Procesar liquidación de ${selectedUser.name}?<br>Horas: ${selectedUser.horasAcumuladas || 0}h<br>Monto Bruto: AR$ ${montoBruto.toFixed(2)}<br>Compras: -AR$ ${compras.toFixed(2)}<br><strong>Total a Pagar: AR$ ${montoNeto.toFixed(2)}</strong>`
+      `¿Procesar liquidación de ${selectedUser.name}?<br><br>Horas trabajadas: ${selectedUser.horasAcumuladas || 0}h × AR$ ${selectedUser.precioHora || 0}<br>Monto Bruto: AR$ ${montoBruto.toFixed(2)}<br>${compras > 0 ? `Compras: -AR$ ${compras.toFixed(2)}<br>` : ''}<strong>Total Neto a Pagar: AR$ ${montoNeto.toFixed(2)}</strong>`
     );
     
     if (!confirmed) return;
@@ -186,7 +190,9 @@ export default function LiquidacionesManager() {
         body: JSON.stringify({
           userId: selectedUser._id,
           periodo: liquidacionForm.periodo,
-          notas: liquidacionForm.notas
+          notas: liquidacionForm.notas,
+          metodoPago: liquidacionForm.metodoPago,
+          nroComprobante: liquidacionForm.metodoPago === 'transferencia' ? liquidacionForm.nroComprobante : undefined
         })
       });
 
@@ -195,7 +201,7 @@ export default function LiquidacionesManager() {
       if (data.success) {
         showSuccessToast(`Liquidación procesada: AR$ ${data.data.montoPagado.toFixed(2)} (Bruto: AR$ ${data.data.montoBruto.toFixed(2)} - Compras: AR$ ${data.data.comprasDescontadas.toFixed(2)})`);
         setShowLiquidar(false);
-        setLiquidacionForm({ periodo: '7', notas: '' });
+        setLiquidacionForm({ periodo: '7', notas: '', metodoPago: 'efectivo', nroComprobante: '' });
         fetchUsers();
       } else {
         showErrorToast(data.error || 'Error al procesar liquidación');
@@ -236,7 +242,7 @@ export default function LiquidacionesManager() {
                 const compras = user.comprasAcumuladas || 0;
                 const totalNeto = montoBruto - compras;
                 return (
-                  <tr key={user._id} className="hover:bg-dark-50 dark:hover:bg-dark-750 transition-colors">
+                  <tr key={user._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">
                       {user.name}
                     </td>
@@ -271,7 +277,7 @@ export default function LiquidacionesManager() {
                           setSelectedUser(user);
                           setShowRegistrarHoras(true);
                         }}
-                        className="text-secondary hover:text-secondary-700 font-semibold transition-colors"
+                        className="text-secondary hover:text-secondary-700 font-semibold transition-colors cursor-pointer"
                       >
                         + Horas
                       </button>
@@ -280,7 +286,7 @@ export default function LiquidacionesManager() {
                           setSelectedUser(user);
                           setShowRegistrarCompra(true);
                         }}
-                        className="text-error hover:text-error-700 font-semibold transition-colors"
+                        className="text-error hover:text-error-700 font-semibold transition-colors cursor-pointer"
                       >
                         + Compra
                       </button>
@@ -289,14 +295,14 @@ export default function LiquidacionesManager() {
                           setSelectedUser(user);
                           setShowLiquidar(true);
                         }}
-                        className="text-primary hover:text-primary-700 font-semibold transition-colors"
+                        className="text-primary hover:text-primary-700 font-semibold transition-colors cursor-pointer"
                         disabled={!user.horasAcumuladas || user.horasAcumuladas === 0}
                       >
                         Liquidar
                       </button>
                       <button
                         onClick={() => handleVerHistorial(user)}
-                        className="text-dark-600 hover:text-dark-900 dark:text-dark-400 dark:hover:text-light-500 font-semibold transition-colors"
+                        className="text-dark-600 hover:text-dark-900 dark:text-dark-400 dark:hover:text-light-500 font-semibold transition-colors cursor-pointer"
                       >
                         Historial
                       </button>
@@ -373,7 +379,7 @@ export default function LiquidacionesManager() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-secondary hover:bg-secondary-700 text-white rounded-lg font-semibold transition-colors"
+                  className="px-4 py-2 bg-secondary hover:bg-secondary-700 text-white rounded-lg font-semibold transition-colors cursor-pointer"
                 >
                   Registrar Horas
                 </button>
@@ -440,13 +446,13 @@ export default function LiquidacionesManager() {
                     setShowRegistrarCompra(false);
                     setCompraForm({ monto: 0, descripcion: '', fecha: new Date().toISOString().split('T')[0] });
                   }}
-                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-error hover:bg-error-700 text-white rounded-lg font-semibold transition-colors"
+                  className="px-4 py-2 bg-error hover:bg-error-700 text-white rounded-lg font-semibold transition-colors cursor-pointer"
                 >
                   Registrar Compra
                 </button>
@@ -516,6 +522,35 @@ export default function LiquidacionesManager() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Método de Pago <span className="text-error">*</span>
+                </label>
+                <select
+                  value={liquidacionForm.metodoPago}
+                  onChange={(e) => setLiquidacionForm({ ...liquidacionForm, metodoPago: e.target.value as 'efectivo' | 'transferencia', nroComprobante: e.target.value === 'efectivo' ? '' : liquidacionForm.nroComprobante })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                  required
+                >
+                  <option value="efectivo">💵 Efectivo</option>
+                  <option value="transferencia">🏦 Transferencia</option>
+                </select>
+              </div>
+              {liquidacionForm.metodoPago === 'transferencia' && (
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Número de Comprobante <span className="text-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={liquidacionForm.nroComprobante}
+                    onChange={(e) => setLiquidacionForm({ ...liquidacionForm, nroComprobante: e.target.value })}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                    placeholder="Ej: 123456789"
+                    required
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                   Notas (opcional)
                 </label>
                 <textarea
@@ -531,15 +566,15 @@ export default function LiquidacionesManager() {
                   type="button"
                   onClick={() => {
                     setShowLiquidar(false);
-                    setLiquidacionForm({ periodo: '7', notas: '' });
+                    setLiquidacionForm({ periodo: '7', notas: '', metodoPago: 'efectivo', nroComprobante: '' });
                   }}
-                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary hover:bg-primary-700 text-white rounded-lg font-semibold transition-colors"
+                  className="px-4 py-2 bg-primary hover:bg-primary-700 text-white rounded-lg font-semibold transition-colors cursor-pointer"
                 >
                   Procesar Liquidación
                 </button>
@@ -581,6 +616,14 @@ export default function LiquidacionesManager() {
                         <div className="text-xs text-dark-700 dark:text-dark-300">
                           {new Date(pago.period.start).toLocaleDateString()} - {new Date(pago.period.end).toLocaleDateString()}
                         </div>
+                        {pago.metodoPago && (
+                          <div className="text-xs text-dark-600 dark:text-dark-400 mt-1">
+                            {pago.metodoPago === 'efectivo' ? '💵 Efectivo' : '🏦 Transferencia'}
+                            {pago.metodoPago === 'transferencia' && pago.nroComprobante && (
+                              <span className="ml-1">- #{pago.nroComprobante}</span>
+                            )}
+                          </div>
+                        )}
                         {pago.notes && (
                           <div className="text-xs text-dark-600 dark:text-dark-400 mt-1 italic">
                             {pago.notes}

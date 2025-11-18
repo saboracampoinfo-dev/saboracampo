@@ -9,6 +9,8 @@ export interface IPaymentRecord {
   };
   createdAt: Date;
   notes?: string;
+  metodoPago?: 'efectivo' | 'transferencia';
+  nroComprobante?: string;
 }
 
 export interface ICompra {
@@ -132,6 +134,14 @@ const UserSchema = new Schema<IUser>(
         default: Date.now,
       },
       notes: {
+        type: String,
+        trim: true,
+      },
+      metodoPago: {
+        type: String,
+        enum: ['efectivo', 'transferencia'],
+      },
+      nroComprobante: {
         type: String,
         trim: true,
       },

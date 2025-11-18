@@ -232,11 +232,25 @@ export async function PUT(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { userId, periodo, notas } = body;
+    const { userId, periodo, notas, metodoPago, nroComprobante } = body;
 
     if (!userId) {
       return NextResponse.json(
         { success: false, error: 'userId es requerido' },
+        { status: 400 }
+      );
+    }
+
+    if (!metodoPago) {
+      return NextResponse.json(
+        { success: false, error: 'Método de pago es requerido' },
+        { status: 400 }
+      );
+    }
+
+    if (metodoPago === 'transferencia' && !nroComprobante) {
+      return NextResponse.json(
+        { success: false, error: 'Número de comprobante es requerido para transferencias' },
         { status: 400 }
       );
     }
@@ -293,6 +307,8 @@ export async function PUT(request: NextRequest) {
       },
       createdAt: new Date(),
       notes: notas || `Liquidación de ${diasPeriodo} día${diasPeriodo > 1 ? 's' : ''}`,
+      metodoPago: metodoPago,
+      nroComprobante: metodoPago === 'transferencia' ? nroComprobante : undefined,
     });
 
     // Reiniciar contadores y actualizar fecha de liquidación
