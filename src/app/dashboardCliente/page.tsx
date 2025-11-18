@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ProfileEditor from '@/components/ProfileEditor';
 
 export default function DashboardCliente() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'inicio' | 'perfil'>('inicio');
 
   useEffect(() => {
     fetchUser();
@@ -19,7 +21,7 @@ export default function DashboardCliente() {
       const data = await response.json();
 
       if (data.success) {
-        setUser(data.data);
+        setUser(data.user);
       } else {
         router.push('/login');
       }
@@ -70,6 +72,26 @@ export default function DashboardCliente() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
+              <button
+                onClick={() => setActiveTab('inicio')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'inicio' 
+                    ? 'bg-primary text-white' 
+                    : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700'
+                }`}
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => setActiveTab('perfil')}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'perfil' 
+                    ? 'bg-primary text-white' 
+                    : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700'
+                }`}
+              >
+                Mi Perfil
+              </button>
               <span className="text-dark-700 dark:text-dark-300 font-medium text-sm">Hola, {user?.name}</span>
               <button
                 onClick={handleLogout}
@@ -117,6 +139,26 @@ export default function DashboardCliente() {
                   Hola, {user?.name}
                 </div>
                 <button
+                  onClick={() => { setActiveTab('inicio'); setIsMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-colors ${
+                    activeTab === 'inicio' 
+                      ? 'bg-primary text-white' 
+                      : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700'
+                  }`}
+                >
+                  Inicio
+                </button>
+                <button
+                  onClick={() => { setActiveTab('perfil'); setIsMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-colors ${
+                    activeTab === 'perfil' 
+                      ? 'bg-primary text-white' 
+                      : 'text-dark-700 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700'
+                  }`}
+                >
+                  Mi Perfil
+                </button>
+                <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 rounded-md text-error-light dark:text-error-dark hover:bg-error-light/10 dark:hover:bg-error-dark/10 font-medium text-sm transition-colors"
                 >
@@ -130,35 +172,39 @@ export default function DashboardCliente() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
-            <h2 className="text-3xl font-bold mb-6 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Bienvenido a Sabor a Campo</h2>
-            <div className="space-y-4">
-              <div className="flex items-start">
-                <span className="text-primary font-semibold w-32">Nombre:</span>
-                <span className="text-dark-900 dark:text-light-500">{user?.name}</span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-primary font-semibold w-32">Email:</span>
-                <span className="text-dark-900 dark:text-light-500">{user?.email}</span>
-              </div>
-              <div className="flex items-start">
-                <span className="text-primary font-semibold w-32">Rol:</span>
-                <span className="px-3 py-1 bg-secondary-100 dark:bg-secondary-800 text-secondary dark:text-secondary-400 rounded-full text-sm font-medium inline-block">{user?.role}</span>
-              </div>
-              {user?.telefono && (
+          {activeTab === 'inicio' ? (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+              <h2 className="text-3xl font-bold mb-6 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Bienvenido a Sabor a Campo</h2>
+              <div className="space-y-4">
                 <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Teléfono:</span>
-                  <span className="text-dark-900 dark:text-light-500">{user.telefono}</span>
+                  <span className="text-primary font-semibold w-32">Nombre:</span>
+                  <span className="text-dark-900 dark:text-light-500">{user?.name}</span>
                 </div>
-              )}
-              {user?.domicilio && (
                 <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Domicilio:</span>
-                  <span className="text-dark-900 dark:text-light-500">{user.domicilio}</span>
+                  <span className="text-primary font-semibold w-32">Email:</span>
+                  <span className="text-dark-900 dark:text-light-500">{user?.email}</span>
                 </div>
-              )}
+                <div className="flex items-start">
+                  <span className="text-primary font-semibold w-32">Rol:</span>
+                  <span className="px-3 py-1 bg-secondary-100 dark:bg-secondary-800 text-secondary dark:text-secondary-400 rounded-full text-sm font-medium inline-block">{user?.role}</span>
+                </div>
+                {user?.telefono && (
+                  <div className="flex items-start">
+                    <span className="text-primary font-semibold w-32">Teléfono:</span>
+                    <span className="text-dark-900 dark:text-light-500">{user.telefono}</span>
+                  </div>
+                )}
+                {user?.domicilio && (
+                  <div className="flex items-start">
+                    <span className="text-primary font-semibold w-32">Domicilio:</span>
+                    <span className="text-dark-900 dark:text-light-500">{user.domicilio}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <ProfileEditor />
+          )}
         </div>
       </main>
     </div>

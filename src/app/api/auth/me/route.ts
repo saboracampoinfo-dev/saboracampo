@@ -53,12 +53,20 @@ export async function GET(request: NextRequest) {
       role: user.role,
       telefono: user.telefono,
       domicilio: user.domicilio,
+      tipoDocumento: user.tipoDocumento,
+      nroDocumento: user.nroDocumento,
+      porcentajeComision: user.porcentajeComision,
+      precioHora: user.precioHora,
+      horasAcumuladas: user.horasAcumuladas,
+      comprasAcumuladas: user.comprasAcumuladas,
+      ultimaLiquidacion: user.ultimaLiquidacion,
       activo: user.activo,
+      createdAt: user.createdAt,
     };
 
     return NextResponse.json({
       success: true,
-      data: userResponse,
+      user: userResponse,
     });
   } catch (error: any) {
     console.error('Error in verify session:', error);

@@ -4,9 +4,9 @@ import connectDB from '@/lib/mongodb';
 import Sucursal from '@/models/Sucursal';
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 // Helper para validar ObjectId
@@ -15,11 +15,11 @@ function isValidObjectId(id: string) {
 }
 
 // GET - Obtener sucursal por ID
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, segmentData: Params) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await segmentData.params;
 
     if (!isValidObjectId(id)) {
       return NextResponse.json(
@@ -60,11 +60,11 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 // PUT - Actualizar sucursal
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, segmentData: Params) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await segmentData.params;
 
     if (!isValidObjectId(id)) {
       return NextResponse.json(
@@ -147,11 +147,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE - Eliminar sucursal
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, segmentData: Params) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await segmentData.params;
 
     if (!isValidObjectId(id)) {
       return NextResponse.json(

@@ -24,7 +24,12 @@ export default function UsersManager() {
     email: '',
     password: '',
     role: 'user',
-    precioHora: 0
+    precioHora: 0,
+    telefono: '',
+    domicilio: '',
+    tipoDocumento: '',
+    nroDocumento: '',
+    porcentajeComision: 0
   });
 
   useEffect(() => {
@@ -53,7 +58,12 @@ export default function UsersManager() {
         email: user.email,
         password: '',
         role: user.role,
-        precioHora: user.precioHora || 0
+        precioHora: user.precioHora || 0,
+        telefono: (user as any).telefono || '',
+        domicilio: (user as any).domicilio || '',
+        tipoDocumento: (user as any).tipoDocumento || '',
+        nroDocumento: (user as any).nroDocumento || '',
+        porcentajeComision: (user as any).porcentajeComision || 0
       });
     } else {
       setEditingUser(null);
@@ -62,7 +72,12 @@ export default function UsersManager() {
         email: '',
         password: '',
         role: 'user',
-        precioHora: 0
+        precioHora: 0,
+        telefono: '',
+        domicilio: '',
+        tipoDocumento: '',
+        nroDocumento: '',
+        porcentajeComision: 0
       });
     }
     setIsModalOpen(true);
@@ -76,7 +91,12 @@ export default function UsersManager() {
       email: '',
       password: '',
       role: 'user',
-      precioHora: 0
+      precioHora: 0,
+      telefono: '',
+      domicilio: '',
+      tipoDocumento: '',
+      nroDocumento: '',
+      porcentajeComision: 0
     });
   };
 
@@ -224,8 +244,8 @@ export default function UsersManager() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-2xl w-full p-6 my-8">
             <h3 className="text-xl font-bold mb-4 text-dark-900 dark:text-light-500">
               {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
             </h3>
@@ -276,21 +296,85 @@ export default function UsersManager() {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
-              {(formData.role === 'seller' || formData.role === 'cashier') && (
+              
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Teléfono</label>
+                <input
+                  type="tel"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Domicilio</label>
+                <input
+                  type="text"
+                  value={formData.domicilio}
+                  onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
-                    Precio por Hora (AR$)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.precioHora}
-                    onChange={(e) => setFormData({ ...formData, precioHora: parseFloat(e.target.value) || 0 })}
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Tipo Documento</label>
+                  <select
+                    value={formData.tipoDocumento}
+                    onChange={(e) => setFormData({ ...formData, tipoDocumento: e.target.value })}
                     className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
-                    min="0"
-                    step="0.01"
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="DNI">DNI</option>
+                    <option value="CUIT">CUIT</option>
+                    <option value="CUIL">CUIL</option>
+                    <option value="Pasaporte">Pasaporte</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Nro. Documento</label>
+                  <input
+                    type="text"
+                    value={formData.nroDocumento}
+                    onChange={(e) => setFormData({ ...formData, nroDocumento: e.target.value })}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
                   />
                 </div>
+              </div>
+
+              {(formData.role === 'seller' || formData.role === 'cashier') && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                      Precio por Hora (AR$)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.precioHora}
+                      onChange={(e) => setFormData({ ...formData, precioHora: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                      Porcentaje Comisión (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.porcentajeComision}
+                      onChange={(e) => setFormData({ ...formData, porcentajeComision: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                    />
+                  </div>
+                </>
               )}
+              
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"

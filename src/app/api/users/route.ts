@@ -112,7 +112,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { name, role, password, precioHora } = body;
+    const { name, role, password, precioHora, telefono, domicilio, tipoDocumento, nroDocumento, porcentajeComision } = body;
 
     // Buscar usuario en MongoDB
     const user = await User.findById(id);
@@ -132,10 +132,17 @@ export async function PUT(request: Request) {
 
     if (name) updateData.name = name;
     if (role) updateData.role = role;
+    if (telefono !== undefined) updateData.telefono = telefono;
+    if (domicilio !== undefined) updateData.domicilio = domicilio;
+    if (tipoDocumento !== undefined) updateData.tipoDocumento = tipoDocumento;
+    if (nroDocumento !== undefined) updateData.nroDocumento = nroDocumento;
 
-    // Si el rol es seller o cashier, actualizar precioHora
+    // Si el rol es seller o cashier, actualizar precioHora y porcentajeComision
     if ((role === 'seller' || role === 'cashier') && precioHora !== undefined) {
       updateData.precioHora = precioHora;
+    }
+    if ((role === 'seller' || role === 'cashier') && porcentajeComision !== undefined) {
+      updateData.porcentajeComision = porcentajeComision;
     }
 
     // Si se proporciona contraseña, actualizar en Firebase
