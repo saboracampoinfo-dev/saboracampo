@@ -139,32 +139,49 @@ const ConfiguracionSchema: Schema = new Schema(
     
     // Redes Sociales
     redesSociales: {
-      facebook: { type: String, trim: true },
-      instagram: { type: String, trim: true },
-      twitter: { type: String, trim: true },
-      linkedin: { type: String, trim: true },
-      youtube: { type: String, trim: true },
-      tiktok: { type: String, trim: true }
+      type: {
+        facebook: { type: String, trim: true },
+        instagram: { type: String, trim: true },
+        twitter: { type: String, trim: true },
+        linkedin: { type: String, trim: true },
+        youtube: { type: String, trim: true },
+        tiktok: { type: String, trim: true }
+      },
+      default: {}
     },
     
     // Dirección Física
     direccion: {
-      calle: { type: String, trim: true },
-      ciudad: { type: String, trim: true },
-      estado: { type: String, trim: true },
-      codigoPostal: { type: String, trim: true },
-      pais: { type: String, trim: true, default: 'México' }
+      type: {
+        calle: { type: String, trim: true },
+        ciudad: { type: String, trim: true },
+        estado: { type: String, trim: true },
+        codigoPostal: { type: String, trim: true },
+        pais: { type: String, trim: true, default: 'México' }
+      },
+      default: {}
     },
     
     // Horarios
     horarioAtencion: {
-      lunes: { type: String, default: '9:00 AM - 6:00 PM' },
-      martes: { type: String, default: '9:00 AM - 6:00 PM' },
-      miercoles: { type: String, default: '9:00 AM - 6:00 PM' },
-      jueves: { type: String, default: '9:00 AM - 6:00 PM' },
-      viernes: { type: String, default: '9:00 AM - 6:00 PM' },
-      sabado: { type: String, default: '10:00 AM - 2:00 PM' },
-      domingo: { type: String, default: 'Cerrado' }
+      type: {
+        lunes: { type: String, default: '9:00 AM - 6:00 PM' },
+        martes: { type: String, default: '9:00 AM - 6:00 PM' },
+        miercoles: { type: String, default: '9:00 AM - 6:00 PM' },
+        jueves: { type: String, default: '9:00 AM - 6:00 PM' },
+        viernes: { type: String, default: '9:00 AM - 6:00 PM' },
+        sabado: { type: String, default: '10:00 AM - 2:00 PM' },
+        domingo: { type: String, default: 'Cerrado' }
+      },
+      default: {
+        lunes: '9:00 AM - 6:00 PM',
+        martes: '9:00 AM - 6:00 PM',
+        miercoles: '9:00 AM - 6:00 PM',
+        jueves: '9:00 AM - 6:00 PM',
+        viernes: '9:00 AM - 6:00 PM',
+        sabado: '10:00 AM - 2:00 PM',
+        domingo: 'Cerrado'
+      }
     },
     
     // Configuración del Sitio
@@ -201,9 +218,16 @@ const ConfiguracionSchema: Schema = new Schema(
     
     // Configuración de Notificaciones
     notificaciones: {
-      emailActivo: { type: Boolean, default: true },
-      smsActivo: { type: Boolean, default: false },
-      whatsappActivo: { type: Boolean, default: false }
+      type: {
+        emailActivo: { type: Boolean, default: true },
+        smsActivo: { type: Boolean, default: false },
+        whatsappActivo: { type: Boolean, default: false }
+      },
+      default: {
+        emailActivo: true,
+        smsActivo: false,
+        whatsappActivo: false
+      }
     },
     
     // Metadatos

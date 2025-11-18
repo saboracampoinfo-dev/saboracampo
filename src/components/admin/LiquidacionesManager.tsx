@@ -11,7 +11,15 @@ interface User {
   role: string;
   precioHora?: number;
   horasAcumuladas?: number;
+  comprasAcumuladas?: number;
   ultimaLiquidacion?: string;
+}
+
+interface Compra {
+  monto: number;
+  descripcion: string;
+  fecha: string;
+  createdAt: string;
 }
 
 interface PaymentRecord {
@@ -30,8 +38,10 @@ export default function LiquidacionesManager() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [historial, setHistorial] = useState<PaymentRecord[]>([]);
+  const [historialCompras, setHistorialCompras] = useState<Compra[]>([]);
   const [showHistorial, setShowHistorial] = useState(false);
   const [showRegistrarHoras, setShowRegistrarHoras] = useState(false);
+  const [showRegistrarCompra, setShowRegistrarCompra] = useState(false);
   const [showLiquidar, setShowLiquidar] = useState(false);
   
   const [horasForm, setHorasForm] = useState({
@@ -43,6 +53,12 @@ export default function LiquidacionesManager() {
   const [liquidacionForm, setLiquidacionForm] = useState({
     periodo: '7',
     notas: ''
+  });
+
+  const [compraForm, setCompraForm] = useState({
+    monto: 0,
+    descripcion: '',
+    fecha: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
@@ -77,9 +93,42 @@ export default function LiquidacionesManager() {
       
       if (data.success) {
         setHistorial(data.data.historialPagos || []);
+        setHistorialCompras(data.data.historialCompras || []);
       }
     } catch (error) {
       showErrorToast('Error al cargar historial');
+    }
+  };
+
+  const handleRegistrarCompra = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedUser) return;
+
+    try {
+      const response = await fetch('/api/liquidaciones', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUser._id,
+          monto: compraForm.monto,
+          descripcion: compraForm.descripcion,
+          fecha: compraForm.fecha
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccessToast(`Compra de AR$ ${compraForm.monto} registrada correctamente`);
+        setShowRegistrarCompra(false);
+        setCompraForm({ monto: 0, descripcion: '', fecha: new Date().toISOString().split('T')[0] });
+        fetchUsers();
+      } else {
+        showErrorToast(data.error || 'Error al registrar compra');
+      }
+    } catch (error) {
+      showErrorToast('Error al registrar compra');
     }
   };
 
@@ -120,8 +169,12 @@ export default function LiquidacionesManager() {
     
     if (!selectedUser) return;
 
+    const montoBruto = (selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0);
+    const compras = selectedUser.comprasAcumuladas || 0;
+    const montoNeto = montoBruto - compras;
+
     const confirmed = await confirmDelete(
-      `¿Procesar liquidación de ${selectedUser.name}?<br>Horas: ${selectedUser.horasAcumuladas || 0}h<br>Monto: AR$ ${((selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0)).toFixed(2)}`
+      `¿Procesar liquidación de ${selectedUser.name}?<br>Horas: ${selectedUser.horasAcumuladas || 0}h<br>Monto Bruto: AR$ ${montoBruto.toFixed(2)}<br>Compras: -AR$ ${compras.toFixed(2)}<br><strong>Total a Pagar: AR$ ${montoNeto.toFixed(2)}</strong>`
     );
     
     if (!confirmed) return;
@@ -140,7 +193,7 @@ export default function LiquidacionesManager() {
       const data = await response.json();
 
       if (data.success) {
-        showSuccessToast(`Liquidación procesada: AR$ ${data.data.montoPagado.toFixed(2)}`);
+        showSuccessToast(`Liquidación procesada: AR$ ${data.data.montoPagado.toFixed(2)} (Bruto: AR$ ${data.data.montoBruto.toFixed(2)} - Compras: AR$ ${data.data.comprasDescontadas.toFixed(2)})`);
         setShowLiquidar(false);
         setLiquidacionForm({ periodo: '7', notas: '' });
         fetchUsers();
@@ -169,16 +222,19 @@ export default function LiquidacionesManager() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Nombre</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Rol</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Horas Acumuladas</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Precio/Hora</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Total a Pagar</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Última Liquidación</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Horas</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Precio/H</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Compras</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Total Neto</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Última Liq.</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
               {users.map((user) => {
-                const totalAPagar = (user.horasAcumuladas || 0) * (user.precioHora || 0);
+                const montoBruto = (user.horasAcumuladas || 0) * (user.precioHora || 0);
+                const compras = user.comprasAcumuladas || 0;
+                const totalNeto = montoBruto - compras;
                 return (
                   <tr key={user._id} className="hover:bg-dark-50 dark:hover:bg-dark-750 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">
@@ -198,8 +254,11 @@ export default function LiquidacionesManager() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400">
                       AR$ {user.precioHora || 0}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-error dark:text-error-400 font-semibold">
+                      {compras > 0 ? `-AR$ ${compras.toFixed(2)}` : '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">
-                      AR$ {totalAPagar.toFixed(2)}
+                      AR$ {totalNeto.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400">
                       {user.ultimaLiquidacion 
@@ -215,6 +274,15 @@ export default function LiquidacionesManager() {
                         className="text-secondary hover:text-secondary-700 font-semibold transition-colors"
                       >
                         + Horas
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowRegistrarCompra(true);
+                        }}
+                        className="text-error hover:text-error-700 font-semibold transition-colors"
+                      >
+                        + Compra
                       </button>
                       <button
                         onClick={() => {
@@ -315,6 +383,79 @@ export default function LiquidacionesManager() {
         </div>
       )}
 
+      {/* Modal Registrar Compra */}
+      {showRegistrarCompra && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-4 text-dark-900 dark:text-light-500">
+              Registrar Compra - {selectedUser.name}
+            </h3>
+            <form onSubmit={handleRegistrarCompra} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Monto de la Compra (AR$)
+                </label>
+                <input
+                  type="number"
+                  value={compraForm.monto}
+                  onChange={(e) => setCompraForm({ ...compraForm, monto: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-error"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Descripción
+                </label>
+                <input
+                  type="text"
+                  value={compraForm.descripcion}
+                  onChange={(e) => setCompraForm({ ...compraForm, descripcion: e.target.value })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-error"
+                  placeholder="Ej: 1 Coca Cola, Almuerzo, etc."
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  value={compraForm.fecha}
+                  onChange={(e) => setCompraForm({ ...compraForm, fecha: e.target.value })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-error"
+                  required
+                />
+              </div>
+              <div className="bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg p-3 text-sm text-dark-700 dark:text-dark-300">
+                💡 Esta compra se descontará del total a pagar en la próxima liquidación.
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRegistrarCompra(false);
+                    setCompraForm({ monto: 0, descripcion: '', fecha: new Date().toISOString().split('T')[0] });
+                  }}
+                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-error hover:bg-error-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Registrar Compra
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal Liquidar */}
       {showLiquidar && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -333,11 +474,25 @@ export default function LiquidacionesManager() {
                   <span className="text-dark-700 dark:text-dark-300">Precio por hora:</span>
                   <span className="font-bold text-dark-900 dark:text-light-500">AR$ {selectedUser.precioHora || 0}</span>
                 </div>
-                <div className="border-t border-primary-200 dark:border-primary-800 pt-2 mt-2">
+                <div className="flex justify-between border-t border-primary-200 dark:border-primary-800 pt-2">
+                  <span className="text-dark-700 dark:text-dark-300">Subtotal (Bruto):</span>
+                  <span className="font-bold text-dark-900 dark:text-light-500">
+                    AR$ {((selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0)).toFixed(2)}
+                  </span>
+                </div>
+                {(selectedUser.comprasAcumuladas || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-error dark:text-error-400">Compras realizadas:</span>
+                    <span className="font-bold text-error dark:text-error-400">
+                      -AR$ {(selectedUser.comprasAcumuladas || 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="border-t-2 border-primary-300 dark:border-primary-700 pt-2 mt-2">
                   <div className="flex justify-between text-lg">
-                    <span className="text-dark-700 dark:text-dark-300">Total a pagar:</span>
+                    <span className="text-dark-700 dark:text-dark-300 font-semibold">Total Neto a pagar:</span>
                     <span className="font-bold text-primary">
-                      AR$ {((selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0)).toFixed(2)}
+                      AR$ {(((selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0)) - (selectedUser.comprasAcumuladas || 0)).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -397,50 +552,90 @@ export default function LiquidacionesManager() {
       {/* Modal Historial */}
       {showHistorial && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4 text-dark-900 dark:text-light-500">
-              Historial de Pagos - {selectedUser.name}
+              Historial Completo - {selectedUser.name}
             </h3>
             
-            {historial.length > 0 ? (
-              <div className="space-y-4">
-                {historial.map((pago, index) => (
-                  <div key={index} className="bg-dark-50 dark:bg-dark-700 rounded-lg p-4 border border-dark-200 dark:border-dark-600">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="text-lg font-bold text-primary">
-                          AR$ {pago.amount.toFixed(2)}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Historial de Pagos */}
+              <div>
+                <h4 className="text-lg font-semibold mb-3 text-primary">💰 Pagos Realizados</h4>
+                {historial.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {historial.map((pago, index) => (
+                      <div key={index} className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-800">
+                        <div className="flex justify-between items-start mb-1">
+                          <div>
+                            <div className="text-base font-bold text-primary">
+                              AR$ {pago.amount.toFixed(2)}
+                            </div>
+                            <div className="text-xs text-dark-600 dark:text-dark-400">
+                              {pago.hoursWorked}h trabajadas
+                            </div>
+                          </div>
+                          <div className="text-right text-xs text-dark-600 dark:text-dark-400">
+                            {new Date(pago.createdAt).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div className="text-sm text-dark-600 dark:text-dark-400">
-                          {pago.hoursWorked}h trabajadas
+                        <div className="text-xs text-dark-700 dark:text-dark-300">
+                          {new Date(pago.period.start).toLocaleDateString()} - {new Date(pago.period.end).toLocaleDateString()}
                         </div>
+                        {pago.notes && (
+                          <div className="text-xs text-dark-600 dark:text-dark-400 mt-1 italic">
+                            {pago.notes}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right text-sm text-dark-600 dark:text-dark-400">
-                        {new Date(pago.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="text-sm text-dark-700 dark:text-dark-300">
-                      Período: {new Date(pago.period.start).toLocaleDateString()} - {new Date(pago.period.end).toLocaleDateString()}
-                    </div>
-                    {pago.notes && (
-                      <div className="text-sm text-dark-600 dark:text-dark-400 mt-2 italic">
-                        {pago.notes}
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-8 text-dark-600 dark:text-dark-400 text-sm">
+                    No hay pagos registrados
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-8 text-dark-600 dark:text-dark-400">
-                No hay pagos registrados
+
+              {/* Historial de Compras */}
+              <div>
+                <h4 className="text-lg font-semibold mb-3 text-error">🛒 Compras Realizadas</h4>
+                {historialCompras.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {historialCompras.map((compra, index) => (
+                      <div key={index} className="bg-error-50 dark:bg-error-900/20 rounded-lg p-3 border border-error-200 dark:border-error-800">
+                        <div className="flex justify-between items-start mb-1">
+                          <div>
+                            <div className="text-base font-bold text-error">
+                              -AR$ {compra.monto.toFixed(2)}
+                            </div>
+                            <div className="text-xs text-dark-700 dark:text-dark-300 font-medium">
+                              {compra.descripcion}
+                            </div>
+                          </div>
+                          <div className="text-right text-xs text-dark-600 dark:text-dark-400">
+                            {new Date(compra.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-xs text-dark-600 dark:text-dark-400">
+                          Fecha: {new Date(compra.fecha).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-dark-600 dark:text-dark-400 text-sm">
+                    No hay compras registradas
+                  </div>
+                )}
               </div>
-            )}
+            </div>
             
             <div className="flex justify-end pt-4 mt-4 border-t border-dark-200 dark:border-dark-700">
               <button
                 onClick={() => {
                   setShowHistorial(false);
                   setHistorial([]);
+                  setHistorialCompras([]);
                 }}
                 className="px-4 py-2 bg-dark-200 dark:bg-dark-600 hover:bg-dark-300 dark:hover:bg-dark-500 text-dark-900 dark:text-light-500 rounded-lg font-semibold transition-colors"
               >

@@ -78,7 +78,26 @@ export default function ConfiguracionManager() {
       const data = await response.json();
 
       if (data.success) {
-        setConfiguracion(data.data);
+        // Asegurar que los objetos anidados existan
+        const config = data.data;
+        setConfiguracion({
+          ...config,
+          redesSociales: config.redesSociales || {},
+          direccion: config.direccion || {},
+          horarioAtencion: config.horarioAtencion || {
+            lunes: '9:00 AM - 6:00 PM',
+            martes: '9:00 AM - 6:00 PM',
+            miercoles: '9:00 AM - 6:00 PM',
+            jueves: '9:00 AM - 6:00 PM',
+            viernes: '9:00 AM - 6:00 PM',
+            sabado: '10:00 AM - 2:00 PM',
+            domingo: 'Cerrado'
+          },
+          notificaciones: config.notificaciones || {
+            emailActivo: true,
+            whatsappActivo: false
+          }
+        });
       } else {
         showErrorToast('Error al cargar la configuración');
       }
@@ -125,10 +144,11 @@ export default function ConfiguracionManager() {
   const updateNestedField = (parent: string, field: string, value: any) => {
     setConfiguracion((prev) => {
       if (!prev) return null;
+      const currentParent = (prev[parent as keyof Configuracion] as any) || {};
       return {
         ...prev,
         [parent]: {
-          ...(prev[parent as keyof Configuracion] as any),
+          ...currentParent,
           [field]: value,
         },
       };
@@ -221,29 +241,64 @@ export default function ConfiguracionManager() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Color Primario
-                </label>
-                <input
-                  type="color"
-                  value={configuracion.colorPrimario || '#10b981'}
-                  onChange={(e) => updateField('colorPrimario', e.target.value)}
-                  className="w-full h-10 border border-gray-300 rounded-lg"
-                />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-800">Colores del Sitio</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateField('colorPrimario', '#10b981');
+                    updateField('colorSecundario', '#059669');
+                    showSuccessToast('Colores restablecidos a valores originales');
+                  }}
+                  className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  🔄 Restablecer Colores
+                </button>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Color Primario
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={configuracion.colorPrimario || '#10b981'}
+                      onChange={(e) => updateField('colorPrimario', e.target.value)}
+                      className="w-20 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={configuracion.colorPrimario || '#10b981'}
+                      onChange={(e) => updateField('colorPrimario', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="#10b981"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Color Secundario
-                </label>
-                <input
-                  type="color"
-                  value={configuracion.colorSecundario || '#059669'}
-                  onChange={(e) => updateField('colorSecundario', e.target.value)}
-                  className="w-full h-10 border border-gray-300 rounded-lg"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Color Secundario
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={configuracion.colorSecundario || '#059669'}
+                      onChange={(e) => updateField('colorSecundario', e.target.value)}
+                      className="w-20 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={configuracion.colorSecundario || '#059669'}
+                      onChange={(e) => updateField('colorSecundario', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      placeholder="#059669"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

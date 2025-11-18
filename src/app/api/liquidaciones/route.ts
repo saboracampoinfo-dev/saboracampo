@@ -35,6 +35,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Si se solicita historial de compras
+    if (action === 'compras') {
+      return NextResponse.json({
+        success: true,
+        data: {
+          historialCompras: user.historialCompras || [],
+          comprasAcumuladas: user.comprasAcumuladas || 0,
+        }
+      });
+    }
+
     // Si se solicita historial
     if (action === 'history') {
       return NextResponse.json({
@@ -47,7 +58,9 @@ export async function GET(request: NextRequest) {
             role: user.role,
           },
           historialPagos: user.historialPagos || [],
+          historialCompras: user.historialCompras || [],
           horasAcumuladas: user.horasAcumuladas || 0,
+          comprasAcumuladas: user.comprasAcumuladas || 0,
           precioHora: user.precioHora || 0,
           ultimaLiquidacion: user.ultimaLiquidacion,
         }
@@ -143,6 +156,76 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// PATCH - Registrar compra
+export async function PATCH(request: NextRequest) {
+  try {
+    await dbConnect();
+
+    const body = await request.json();
+    const { userId, monto, descripcion, fecha } = body;
+
+    if (!userId || !monto || !descripcion) {
+      return NextResponse.json(
+        { success: false, error: 'userId, monto y descripcion son requeridos' },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Usuario no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    if (user.role !== 'seller' && user.role !== 'cashier') {
+      return NextResponse.json(
+        { success: false, error: 'Este usuario no es vendedor ni cajero' },
+        { status: 400 }
+      );
+    }
+
+    // Agregar compra al historial
+    if (!user.historialCompras) {
+      user.historialCompras = [];
+    }
+
+    user.historialCompras.push({
+      monto: parseFloat(monto),
+      descripcion,
+      fecha: fecha ? new Date(fecha) : new Date(),
+      createdAt: new Date(),
+    });
+
+    // Acumular el monto de la compra
+    user.comprasAcumuladas = (user.comprasAcumuladas || 0) + parseFloat(monto);
+    
+    await user.save();
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        userId: user._id,
+        comprasAcumuladas: user.comprasAcumuladas,
+        compraRegistrada: {
+          monto: parseFloat(monto),
+          descripcion,
+          fecha: fecha ? new Date(fecha) : new Date(),
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error en PATCH liquidaciones:', error);
+    return NextResponse.json(
+      { success: false, error: 'Error al registrar compra' },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT - Procesar liquidación (pagar y reiniciar contador)
 export async function PUT(request: NextRequest) {
   try {
@@ -176,7 +259,9 @@ export async function PUT(request: NextRequest) {
 
     const horasAcumuladas = user.horasAcumuladas || 0;
     const precioHora = user.precioHora || 0;
-    const montoTotal = horasAcumuladas * precioHora;
+    const comprasAcumuladas = user.comprasAcumuladas || 0;
+    const montoBruto = horasAcumuladas * precioHora;
+    const montoTotal = montoBruto - comprasAcumuladas;
 
     if (horasAcumuladas === 0) {
       return NextResponse.json(
@@ -210,8 +295,9 @@ export async function PUT(request: NextRequest) {
       notes: notas || `Liquidación de ${diasPeriodo} día${diasPeriodo > 1 ? 's' : ''}`,
     });
 
-    // Reiniciar contador de horas y actualizar fecha de liquidación
+    // Reiniciar contadores y actualizar fecha de liquidación
     user.horasAcumuladas = 0;
+    user.comprasAcumuladas = 0;
     user.ultimaLiquidacion = new Date();
     
     await user.save();
@@ -222,6 +308,8 @@ export async function PUT(request: NextRequest) {
         userId: user._id,
         userName: user.name,
         montoPagado: montoTotal,
+        montoBruto,
+        comprasDescontadas: comprasAcumuladas,
         horasTrabajadas: horasAcumuladas,
         precioHora,
         periodo: {

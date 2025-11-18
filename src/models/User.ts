@@ -11,6 +11,13 @@ export interface IPaymentRecord {
   notes?: string;
 }
 
+export interface ICompra {
+  monto: number;
+  descripcion: string;
+  fecha: Date;
+  createdAt: Date;
+}
+
 export interface IUser {
   _id: string;
   firebaseUid?: string;
@@ -25,8 +32,10 @@ export interface IUser {
   porcentajeComision?: number;
   precioHora?: number;
   horasAcumuladas?: number;
+  comprasAcumuladas?: number;
   ultimaLiquidacion?: Date;
   historialPagos?: IPaymentRecord[];
+  historialCompras?: ICompra[];
   activo: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -91,6 +100,11 @@ const UserSchema = new Schema<IUser>(
       default: 0,
       min: 0,
     },
+    comprasAcumuladas: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     ultimaLiquidacion: {
       type: Date,
     },
@@ -120,6 +134,26 @@ const UserSchema = new Schema<IUser>(
       notes: {
         type: String,
         trim: true,
+      },
+    }],
+    historialCompras: [{
+      monto: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
+      descripcion: {
+        type: String,
+        required: true,
+        trim: true,
+      },
+      fecha: {
+        type: Date,
+        required: true,
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
       },
     }],
     activo: {
