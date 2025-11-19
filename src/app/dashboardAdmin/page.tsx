@@ -26,7 +26,7 @@ export default function DashboardAdmin() {
       const data = await response.json();
 
       if (data.success) {
-        setUser(data.data);
+        setUser(data.user);
       } else {
         router.push('/login');
       }
