@@ -237,6 +237,19 @@ export default function SucursalesManager() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validar configuración de Cloudinary
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+      showErrorToast('Cloudinary no está configurado. Verifica las variables de entorno.');
+      console.error('Falta NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME en .env.local');
+      return;
+    }
+
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) {
+      showErrorToast('Cloudinary Upload Preset no configurado. Verifica NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET');
+      console.error('Falta NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET en .env.local');
+      return;
+    }
+
     // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
       showErrorToast('Por favor selecciona un archivo de imagen válido');
@@ -272,12 +285,12 @@ export default function SucursalesManager() {
         });
         showSuccessToast('Imagen subida correctamente');
       } else {
-        showErrorToast('Error al subir la imagen');
+        showErrorToast('Error al subir la imagen a Cloudinary. Verifica la consola para más detalles.');
         setImagePreview(null);
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      showErrorToast('Error al subir la imagen');
+      showErrorToast('Error al subir la imagen. Verifica la configuración de Cloudinary.');
       setImagePreview(null);
     } finally {
       setUploadingImage(false);
@@ -499,12 +512,22 @@ export default function SucursalesManager() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-4xl w-full p-6 my-8">
-            <h3 className="text-xl font-bold mb-4 text-dark-900 dark:text-light-500">
-              {editingSucursal ? 'Editar Sucursal' : 'Nueva Sucursal'}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col my-8">
+            <div className="px-6 pt-6 pb-4 border-b border-dark-200 dark:border-dark-700">
+              <h3 className="text-xl font-bold text-dark-900 dark:text-light-500">
+                {editingSucursal ? 'Editar Sucursal' : 'Nueva Sucursal'}
+              </h3>
+            </div>
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="overflow-y-auto px-6 py-4 space-y-6">
+              {/* Nota campos obligatorios */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  <span className="text-red-500 font-bold">*</span> Indica campos obligatorios
+                </p>
+              </div>
+
               {/* Info básica */}
               <div>
                 <h4 className="text-sm font-semibold mb-2 text-dark-800 dark:text-light-400">
@@ -513,7 +536,7 @@ export default function SucursalesManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
-                      Nombre *
+                      Nombre <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -527,7 +550,7 @@ export default function SucursalesManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
-                      Estado *
+                      Estado
                     </label>
                     <select
                       value={formData.estado}
@@ -568,7 +591,7 @@ export default function SucursalesManager() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Calle *
+                      Calle <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -588,7 +611,7 @@ export default function SucursalesManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Número *
+                      Número <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -608,7 +631,7 @@ export default function SucursalesManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Ciudad *
+                      Ciudad <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -630,7 +653,7 @@ export default function SucursalesManager() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Provincia *
+                      Provincia <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -650,7 +673,7 @@ export default function SucursalesManager() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Código postal *
+                      Código postal <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -737,7 +760,7 @@ export default function SucursalesManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Teléfono principal *
+                      Teléfono principal <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -778,7 +801,7 @@ export default function SucursalesManager() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      Email *
+                      Email <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -1018,7 +1041,7 @@ export default function SucursalesManager() {
                   {/* Input para subir archivo */}
                   <div className="mb-3">
                     <label className="block text-sm font-medium mb-1">
-                      Subir imagen *
+                      Subir imagen <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="file"
@@ -1040,10 +1063,10 @@ export default function SucursalesManager() {
                   {/* Input alternativo con URL */}
                   <div>
                     <label className="block text-sm font-medium mb-1">
-                      O ingresa URL de imagen
+                      O ingresa URL de imagen <span className="text-red-500">*</span>
                     </label>
                     <input
-                      type="text"
+                      type="url"
                       value={formData.imagenes.principal}
                       onChange={(e) => {
                         setFormData({
@@ -1057,6 +1080,7 @@ export default function SucursalesManager() {
                       }}
                       placeholder="https://ejemplo.com/imagen.jpg"
                       className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-sm"
+                      required
                     />
                   </div>
 
@@ -1203,8 +1227,9 @@ export default function SucursalesManager() {
                   </div>
                 </div>
               </div>
+              </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 px-6 py-4 border-t border-dark-200 dark:border-dark-700">
                 <button
                   type="button"
                   onClick={handleCloseModal}
