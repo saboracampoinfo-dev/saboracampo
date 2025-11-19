@@ -35,11 +35,24 @@ export async function uploadToCloudinary(file: File): Promise<{ url: string; pub
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('❌ Error de Cloudinary:', errorData);
+      console.error('❌ Error de Cloudinary - Status:', response.status);
+      console.error('📋 Detalles del error:', JSON.stringify(errorData, null, 2));
+      console.error('🔍 Mensaje de error:', errorData.error?.message || errorData.message);
       console.error('💡 Posibles causas:');
-      console.error('   - Upload preset no existe o está mal escrito');
-      console.error('   - Upload preset no está configurado como "unsigned"');
-      console.error('   - Cloud name incorrecto');
+      
+      if (errorData.error?.message?.includes('Invalid upload preset')) {
+        console.error('   ❌ El upload preset "' + uploadPreset + '" NO EXISTE en tu cuenta de Cloudinary');
+        console.error('   ✅ Solución: Ve a Cloudinary → Settings → Upload → Upload presets');
+        console.error('   ✅ Crea un preset llamado "' + uploadPreset + '" en modo "Unsigned"');
+      } else if (errorData.error?.message?.includes('Upload preset must allow unsigned uploading')) {
+        console.error('   ❌ El upload preset existe pero está en modo "Signed"');
+        console.error('   ✅ Solución: Cambia el preset a modo "Unsigned"');
+      } else {
+        console.error('   - Upload preset no existe o está mal escrito');
+        console.error('   - Upload preset no está configurado como "unsigned"');
+        console.error('   - Cloud name incorrecto');
+      }
+      
       return null;
     }
 
