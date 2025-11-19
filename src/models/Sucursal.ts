@@ -91,18 +91,6 @@ const SucursalSchema: Schema<ISucursal> = new Schema(
         required: [true, 'El código postal es obligatorio'],
         trim: true,
       },
-      coordenadas: {
-        latitud: {
-          type: Number,
-          min: -90,
-          max: 90,
-        },
-        longitud: {
-          type: Number,
-          min: -180,
-          max: 180,
-        },
-      },
     },
     contacto: {
       telefono: {

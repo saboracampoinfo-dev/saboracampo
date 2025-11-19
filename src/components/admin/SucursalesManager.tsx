@@ -297,6 +297,8 @@ export default function SucursalesManager() {
     }
   };
 
+
+
   const handleRemoveImage = () => {
     setImagePreview(null);
     setFormData({
@@ -1089,29 +1091,6 @@ export default function SucursalesManager() {
                     </p>
                   </div>
 
-                  {/* Input alternativo con URL */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      O ingresa URL de imagen <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.imagenes.principal}
-                      onChange={(e) => {
-                        setFormData({
-                          ...formData,
-                          imagenes: {
-                            ...formData.imagenes,
-                            principal: e.target.value,
-                          },
-                        });
-                        setImagePreview(e.target.value);
-                      }}
-                      placeholder="https://ejemplo.com/imagen.jpg"
-                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-sm"
-                      required
-                    />
-                  </div>
 
                   <label className="block text-sm font-medium mb-1 mt-3">
                     Galería (URLs separadas por coma)
