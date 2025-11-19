@@ -377,7 +377,7 @@ export default function ProductsManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 px-1 md:px-0">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Productos</h2>
         <div className="flex gap-2">

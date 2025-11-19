@@ -163,20 +163,20 @@ export default function UsersManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 px-1 md:px-0">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Usuarios</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Usuarios</h2>
         <button
           onClick={() => handleOpenModal()}
-          className="bg-primary hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+          className="bg-primary hover:bg-primary-700 text-white px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base"
         >
           + Nuevo Usuario
         </button>
       </div>
 
       <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg overflow-hidden border border-dark-200 dark:border-dark-700">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-dark-200 dark:divide-dark-700">
+        <div className="overflow-x-auto -mx-1 md:mx-0">
+          <table className="min-w-full divide-y divide-dark-200 dark:divide-dark-700 text-xs md:text-sm">
             <thead className="bg-dark-100 dark:bg-dark-900">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Nombre</th>
@@ -258,7 +258,7 @@ export default function UsersManager() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                   required
                 />
               </div>
@@ -268,7 +268,7 @@ export default function UsersManager() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                   required
                   disabled={!!editingUser}
                 />
@@ -282,7 +282,7 @@ export default function UsersManager() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 pr-10 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                    className="w-full px-2 md:px-3 py-1.5 md:py-2 pr-10 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                     required={!editingUser}
                   />
                   <button
@@ -323,7 +323,7 @@ export default function UsersManager() {
                   type="tel"
                   value={formData.telefono}
                   onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                 />
               </div>
 
@@ -333,7 +333,7 @@ export default function UsersManager() {
                   type="text"
                   value={formData.domicilio}
                   onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                  className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                 />
               </div>
 

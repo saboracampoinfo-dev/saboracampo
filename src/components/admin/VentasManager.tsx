@@ -114,14 +114,14 @@ export default function VentasManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6 px-1 md:px-0">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Reportes de Ventas</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-dark-900 dark:text-light-500">Reportes de Ventas</h2>
         <div className="flex items-center space-x-2">
           <select
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+            className="px-2 md:px-4 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-xs md:text-base"
           >
             <option value="todas">Todas</option>
             <option value="hoy">Hoy</option>
@@ -134,28 +134,28 @@ export default function VentasManager() {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-primary-50 dark:bg-primary-900 p-6 rounded-lg border-l-4 border-primary">
-          <h3 className="text-sm font-medium text-primary-700 dark:text-primary-300">Total Ventas</h3>
-          <p className="text-3xl font-bold text-primary-900 dark:text-primary-200 mt-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-primary-50 dark:bg-primary-900 p-3 md:p-6 rounded-lg border-l-4 border-primary">
+          <h3 className="text-xs md:text-sm font-medium text-primary-700 dark:text-primary-300">Total Ventas</h3>
+          <p className="text-xl md:text-3xl font-bold text-primary-900 dark:text-primary-200 mt-1 md:mt-2">
             ${totalGeneral.toFixed(2)}
           </p>
         </div>
-        <div className="bg-success-50 dark:bg-success-900 p-6 rounded-lg border-l-4 border-success">
-          <h3 className="text-sm font-medium text-success-700 dark:text-success-300">Ventas Hoy</h3>
-          <p className="text-3xl font-bold text-success-900 dark:text-success-200 mt-2">
+        <div className="bg-success-50 dark:bg-success-900 p-3 md:p-6 rounded-lg border-l-4 border-success">
+          <h3 className="text-xs md:text-sm font-medium text-success-700 dark:text-success-300">Ventas Hoy</h3>
+          <p className="text-xl md:text-3xl font-bold text-success-900 dark:text-success-200 mt-1 md:mt-2">
             {ventasFiltradas.filter(v => new Date(v.fecha).toDateString() === new Date().toDateString()).length}
           </p>
         </div>
-        <div className="bg-secondary-50 dark:bg-secondary-900 p-6 rounded-lg border-l-4 border-secondary">
-          <h3 className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Ventas del Mes</h3>
-          <p className="text-3xl font-bold text-secondary-900 dark:text-secondary-200 mt-2">
+        <div className="bg-secondary-50 dark:bg-secondary-900 p-3 md:p-6 rounded-lg border-l-4 border-secondary">
+          <h3 className="text-xs md:text-sm font-medium text-secondary-700 dark:text-secondary-300">Ventas del Mes</h3>
+          <p className="text-xl md:text-3xl font-bold text-secondary-900 dark:text-secondary-200 mt-1 md:mt-2">
             {ventas.length}
           </p>
         </div>
-        <div className="bg-warning-50 dark:bg-warning-900 p-6 rounded-lg border-l-4 border-warning">
-          <h3 className="text-sm font-medium text-warning-700 dark:text-warning-300">Pendientes</h3>
-          <p className="text-3xl font-bold text-warning-900 dark:text-warning-200 mt-2">
+        <div className="bg-warning-50 dark:bg-warning-900 p-3 md:p-6 rounded-lg border-l-4 border-warning">
+          <h3 className="text-xs md:text-sm font-medium text-warning-700 dark:text-warning-300">Pendientes</h3>
+          <p className="text-xl md:text-3xl font-bold text-warning-900 dark:text-warning-200 mt-1 md:mt-2">
             {ventas.filter(v => v.estado === 'pendiente').length}
           </p>
         </div>
@@ -163,7 +163,7 @@ export default function VentasManager() {
 
       {/* Tabla de Ventas */}
       <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg overflow-hidden border border-dark-200 dark:border-dark-700">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-1 md:mx-0">
           <table className="min-w-full divide-y divide-dark-200 dark:divide-dark-700">
             <thead className="bg-dark-100 dark:bg-dark-900">
               <tr>
@@ -229,10 +229,10 @@ export default function VentasManager() {
       </div>
 
       {/* Gráficos y estadísticas adicionales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-6 border border-dark-200 dark:border-dark-700">
-          <h3 className="text-lg font-bold text-dark-900 dark:text-light-500 mb-4">Top 5 Productos</h3>
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
+        <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-3 md:p-6 border border-dark-200 dark:border-dark-700">
+          <h3 className="text-base md:text-lg font-bold text-dark-900 dark:text-light-500 mb-2 md:mb-4">Top 5 Productos</h3>
+          <div className="space-y-2 md:space-y-3">
             {['Leche Entera 1L', 'Queso Fresco 500g', 'Pan Integral', 'Yogurt Natural', 'Carne de Res 1kg'].map((prod, idx) => (
               <div key={idx} className="flex justify-between items-center">
                 <span className="text-sm text-dark-700 dark:text-dark-300">{prod}</span>
@@ -242,9 +242,9 @@ export default function VentasManager() {
           </div>
         </div>
 
-        <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-6 border border-dark-200 dark:border-dark-700">
-          <h3 className="text-lg font-bold text-dark-900 dark:text-light-500 mb-4">Ventas por Sucursal</h3>
-          <div className="space-y-3">
+        <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-3 md:p-6 border border-dark-200 dark:border-dark-700">
+          <h3 className="text-base md:text-lg font-bold text-dark-900 dark:text-light-500 mb-2 md:mb-4">Ventas por Sucursal</h3>
+          <div className="space-y-2 md:space-y-3">
             {['Sucursal Centro', 'Sucursal Norte', 'Sucursal Sur'].map((suc, idx) => (
               <div key={idx} className="flex justify-between items-center">
                 <span className="text-sm text-dark-700 dark:text-dark-300">{suc}</span>
