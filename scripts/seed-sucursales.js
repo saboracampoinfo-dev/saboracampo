@@ -161,7 +161,7 @@ async function seedSucursales() {
   try {
     console.log('🌱 Iniciando seed de sucursales...\n');
     
-    const baseUrl = 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     
     // Verificar las sucursales existentes
     console.log('📊 Verificando sucursales existentes...');
