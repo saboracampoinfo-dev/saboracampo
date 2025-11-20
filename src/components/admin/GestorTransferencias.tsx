@@ -376,7 +376,7 @@ export default function GestorTransferencias() {
                   value={busquedaProducto}
                   onChange={(e) => setBusquedaProducto(e.target.value)}
                   placeholder="Buscar por nombre..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
               <div>
@@ -386,7 +386,7 @@ export default function GestorTransferencias() {
                 <select
                   value={filtroCategoria}
                   onChange={(e) => setFiltroCategoria(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 >
                   <option value="">Todas las categorías</option>
                   {categorias.map(cat => (
@@ -492,7 +492,7 @@ export default function GestorTransferencias() {
                             <select
                               value={transferencia.sucursalDestinoId || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'sucursalDestinoId', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                              className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                               disabled={!transferencia.sucursalOrigenId}
                             >
                               <option value="">Seleccionar</option>
@@ -511,7 +511,7 @@ export default function GestorTransferencias() {
                               value={transferencia.cantidad || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'cantidad', parseInt(e.target.value) || 0)}
                               placeholder="0"
-                              className="w-20 px-2 py-1 text-sm text-center border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                              className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                               disabled={!transferencia.sucursalOrigenId || !transferencia.sucursalDestinoId}
                             />
                           </td>
