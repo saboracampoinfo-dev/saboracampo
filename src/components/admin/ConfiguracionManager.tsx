@@ -237,7 +237,7 @@ export default function ConfiguracionManager() {
                 required
                 value={configuracion.nombreEmpresa}
                 onChange={(e) => updateField('nombreEmpresa', e.target.value)}
-                className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base"
+                className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
 
@@ -250,7 +250,7 @@ export default function ConfiguracionManager() {
                 maxLength={200}
                 value={configuracion.descripcionCorta || ''}
                 onChange={(e) => updateField('descripcionCorta', e.target.value)}
-                className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base"
+                className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="Máximo 200 caracteres"
               />
             </div>
@@ -264,7 +264,7 @@ export default function ConfiguracionManager() {
                 rows={4}
                 value={configuracion.descripcionLarga || ''}
                 onChange={(e) => updateField('descripcionLarga', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="Máximo 1000 caracteres"
               />
             </div>
@@ -301,7 +301,7 @@ export default function ConfiguracionManager() {
                       type="text"
                       value={configuracion.colorPrimario || '#10b981'}
                       onChange={(e) => updateField('colorPrimario', e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       placeholder="#10b981"
                     />
                   </div>
@@ -322,7 +322,7 @@ export default function ConfiguracionManager() {
                       type="text"
                       value={configuracion.colorSecundario || '#059669'}
                       onChange={(e) => updateField('colorSecundario', e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       placeholder="#059669"
                     />
                   </div>
@@ -345,7 +345,7 @@ export default function ConfiguracionManager() {
                   required
                   value={configuracion.correoAdministracion}
                   onChange={(e) => updateField('correoAdministracion', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -358,7 +358,7 @@ export default function ConfiguracionManager() {
                   required
                   value={configuracion.correoVentas}
                   onChange={(e) => updateField('correoVentas', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -370,7 +370,7 @@ export default function ConfiguracionManager() {
                   type="email"
                   value={configuracion.correoSoporte || ''}
                   onChange={(e) => updateField('correoSoporte', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -382,7 +382,7 @@ export default function ConfiguracionManager() {
                   type="email"
                   value={configuracion.correoContacto || ''}
                   onChange={(e) => updateField('correoContacto', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function ConfiguracionManager() {
                   required
                   value={configuracion.telefonoAdministracion}
                   onChange={(e) => updateField('telefonoAdministracion', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -410,7 +410,7 @@ export default function ConfiguracionManager() {
                   required
                   value={configuracion.telefonoVentas}
                   onChange={(e) => updateField('telefonoVentas', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -422,7 +422,7 @@ export default function ConfiguracionManager() {
                   type="tel"
                   value={configuracion.telefonoSoporte || ''}
                   onChange={(e) => updateField('telefonoSoporte', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 />
               </div>
 
@@ -434,7 +434,7 @@ export default function ConfiguracionManager() {
                   type="tel"
                   value={configuracion.telefonoWhatsApp || ''}
                   onChange={(e) => updateField('telefonoWhatsApp', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   placeholder="+52 123 456 7890"
                 />
               </div>
@@ -450,7 +450,7 @@ export default function ConfiguracionManager() {
                     type="text"
                     value={configuracion.direccion?.calle || ''}
                     onChange={(e) => updateNestedField('direccion', 'calle', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -460,7 +460,7 @@ export default function ConfiguracionManager() {
                     type="text"
                     value={configuracion.direccion?.ciudad || ''}
                     onChange={(e) => updateNestedField('direccion', 'ciudad', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -470,7 +470,7 @@ export default function ConfiguracionManager() {
                     type="text"
                     value={configuracion.direccion?.estado || ''}
                     onChange={(e) => updateNestedField('direccion', 'estado', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -480,7 +480,7 @@ export default function ConfiguracionManager() {
                     type="text"
                     value={configuracion.direccion?.codigoPostal || ''}
                     onChange={(e) => updateNestedField('direccion', 'codigoPostal', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
 
@@ -490,7 +490,7 @@ export default function ConfiguracionManager() {
                     type="text"
                     value={configuracion.direccion?.pais || ''}
                     onChange={(e) => updateNestedField('direccion', 'pais', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -540,7 +540,7 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.administracion,
                         codigoPais: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       placeholder="54"
                     />
                   </div>
@@ -556,7 +556,7 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.administracion,
                         numero: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       placeholder="2235032141"
                     />
                   </div>
@@ -573,7 +573,7 @@ export default function ConfiguracionManager() {
                       ...configuracion.whatsapp?.administracion,
                       textoPredefinido: e.target.value
                     })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                     placeholder="Hola, me gustaría contactar con administración."
                   />
                 </div>
@@ -613,7 +613,7 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.ventas,
                         codigoPais: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       placeholder="54"
                     />
                   </div>
@@ -629,7 +629,7 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.ventas,
                         numero: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                       placeholder="2231234567"
                     />
                   </div>
@@ -646,7 +646,7 @@ export default function ConfiguracionManager() {
                       ...configuracion.whatsapp?.ventas,
                       textoPredefinido: e.target.value
                     })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                     placeholder="Hola, me interesa saber más sobre productos o servicios."
                   />
                 </div>
@@ -664,7 +664,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.redesSociales?.facebook || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'facebook', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="https://facebook.com/tu-pagina"
               />
             </div>
@@ -675,7 +675,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.redesSociales?.instagram || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'instagram', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="https://instagram.com/tu-usuario"
               />
             </div>
@@ -686,7 +686,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.redesSociales?.twitter || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'twitter', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="https://twitter.com/tu-usuario"
               />
             </div>
@@ -697,7 +697,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.redesSociales?.linkedin || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'linkedin', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="https://linkedin.com/company/tu-empresa"
               />
             </div>
@@ -708,7 +708,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.redesSociales?.youtube || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'youtube', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="https://youtube.com/@tu-canal"
               />
             </div>
@@ -719,7 +719,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.redesSociales?.tiktok || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'tiktok', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 placeholder="https://tiktok.com/@tu-usuario"
               />
             </div>
@@ -738,7 +738,7 @@ export default function ConfiguracionManager() {
                   type="text"
                   value={(configuracion.horarioAtencion as any)?.[dia] || ''}
                   onChange={(e) => updateNestedField('horarioAtencion', dia, e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                   placeholder="9:00 AM - 6:00 PM"
                 />
               </div>
@@ -755,7 +755,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.logoUrl || ''}
                 onChange={(e) => updateField('logoUrl', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
 
@@ -765,7 +765,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.faviconUrl || ''}
                 onChange={(e) => updateField('faviconUrl', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
 
@@ -777,7 +777,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.terminosCondiciones || ''}
                 onChange={(e) => updateField('terminosCondiciones', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
 
@@ -789,7 +789,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.politicaPrivacidad || ''}
                 onChange={(e) => updateField('politicaPrivacidad', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
 
@@ -801,7 +801,7 @@ export default function ConfiguracionManager() {
                 type="url"
                 value={configuracion.politicaDevolucion || ''}
                 onChange={(e) => updateField('politicaDevolucion', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
 
