@@ -333,7 +333,7 @@ export default function GestorTransferencias() {
   const transferenciasCount = Object.keys(transferenciasInput).length;
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="max-w-7xl mx-auto">
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
@@ -473,13 +473,13 @@ export default function GestorTransferencias() {
                             <select
                               value={transferencia.sucursalOrigenId || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'sucursalOrigenId', e.target.value)}
-                              className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                             >
                               <option value="">Seleccionar</option>
                               {sucursales
                                 .filter(s => s._id !== transferencia.sucursalDestinoId)
                                 .map(s => (
-                                  <option key={s._id} value={s._id} className=''>{s.nombre}</option>
+                                  <option key={s._id} value={s._id}>{s.nombre}</option>
                                 ))}
                             </select>
                           </td>
@@ -492,7 +492,7 @@ export default function GestorTransferencias() {
                             <select
                               value={transferencia.sucursalDestinoId || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'sucursalDestinoId', e.target.value)}
-                              className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               disabled={!transferencia.sucursalOrigenId}
                             >
                               <option value="">Seleccionar</option>
