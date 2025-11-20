@@ -34,3 +34,14 @@ export async function authenticateRequest(req: NextRequest) {
 
   return { authenticated: true, user: payload };
 }
+
+export async function verifyAuth(req: NextRequest) {
+  const token = getTokenFromCookies(req);
+
+  if (!token) {
+    return null;
+  }
+
+  const payload = verifyToken(token);
+  return payload;
+}

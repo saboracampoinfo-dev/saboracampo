@@ -11,13 +11,14 @@ const ProductsManager = dynamic(() => import('@/components/admin/ProductsManager
 const VentasManager = dynamic(() => import('@/components/admin/VentasManager'), { ssr: false });
 const LiquidacionesManager = dynamic(() => import('@/components/admin/LiquidacionesManager'), { ssr: false });
 const ConfiguracionManager = dynamic(() => import('@/components/admin/ConfiguracionManager'), { ssr: false });
+const GestorTransferencias = dynamic(() => import('@/components/admin/GestorTransferencias'), { ssr: false });
 
 export default function DashboardAdmin() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion'>('liquidaciones');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion' | 'transferencias'>('liquidaciones');
 
   useEffect(() => {
     fetchUser();
@@ -226,7 +227,17 @@ export default function DashboardAdmin() {
               >
                 💵 Liquidaciones
               </button>
-            <button
+              <button
+                onClick={() => setActiveTab('transferencias')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'transferencias'
+                    ? 'bg-primary-600 text-white shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                🔄 Transferencias
+              </button>
+              <button
                 onClick={() => setActiveTab('configuracion')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'configuracion'
@@ -340,7 +351,14 @@ export default function DashboardAdmin() {
               <LiquidacionesManager />
             </div>
           )}
-            {activeTab === 'configuracion' && (
+
+          {activeTab === 'transferencias' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <GestorTransferencias />
+            </div>
+          )}
+
+          {activeTab === 'configuracion' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <ConfiguracionManager />
             </div>

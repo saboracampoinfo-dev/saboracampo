@@ -73,3 +73,29 @@ export const confirmDelete = async (message: string = '¿Estás seguro de elimin
 
   return result.isConfirmed;
 };
+
+export const showPromptAlert = async (
+  title: string,
+  message: string
+): Promise<string | null> => {
+  const result = await Swal.fire({
+    icon: 'question',
+    title,
+    text: message,
+    input: 'textarea',
+    inputPlaceholder: 'Ingrese el motivo...',
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#3b82f6',
+    cancelButtonColor: '#6b7280',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Debe ingresar un motivo';
+      }
+      return null;
+    }
+  });
+
+  return result.isConfirmed ? result.value : null;
+};
