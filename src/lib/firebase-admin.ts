@@ -2,6 +2,17 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
+// Validar que las variables de entorno estén presentes
+if (!process.env.FIREBASE_ADMIN_PROJECT_ID) {
+  console.error('❌ FIREBASE_ADMIN_PROJECT_ID no está configurada');
+}
+if (!process.env.FIREBASE_ADMIN_CLIENT_EMAIL) {
+  console.error('❌ FIREBASE_ADMIN_CLIENT_EMAIL no está configurada');
+}
+if (!process.env.FIREBASE_ADMIN_PRIVATE_KEY) {
+  console.error('❌ FIREBASE_ADMIN_PRIVATE_KEY no está configurada');
+}
+
 const firebaseAdminConfig = {
   credential: cert({
     projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
@@ -12,7 +23,13 @@ const firebaseAdminConfig = {
 
 export function initAdmin() {
   if (getApps().length === 0) {
-    initializeApp(firebaseAdminConfig);
+    try {
+      initializeApp(firebaseAdminConfig);
+      console.log('✅ Firebase Admin inicializado correctamente');
+    } catch (error: any) {
+      console.error('❌ Error al inicializar Firebase Admin:', error.message);
+      throw error;
+    }
   }
 }
 

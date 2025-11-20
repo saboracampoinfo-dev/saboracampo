@@ -56,13 +56,30 @@ export async function POST(request: NextRequest) {
         emailVerified: false,
       });
     } catch (firebaseError: any) {
-      console.error('Error creating Firebase user:', firebaseError);
+      console.error('Error al crear usuario en Firebase:', {
+        message: firebaseError.message,
+        code: firebaseError.code,
+        stack: firebaseError.stack,
+      });
       
       // Manejar errores específicos de Firebase
       if (firebaseError.code === 'auth/email-already-exists') {
         return NextResponse.json(
           { success: false, error: 'El email ya está registrado en Firebase' },
           { status: 409 }
+        );
+      }
+      
+      // Error de credenciales de Firebase Admin
+      if (firebaseError.message?.includes('invalid_grant') || 
+          firebaseError.message?.includes('Invalid JWT')) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Error de configuración de Firebase Admin. Por favor, contacta al administrador.',
+            details: 'Las credenciales de Firebase Admin necesitan ser regeneradas.'
+          },
+          { status: 500 }
         );
       }
       
