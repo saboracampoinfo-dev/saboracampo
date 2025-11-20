@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 interface Sucursal {
   _id: string;
   nombre: string;
@@ -56,29 +60,43 @@ function formatearHorarios(horarios: Sucursal['horarios']): string {
   return `Lun - Vie: ${horarioSemanalStr} | ${horarioFinDeSemanaStr}`;
 }
 
-async function getSucursales(): Promise<Sucursal[]> {
-  try {
-    // Usar la URL base correcta según el entorno
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/sucursales?estado=activa`, {
-      cache: 'no-store', // Para obtener datos frescos siempre
-    });
-    
-    if (!res.ok) {
-      console.error('Error al obtener sucursales:', res.statusText);
-      return [];
-    }
-    
-    const data = await res.json();
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error('Error al cargar sucursales:', error);
-    return [];
-  }
-}
+export default function Locales() {
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function Locales() {
-  const sucursales = await getSucursales();
+  useEffect(() => {
+    async function fetchSucursales() {
+      try {
+        const res = await fetch('/api/sucursales?estado=activa');
+        
+        if (!res.ok) {
+          console.error('Error al obtener sucursales:', res.statusText);
+          return;
+        }
+        
+        const data = await res.json();
+        if (data.success) {
+          setSucursales(data.data);
+        }
+      } catch (error) {
+        console.error('Error al cargar sucursales:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSucursales();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="locales" className="py-20 bg-base dark:bg-dark-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="text-xl text-primary font-semibold animate-pulse">Cargando sucursales...</div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="locales" className="py-20 bg-base dark:bg-dark-900">

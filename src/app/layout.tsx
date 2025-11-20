@@ -62,11 +62,6 @@ export const metadata: Metadata = {
     apple: "/iconos/apple-icon.png",
   },
   manifest: "/manifest.json",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
   verification: {
     // Agrega aquí tus códigos de verificación cuando los tengas
     // google: "tu-codigo-de-verificacion",

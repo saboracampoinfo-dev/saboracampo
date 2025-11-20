@@ -2,7 +2,7 @@
   "name": "Sabor a Campo",
   "short_name": "SaborACampo",
   "description": "Productos frescos, naturales y de calidad. Carnes, frutas, verduras y más.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#22c55e",

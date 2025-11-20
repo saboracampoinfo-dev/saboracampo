@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import UsersManager from '@/components/admin/UsersManager';
-import SucursalesManager from '@/components/admin/SucursalesManager';
-import ProductsManager from '@/components/admin/ProductsManager';
-import VentasManager from '@/components/admin/VentasManager';
-import LiquidacionesManager from '@/components/admin/LiquidacionesManager';
-import ConfiguracionManager from '@/components/admin/ConfiguracionManager';
+import dynamic from 'next/dynamic';
+
+// Importar componentes con dynamic para evitar SSR issues
+const UsersManager = dynamic(() => import('@/components/admin/UsersManager'), { ssr: false });
+const SucursalesManager = dynamic(() => import('@/components/admin/SucursalesManager'), { ssr: false });
+const ProductsManager = dynamic(() => import('@/components/admin/ProductsManager'), { ssr: false });
+const VentasManager = dynamic(() => import('@/components/admin/VentasManager'), { ssr: false });
+const LiquidacionesManager = dynamic(() => import('@/components/admin/LiquidacionesManager'), { ssr: false });
+const ConfiguracionManager = dynamic(() => import('@/components/admin/ConfiguracionManager'), { ssr: false });
 
 export default function DashboardAdmin() {
   const router = useRouter();
