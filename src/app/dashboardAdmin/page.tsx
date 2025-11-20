@@ -58,7 +58,7 @@ export default function DashboardAdmin() {
   return (
     <div className="min-h-screen bg-base dark:bg-dark-900">
       <nav className="bg-dark-900 dark:bg-dark-950 shadow-md border-b-2 border-primary">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo y título */}
             <div className="flex items-center">
@@ -158,8 +158,8 @@ export default function DashboardAdmin() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="max-w-7xl mx-auto py-6 px-2 md:px-6">
+        <div className="px-2 py-6 ">
           {/* Tabs Navigation */}
           <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg mb-6 border border-dark-200 dark:border-dark-700 overflow-x-auto">
             <div className="flex space-x-1 p-2 min-w-max">
@@ -238,7 +238,7 @@ export default function DashboardAdmin() {
 
           {/* Content */}
           {activeTab === 'dashboard' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <h2 className="text-3xl font-bold mb-2 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Panel de Administración</h2>
               <p className="text-dark-600 dark:text-dark-400 mb-6">Mis Datos</p>
               <div className="space-y-3 mb-8">
@@ -309,36 +309,36 @@ export default function DashboardAdmin() {
           )}
 
           {activeTab === 'usuarios' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <UsersManager />
             </div>
           )}
 
           {activeTab === 'sucursales' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <SucursalesManager />
             </div>
           )}
 
           {activeTab === 'productos' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <ProductsManager />
             </div>
           )}
 
           {activeTab === 'ventas' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <VentasManager />
             </div>
           )}
 
           {activeTab === 'liquidaciones' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <LiquidacionesManager />
             </div>
           )}
             {activeTab === 'configuracion' && (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <ConfiguracionManager />
             </div>
           )}

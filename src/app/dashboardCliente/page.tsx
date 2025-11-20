@@ -170,10 +170,10 @@ export default function DashboardCliente() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="max-w-7xl mx-auto py-6 px-2 md:px-6">
+        <div className="px-2 py-6 ">
           {activeTab === 'inicio' ? (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-8 border border-dark-200 dark:border-dark-700">
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <h2 className="text-3xl font-bold mb-6 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Bienvenido a Sabor a Campo</h2>
               <div className="space-y-4">
                 <div className="flex items-start">

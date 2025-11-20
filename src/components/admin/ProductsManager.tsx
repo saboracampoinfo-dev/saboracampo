@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { confirmDelete } from '@/utils/alerts';
+import UploadImage from './UploadImage';
+
+interface StockSucursal {
+  sucursalId: string;
+  sucursalNombre: string;
+  cantidad: number;
+  stockMinimo: number;
+}
 
 interface Product {
   _id: string;
@@ -14,6 +22,7 @@ interface Product {
   precioPromocion?: number;
   stock: number;
   stockMinimo: number;
+  stockPorSucursal: StockSucursal[];
   unidadMedida: 'kg' | 'unidad' | 'litro' | 'paquete' | 'caja';
   imagenes: string[];
   destacado: boolean;
@@ -37,14 +46,24 @@ interface Product {
   createdAt: string;
 }
 
+interface Sucursal {
+  _id: string;
+  nombre: string;
+  estado: string;
+}
+
 export default function ProductsManager() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMassiveEditOpen, setIsMassiveEditOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [transferProduct, setTransferProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [currentTab, setCurrentTab] = useState<'basic' | 'details' | 'inventory'>('basic');
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     nombre: '',
@@ -104,6 +123,7 @@ export default function ProductsManager() {
 
   useEffect(() => {
     fetchProducts();
+    fetchSucursales();
   }, []);
 
   const fetchProducts = async () => {
@@ -120,9 +140,22 @@ export default function ProductsManager() {
     }
   };
 
+  const fetchSucursales = async () => {
+    try {
+      const response = await fetch('/api/sucursales');
+      const data = await response.json();
+      if (data.success) {
+        setSucursales(data.data.filter((s: Sucursal) => s.estado === 'activa'));
+      }
+    } catch (error) {
+      console.error('Error al cargar sucursales:', error);
+    }
+  };
+
   const handleOpenModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
+      setUploadedImages(product.imagenes);
       setFormData({
         nombre: product.nombre,
         descripcion: product.descripcion || '',
@@ -155,6 +188,7 @@ export default function ProductsManager() {
       });
     } else {
       setEditingProduct(null);
+      setUploadedImages([]);
       setFormData({
         nombre: '',
         descripcion: '',
@@ -198,7 +232,8 @@ export default function ProductsManager() {
       const url = editingProduct ? `/api/products/${editingProduct._id}` : '/api/products';
       const method = editingProduct ? 'PUT' : 'POST';
 
-      const imagenes = formData.imagenesInput
+      // Usar imágenes subidas o del input manual
+      const imagenes = uploadedImages.length > 0 ? uploadedImages : formData.imagenesInput
         .split(',')
         .map(img => img.trim())
         .filter(img => img.length > 0);
@@ -372,6 +407,63 @@ export default function ProductsManager() {
     }
   };
 
+  // Manejar imágenes subidas (el componente UploadImage maneja esto internamente)
+  const handleRemoveImage = (url: string) => {
+    setUploadedImages(prev => prev.filter(img => img !== url));
+  };
+
+  // Modal de transferencia
+  const handleOpenTransferModal = (product: Product) => {
+    setTransferProduct(product);
+    setIsTransferModalOpen(true);
+  };
+
+  const handleCloseTransferModal = () => {
+    setIsTransferModalOpen(false);
+    setTransferProduct(null);
+  };
+
+  const [transferData, setTransferData] = useState({
+    origenSucursalId: '',
+    destinoSucursalId: '',
+    cantidad: 0,
+  });
+
+  const handleTransferStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!transferProduct) return;
+
+    try {
+      const destinoSucursal = sucursales.find(s => s._id === transferData.destinoSucursalId);
+      
+      const response = await fetch('/api/products/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productoId: transferProduct._id,
+          origenSucursalId: transferData.origenSucursalId,
+          destinoSucursalId: transferData.destinoSucursalId,
+          destinoSucursalNombre: destinoSucursal?.nombre,
+          cantidad: transferData.cantidad,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccessToast(data.message || 'Transferencia realizada');
+        fetchProducts();
+        handleCloseTransferModal();
+        setTransferData({ origenSucursalId: '', destinoSucursalId: '', cantidad: 0 });
+      } else {
+        showErrorToast(data.error || 'Error en la transferencia');
+      }
+    } catch (error) {
+      showErrorToast('Error al transferir stock');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-primary">Cargando productos...</div>;
   }
@@ -468,6 +560,17 @@ export default function ProductsManager() {
                       {product.stock} {product.unidadMedida}
                     </span>
                     <div className="text-xs text-dark-500">Min: {product.stockMinimo}</div>
+                    {product.stockPorSucursal && product.stockPorSucursal.length > 0 && (
+                      <div className="mt-1 space-y-1">
+                        {product.stockPorSucursal.map((stockSuc: StockSucursal) => (
+                          <div key={stockSuc.sucursalId} className="text-xs">
+                            <span className={stockSuc.cantidad <= stockSuc.stockMinimo ? 'text-error font-semibold' : 'text-dark-500'}>
+                              {stockSuc.sucursalNombre}: {stockSuc.cantidad}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-xs text-dark-500 dark:text-dark-400">
                     {product.sku || '-'}
@@ -485,6 +588,13 @@ export default function ProductsManager() {
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <button
+                      onClick={() => handleOpenTransferModal(product)}
+                      className="text-warning hover:text-warning-700 font-semibold transition-colors"
+                      title="Transferir stock"
+                    >
+                      🔄
+                    </button>
                     <button
                       onClick={() => handleOpenModal(product)}
                       className="text-secondary hover:text-secondary-700 font-semibold transition-colors"
@@ -630,14 +740,30 @@ export default function ProductsManager() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Imágenes (URLs separadas por comas)</label>
-                    <textarea
-                      value={formData.imagenesInput}
-                      onChange={(e) => setFormData({ ...formData, imagenesInput: e.target.value })}
-                      rows={2}
-                      placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg"
-                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
-                    />
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">Imágenes del Producto</label>
+                    
+                    {/* Componente de subida de imágenes */}
+                    <div className="mb-3">
+                      <UploadImage 
+                        imagenes={uploadedImages}
+                        updateImages={setUploadedImages}
+                        handleRemoveImage={handleRemoveImage}
+                      />
+                    </div>
+
+                    {/* Opción de ingresar URLs manualmente */}
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-dark-600 dark:text-dark-400 mb-1">
+                        O ingresa URLs manualmente (separadas por comas)
+                      </label>
+                      <textarea
+                        value={formData.imagenesInput}
+                        onChange={(e) => setFormData({ ...formData, imagenesInput: e.target.value })}
+                        rows={2}
+                        placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg"
+                        className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -1025,6 +1151,116 @@ export default function ProductsManager() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Transferencia de Stock */}
+      {isTransferModalOpen && transferProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-2xl w-full p-6">
+            <h3 className="text-xl font-bold mb-4 text-dark-900 dark:text-light-500">
+              Transferir Stock - {transferProduct.nombre}
+            </h3>
+            
+            <form onSubmit={handleTransferStock} className="space-y-4">
+              <div className="bg-dark-50 dark:bg-dark-900 p-4 rounded-lg mb-4">
+                <h4 className="font-semibold text-dark-800 dark:text-light-400 mb-2">Stock Actual por Sucursal:</h4>
+                {transferProduct.stockPorSucursal && transferProduct.stockPorSucursal.length > 0 ? (
+                  <div className="space-y-2">
+                    {transferProduct.stockPorSucursal.map((stock: StockSucursal) => (
+                      <div key={stock.sucursalId} className="flex justify-between items-center">
+                        <span className="text-dark-700 dark:text-dark-300">{stock.sucursalNombre}:</span>
+                        <span className={`font-semibold ${stock.cantidad <= stock.stockMinimo ? 'text-error' : 'text-success-600'}`}>
+                          {stock.cantidad} {transferProduct.unidadMedida}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-dark-600 dark:text-dark-400">No hay stock distribuido por sucursales</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Sucursal Origen *
+                  </label>
+                  <select
+                    value={transferData.origenSucursalId}
+                    onChange={(e) => setTransferData({ ...transferData, origenSucursalId: e.target.value })}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    required
+                  >
+                    <option value="">Seleccionar sucursal</option>
+                    {transferProduct.stockPorSucursal?.map((stock: StockSucursal) => (
+                      <option key={stock.sucursalId} value={stock.sucursalId}>
+                        {stock.sucursalNombre} ({stock.cantidad} disponibles)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Sucursal Destino *
+                  </label>
+                  <select
+                    value={transferData.destinoSucursalId}
+                    onChange={(e) => setTransferData({ ...transferData, destinoSucursalId: e.target.value })}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    required
+                  >
+                    <option value="">Seleccionar sucursal</option>
+                    {sucursales.map((sucursal) => (
+                      <option 
+                        key={sucursal._id} 
+                        value={sucursal._id}
+                        disabled={sucursal._id === transferData.origenSucursalId}
+                      >
+                        {sucursal.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Cantidad a Transferir *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={transferData.cantidad}
+                  onChange={(e) => setTransferData({ ...transferData, cantidad: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  required
+                />
+                {transferData.origenSucursalId && (
+                  <p className="text-xs text-dark-500 dark:text-dark-400 mt-1">
+                    Disponible: {transferProduct.stockPorSucursal?.find(s => s.sucursalId === transferData.origenSucursalId)?.cantidad || 0} {transferProduct.unidadMedida}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-dark-200 dark:border-dark-700">
+                <button
+                  type="button"
+                  onClick={handleCloseTransferModal}
+                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-warning hover:bg-warning-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Transferir Stock
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

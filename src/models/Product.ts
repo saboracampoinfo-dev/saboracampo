@@ -1,5 +1,12 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
+export interface IStockSucursal {
+  sucursalId: string;
+  sucursalNombre: string;
+  cantidad: number;
+  stockMinimo: number;
+}
+
 export interface IProduct {
   _id: string;
   nombre: string;
@@ -8,8 +15,9 @@ export interface IProduct {
   subcategoria?: string;
   precio: number;
   precioPromocion?: number;
-  stock: number;
-  stockMinimo: number;
+  stock: number; // Stock total (suma de todas las sucursales)
+  stockMinimo: number; // Stock mínimo global
+  stockPorSucursal: IStockSucursal[]; // Stock distribuido por sucursal
   unidadMedida: 'kg' | 'unidad' | 'litro' | 'paquete' | 'caja';
   imagenes: string[];
   destacado: boolean;
@@ -77,6 +85,30 @@ const ProductSchema = new Schema<IProduct>(
       type: Number,
       default: 5,
       min: [0, 'El stock mínimo no puede ser negativo'],
+    },
+    stockPorSucursal: {
+      type: [{
+        sucursalId: {
+          type: String,
+          required: true,
+        },
+        sucursalNombre: {
+          type: String,
+          required: true,
+        },
+        cantidad: {
+          type: Number,
+          required: true,
+          min: [0, 'La cantidad no puede ser negativa'],
+          default: 0,
+        },
+        stockMinimo: {
+          type: Number,
+          default: 5,
+          min: [0, 'El stock mínimo no puede ser negativo'],
+        },
+      }],
+      default: [],
     },
     unidadMedida: {
       type: String,
