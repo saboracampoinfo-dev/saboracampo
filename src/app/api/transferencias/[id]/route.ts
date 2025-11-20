@@ -7,7 +7,7 @@ import { authenticateRequest } from '@/lib/auth';
 // GET - Obtener una transferencia específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { authenticated, user } = await authenticateRequest(request);
@@ -20,7 +20,8 @@ export async function GET(
 
     await connectDB();
 
-    const transferencia = await TransferenciaStock.findById(params.id);
+    const { id } = await params;
+    const transferencia = await TransferenciaStock.findById(id);
 
     if (!transferencia) {
       return NextResponse.json(
@@ -46,7 +47,7 @@ export async function GET(
 // PUT - Aprobar o cancelar transferencia
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { authenticated, user } = await authenticateRequest(request);
@@ -62,7 +63,8 @@ export async function PUT(
     const body = await request.json();
     const { accion, motivoCancelacion } = body;
 
-    const transferencia = await TransferenciaStock.findById(params.id);
+    const { id } = await params;
+    const transferencia = await TransferenciaStock.findById(id);
 
     if (!transferencia) {
       return NextResponse.json(
@@ -198,7 +200,7 @@ export async function PUT(
 // DELETE - Eliminar transferencia (solo si está cancelada o pendiente)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { authenticated, user } = await authenticateRequest(request);
@@ -211,7 +213,8 @@ export async function DELETE(
 
     await connectDB();
 
-    const transferencia = await TransferenciaStock.findById(params.id);
+    const { id } = await params;
+    const transferencia = await TransferenciaStock.findById(id);
 
     if (!transferencia) {
       return NextResponse.json(
@@ -227,7 +230,7 @@ export async function DELETE(
       );
     }
 
-    await TransferenciaStock.findByIdAndDelete(params.id);
+    await TransferenciaStock.findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,
