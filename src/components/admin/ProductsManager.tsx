@@ -452,7 +452,10 @@ export default function ProductsManager() {
       
       const response = await fetch('/api/products/transfer', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Importante: incluir cookies de autenticación
         body: JSON.stringify({
           productoId: transferProduct._id,
           origenSucursalId: transferData.origenSucursalId,
@@ -464,16 +467,21 @@ export default function ProductsManager() {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         showSuccessToast(data.message || 'Transferencia realizada');
         fetchProducts();
         handleCloseTransferModal();
         setTransferData({ origenSucursalId: '', destinoSucursalId: '', cantidad: 0 });
+      } else if (response.status === 401) {
+        showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
+      } else if (response.status === 403) {
+        showErrorToast('No tienes permisos para realizar transferencias.');
       } else {
         showErrorToast(data.error || 'Error en la transferencia');
       }
     } catch (error) {
-      showErrorToast('Error al transferir stock');
+      console.error('Error al transferir stock:', error);
+      showErrorToast('Error al transferir stock. Verifica tu conexión.');
     }
   };
 
@@ -1405,13 +1413,13 @@ export default function ProductsManager() {
                 <button
                   type="button"
                   onClick={handleCloseTransferModal}
-                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors"
+                  className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-red-500 dark:hover:bg-red-500 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-warning hover:bg-warning-700 text-white rounded-lg font-semibold transition-colors"
+                  className="px-4 py-2 bg-warning hover:bg-warning-700 text-white rounded-lg font-semibold transition-colors cursor-pointer hover:bg-green-500"
                 >
                   Transferir Stock
                 </button>

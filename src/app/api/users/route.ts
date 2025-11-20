@@ -27,7 +27,18 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { email, password, name, role, precioHora } = body;
+    const { 
+      email, 
+      password, 
+      name, 
+      role, 
+      precioHora, 
+      telefono, 
+      domicilio, 
+      tipoDocumento, 
+      nroDocumento, 
+      porcentajeComision 
+    } = body;
 
     // Validar campos requeridos
     if (!email || !password || !name) {
@@ -68,9 +79,16 @@ export async function POST(request: Request) {
       activo: true,
     };
 
-    // Agregar precioHora si el rol es seller o cashier
-    if ((role === 'seller' || role === 'cashier') && precioHora !== undefined) {
-      userData.precioHora = precioHora;
+    // Agregar campos opcionales si están presentes
+    if (telefono) userData.telefono = telefono;
+    if (domicilio) userData.domicilio = domicilio;
+    if (tipoDocumento) userData.tipoDocumento = tipoDocumento;
+    if (nroDocumento) userData.nroDocumento = nroDocumento;
+
+    // Agregar precioHora y porcentajeComision si el rol es seller o cashier
+    if ((role === 'seller' || role === 'cashier')) {
+      if (precioHora !== undefined) userData.precioHora = precioHora;
+      if (porcentajeComision !== undefined) userData.porcentajeComision = porcentajeComision;
     }
 
     const user = await User.create(userData);

@@ -94,10 +94,14 @@ export default function GestorTransferencias() {
 
   const cargarSucursales = async () => {
     try {
-      const res = await fetch('/api/sucursales?estado=activa');
+      const res = await fetch('/api/sucursales?estado=activa', {
+        credentials: 'include'
+      });
       if (res.ok) {
         const data = await res.json();
         setSucursales(data.data || data.sucursales || []);
+      } else if (res.status === 401) {
+        showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
     } catch (error) {
       console.error('Error al cargar sucursales:', error);
@@ -108,11 +112,15 @@ export default function GestorTransferencias() {
   const cargarProductos = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/products?limit=10000');
+      const res = await fetch('/api/products?limit=10000', {
+        credentials: 'include'
+      });
       if (res.ok) {
         const data = await res.json();
         const productosCargados = data.data || data.products || [];
         setProductos(productosCargados);
+      } else if (res.status === 401) {
+        showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
@@ -129,10 +137,14 @@ export default function GestorTransferencias() {
       if (filtroEstado && filtroEstado !== 'todas') params.append('estado', filtroEstado);
       if (filtroSucursal) params.append('sucursalId', filtroSucursal);
 
-      const res = await fetch(`/api/transferencias?${params.toString()}`);
+      const res = await fetch(`/api/transferencias?${params.toString()}`, {
+        credentials: 'include'
+      });
       if (res.ok) {
         const data = await res.json();
         setTransferencias(data.transferencias);
+      } else if (res.status === 401) {
+        showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
     } catch (error) {
       console.error('Error al cargar transferencias:', error);
@@ -226,6 +238,7 @@ export default function GestorTransferencias() {
         const res = await fetch('/api/transferencias', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             sucursalOrigenId: t.sucursalOrigenId,
             sucursalDestinoId: t.sucursalDestinoId,
@@ -238,7 +251,16 @@ export default function GestorTransferencias() {
           })
         });
 
-        if (res.ok) {
+        if (res.status === 401) {
+          showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
+          fallidas++;
+          break;
+        } else if (res.status === 403) {
+          showErrorToast('No tienes permisos para realizar transferencias.');
+          fallidas++;
+          break;
+
+        } else if (res.ok) {
           exitosas++;
         } else {
           fallidas++;
@@ -275,6 +297,7 @@ export default function GestorTransferencias() {
       const res = await fetch(`/api/transferencias/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ accion: 'aprobar' })
       });
 
@@ -284,6 +307,10 @@ export default function GestorTransferencias() {
         showSuccessToast('Transferencia aprobada exitosamente');
         cargarTransferencias();
         cargarProductos();
+      } else if (res.status === 401) {
+        showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
+      } else if (res.status === 403) {
+        showErrorToast('No tienes permisos para aprobar transferencias.');
       } else {
         showErrorToast(data.error || 'Error al aprobar transferencia');
       }
@@ -308,6 +335,7 @@ export default function GestorTransferencias() {
       const res = await fetch(`/api/transferencias/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ 
           accion: 'cancelar',
           motivoCancelacion
@@ -319,6 +347,10 @@ export default function GestorTransferencias() {
       if (res.ok) {
         showSuccessToast('Transferencia cancelada');
         cargarTransferencias();
+      } else if (res.status === 401) {
+        showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
+      } else if (res.status === 403) {
+        showErrorToast('No tienes permisos para cancelar transferencias.');
       } else {
         showErrorToast(data.error || 'Error al cancelar transferencia');
       }
@@ -545,7 +577,7 @@ export default function GestorTransferencias() {
                     setFiltroEstado(e.target.value);
                     cargarTransferencias();
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 >
                   <option value="todas">Todas</option>
                   <option value="pendiente">Pendientes</option>
@@ -564,7 +596,7 @@ export default function GestorTransferencias() {
                     setFiltroSucursal(e.target.value);
                     cargarTransferencias();
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700"
+                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                 >
                   <option value="">Todas las sucursales</option>
                   {sucursales.map(s => (

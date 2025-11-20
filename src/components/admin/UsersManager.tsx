@@ -39,10 +39,14 @@ export default function UsersManager() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch('/api/users', {
+        credentials: 'include'
+      });
       const data = await response.json();
       if (data.success) {
         setUsers(data.data);
+      } else if (response.status === 401) {
+        showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
     } catch (error) {
       showErrorToast('Error al cargar usuarios');
@@ -115,26 +119,48 @@ export default function UsersManager() {
             name: formData.name, 
             role: formData.role,
             precioHora: formData.precioHora,
+            telefono: formData.telefono,
+            domicilio: formData.domicilio,
+            tipoDocumento: formData.tipoDocumento,
+            nroDocumento: formData.nroDocumento,
+            porcentajeComision: formData.porcentajeComision,
             ...(formData.password && { password: formData.password }) 
           }
-        : formData;
+        : {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            role: formData.role,
+            precioHora: formData.precioHora,
+            telefono: formData.telefono,
+            domicilio: formData.domicilio,
+            tipoDocumento: formData.tipoDocumento,
+            nroDocumento: formData.nroDocumento,
+            porcentajeComision: formData.porcentajeComision
+          };
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(body)
       });
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         showSuccessToast(editingUser ? 'Usuario actualizado' : 'Usuario creado');
         fetchUsers();
         handleCloseModal();
+      } else if (response.status === 401) {
+        showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
+      } else if (response.status === 403) {
+        showErrorToast('No tienes permisos para gestionar usuarios.');
       } else {
         showErrorToast(data.error || 'Error al guardar usuario');
       }
     } catch (error) {
+      console.error('Error al guardar usuario:', error);
       showErrorToast('Error al guardar usuario');
     }
   };
@@ -144,16 +170,24 @@ export default function UsersManager() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/users?id=${id}`, { 
+        method: 'DELETE',
+        credentials: 'include'
+      });
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         showSuccessToast('Usuario eliminado');
         fetchUsers();
+      } else if (response.status === 401) {
+        showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
+      } else if (response.status === 403) {
+        showErrorToast('No tienes permisos para eliminar usuarios.');
       } else {
         showErrorToast(data.error || 'Error al eliminar usuario');
       }
     } catch (error) {
+      console.error('Error al eliminar usuario:', error);
       showErrorToast('Error al eliminar usuario');
     }
   };
