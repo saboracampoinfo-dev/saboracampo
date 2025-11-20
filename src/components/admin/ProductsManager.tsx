@@ -74,6 +74,7 @@ export default function ProductsManager() {
     precioPromocion: 0,
     stock: 0,
     stockMinimo: 5,
+    stockPorSucursal: [] as StockSucursal[],
     unidadMedida: 'unidad' as 'kg' | 'unidad' | 'litro' | 'paquete' | 'caja',
     imagenes: [] as string[],
     imagenesInput: '',
@@ -165,6 +166,7 @@ export default function ProductsManager() {
         precioPromocion: product.precioPromocion || 0,
         stock: product.stock,
         stockMinimo: product.stockMinimo,
+        stockPorSucursal: product.stockPorSucursal || [],
         unidadMedida: product.unidadMedida,
         imagenes: product.imagenes,
         imagenesInput: product.imagenes.join(', '),
@@ -189,6 +191,15 @@ export default function ProductsManager() {
     } else {
       setEditingProduct(null);
       setUploadedImages([]);
+      // Encontrar sucursal CENTRAL
+      const sucursalCentral = sucursales.find(s => s.nombre.toUpperCase().includes('CENTRAL'));
+      const stockInicial: StockSucursal[] = sucursalCentral ? [{
+        sucursalId: sucursalCentral._id,
+        sucursalNombre: sucursalCentral.nombre,
+        cantidad: 0,
+        stockMinimo: 5
+      }] : [];
+      
       setFormData({
         nombre: '',
         descripcion: '',
@@ -198,6 +209,7 @@ export default function ProductsManager() {
         precioPromocion: 0,
         stock: 0,
         stockMinimo: 5,
+        stockPorSucursal: stockInicial,
         unidadMedida: 'unidad',
         imagenes: [],
         imagenesInput: '',
@@ -252,6 +264,7 @@ export default function ProductsManager() {
         precioPromocion: formData.precioPromocion || undefined,
         stock: formData.stock,
         stockMinimo: formData.stockMinimo,
+        stockPorSucursal: formData.stockPorSucursal,
         unidadMedida: formData.unidadMedida,
         imagenes,
         destacado: formData.destacado,
@@ -938,31 +951,6 @@ export default function ProductsManager() {
               {/* Tab Inventario */}
               {currentTab === 'inventory' && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Stock *</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.stock}
-                        onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
-                        className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Stock Mínimo *</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.stockMinimo}
-                        onChange={(e) => setFormData({ ...formData, stockMinimo: parseInt(e.target.value) })}
-                        className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
-                        required
-                      />
-                    </div>
-                  </div>
-
                   <div>
                     <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Unidad de Medida *</label>
                     <select
@@ -977,14 +965,178 @@ export default function ProductsManager() {
                     </select>
                   </div>
 
-                  <div className="bg-primary-50 dark:bg-primary-900 p-4 rounded-lg">
-                    <h4 className="font-semibold text-primary-900 dark:text-primary-200 mb-2">Información de Inventario</h4>
-                    <div className="space-y-2 text-sm text-primary-700 dark:text-primary-300">
-                      <p>• Stock actual: <strong>{formData.stock} {formData.unidadMedida}</strong></p>
-                      <p>• Stock mínimo configurado: <strong>{formData.stockMinimo} {formData.unidadMedida}</strong></p>
-                      <p className={formData.stock <= formData.stockMinimo ? 'text-error font-semibold' : ''}>
-                        • Estado: {formData.stock <= formData.stockMinimo ? '⚠️ Stock bajo' : '✅ Stock suficiente'}
-                      </p>
+                  <div className="border-t border-dark-200 dark:border-dark-700 pt-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-lg font-semibold text-dark-800 dark:text-light-400">Stock por Sucursal</h4>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nuevaSucursal = sucursales.find(
+                            s => !formData.stockPorSucursal.some(stock => stock.sucursalId === s._id)
+                          );
+                          if (nuevaSucursal) {
+                            setFormData({
+                              ...formData,
+                              stockPorSucursal: [
+                                ...formData.stockPorSucursal,
+                                {
+                                  sucursalId: nuevaSucursal._id,
+                                  sucursalNombre: nuevaSucursal.nombre,
+                                  cantidad: 0,
+                                  stockMinimo: 5
+                                }
+                              ]
+                            });
+                          } else {
+                            showErrorToast('No hay más sucursales disponibles');
+                          }
+                        }}
+                        className="px-3 py-1 bg-secondary hover:bg-secondary-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                      >
+                        + Agregar Sucursal
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {formData.stockPorSucursal.map((stockSuc, index) => (
+                        <div key={stockSuc.sucursalId} className="bg-dark-50 dark:bg-dark-900 p-4 rounded-lg border border-dark-200 dark:border-dark-700">
+                          <div className="flex justify-between items-start mb-3">
+                            <h5 className="font-medium text-dark-800 dark:text-light-400">Sucursal {index + 1}</h5>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  stockPorSucursal: formData.stockPorSucursal.filter((_, i) => i !== index)
+                                });
+                              }}
+                              className="text-error hover:text-error-dark text-sm font-semibold"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-dark-600 dark:text-dark-400 mb-1">Sucursal *</label>
+                              <select
+                                value={stockSuc.sucursalId}
+                                onChange={(e) => {
+                                  const sucursal = sucursales.find(s => s._id === e.target.value);
+                                  if (sucursal) {
+                                    const newStockPorSucursal = [...formData.stockPorSucursal];
+                                    newStockPorSucursal[index] = {
+                                      ...newStockPorSucursal[index],
+                                      sucursalId: sucursal._id,
+                                      sucursalNombre: sucursal.nombre
+                                    };
+                                    setFormData({ ...formData, stockPorSucursal: newStockPorSucursal });
+                                  }
+                                }}
+                                className="w-full px-2 py-1.5 text-sm border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                                required
+                              >
+                                {sucursales.map((sucursal) => (
+                                  <option 
+                                    key={sucursal._id} 
+                                    value={sucursal._id}
+                                    disabled={formData.stockPorSucursal.some((s, i) => i !== index && s.sucursalId === sucursal._id)}
+                                  >
+                                    {sucursal.nombre}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-dark-600 dark:text-dark-400 mb-1">Cantidad *</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={stockSuc.cantidad}
+                                onChange={(e) => {
+                                  const newStockPorSucursal = [...formData.stockPorSucursal];
+                                  newStockPorSucursal[index] = {
+                                    ...newStockPorSucursal[index],
+                                    cantidad: parseInt(e.target.value) || 0
+                                  };
+                                  // Calcular stock total
+                                  const stockTotal = newStockPorSucursal.reduce((sum, s) => sum + s.cantidad, 0);
+                                  setFormData({ 
+                                    ...formData, 
+                                    stockPorSucursal: newStockPorSucursal,
+                                    stock: stockTotal
+                                  });
+                                }}
+                                className="w-full px-2 py-1.5 text-sm border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-dark-600 dark:text-dark-400 mb-1">Stock Mínimo *</label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={stockSuc.stockMinimo}
+                                onChange={(e) => {
+                                  const newStockPorSucursal = [...formData.stockPorSucursal];
+                                  newStockPorSucursal[index] = {
+                                    ...newStockPorSucursal[index],
+                                    stockMinimo: parseInt(e.target.value) || 0
+                                  };
+                                  setFormData({ ...formData, stockPorSucursal: newStockPorSucursal });
+                                }}
+                                className="w-full px-2 py-1.5 text-sm border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                                required
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {formData.stockPorSucursal.length === 0 && (
+                        <div className="text-center py-6 text-dark-500 dark:text-dark-400">
+                          No hay sucursales agregadas. Haz clic en "+ Agregar Sucursal" para comenzar.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-secondary-50 dark:bg-secondary-900 p-4 rounded-lg border border-secondary-200 dark:border-secondary-800">
+                    <h4 className="font-semibold text-secondary-900 dark:text-secondary-200 mb-3">Resumen de Inventario</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-secondary-700 dark:text-secondary-300">Stock Total:</span>
+                        <span className="font-bold text-lg text-secondary-900 dark:text-secondary-100">
+                          {formData.stock} {formData.unidadMedida}
+                        </span>
+                      </div>
+                      
+                      {formData.stockPorSucursal.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-secondary-200 dark:border-secondary-700">
+                          <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400 mb-2">Distribución:</p>
+                          {formData.stockPorSucursal.map((stockSuc) => (
+                            <div key={stockSuc.sucursalId} className="flex justify-between items-center text-xs py-1">
+                              <span className="text-secondary-700 dark:text-secondary-300">
+                                {stockSuc.sucursalNombre}:
+                              </span>
+                              <span className={`font-semibold ${
+                                stockSuc.cantidad <= stockSuc.stockMinimo 
+                                  ? 'text-error' 
+                                  : 'text-success-600 dark:text-success-400'
+                              }`}>
+                                {stockSuc.cantidad} {formData.unidadMedida}
+                                {stockSuc.cantidad <= stockSuc.stockMinimo && ' ⚠️'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="mt-3 text-xs text-secondary-600 dark:text-secondary-400">
+                        💡 El stock total se calcula automáticamente sumando las cantidades de todas las sucursales.
+                      </div>
                     </div>
                   </div>
                 </div>

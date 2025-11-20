@@ -473,7 +473,7 @@ export default function GestorTransferencias() {
                             <select
                               value={transferencia.sucursalOrigenId || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'sucursalOrigenId', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                              className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
                             >
                               <option value="">Seleccionar</option>
                               {sucursales
