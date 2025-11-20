@@ -454,7 +454,7 @@ export default function SucursalesManager() {
               {sucursales.map((sucursal) => (
                 <tr
                   key={sucursal._id}
-                  className="hover:bg-dark-50 dark:hover:bg-dark-750 transition-colors"
+                  className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">
                     {sucursal.nombre}
@@ -488,13 +488,13 @@ export default function SucursalesManager() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleOpenModal(sucursal)}
-                      className="text-primary hover:text-primary-700 font-semibold transition-colors"
+                      className="text-primary hover:text-green-700 font-semibold transition-colors cursor-pointer text-green-500"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(sucursal._id)}
-                      className="text-error hover:text-error-dark font-semibold transition-colors"
+                      className="text-error hover:text-error-dark font-semibold transition-colors cursor-pointer text-red-500"
                     >
                       Eliminar
                     </button>

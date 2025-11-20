@@ -514,7 +514,7 @@ export default function ProductsManager() {
             </thead>
             <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
               {products.map((product) => (
-                <tr key={product._id} className="hover:bg-dark-50 dark:hover:bg-dark-750 transition-colors">
+                <tr key={product._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
@@ -590,20 +590,20 @@ export default function ProductsManager() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleOpenTransferModal(product)}
-                      className="text-warning hover:text-warning-700 font-semibold transition-colors"
+                      className="text-warning hover:text-warning-700 font-semibold transition-colors cursor-pointer text-yellow-500"
                       title="Transferir stock"
                     >
                       🔄
                     </button>
                     <button
                       onClick={() => handleOpenModal(product)}
-                      className="text-secondary hover:text-secondary-700 font-semibold transition-colors"
+                      className="text-secondary hover:text-green-700 font-semibold transition-colors cursor-pointer text-green-500"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(product._id)}
-                      className="text-error hover:text-error-dark font-semibold transition-colors"
+                      className="text-error hover:text-error-dark font-semibold transition-colors cursor-pointer text-red-500"
                     >
                       Eliminar
                     </button>
@@ -1194,9 +1194,13 @@ export default function ProductsManager() {
                     required
                   >
                     <option value="">Seleccionar sucursal</option>
-                    {transferProduct.stockPorSucursal?.map((stock: StockSucursal) => (
-                      <option key={stock.sucursalId} value={stock.sucursalId}>
-                        {stock.sucursalNombre} ({stock.cantidad} disponibles)
+                    {sucursales.map((sucursal) => (
+                      <option 
+                        key={sucursal._id} 
+                        value={sucursal._id}
+                        disabled={sucursal._id === transferData.destinoSucursalId}
+                      >
+                        {sucursal.nombre}
                       </option>
                     ))}
                   </select>

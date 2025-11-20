@@ -235,7 +235,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                🔄 Transferencias
+                🔄 Transfer
               </button>
               <button
                 onClick={() => setActiveTab('configuracion')}
@@ -245,7 +245,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                ⚙️ Configuración
+                ⚙️ Conf
               </button>
             </div>
           </div>

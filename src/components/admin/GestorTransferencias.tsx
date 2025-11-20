@@ -143,11 +143,14 @@ export default function GestorTransferencias() {
   };
 
   // Obtener categorías únicas
-  const categorias = Array.from(new Set(productos.map(p => p.categoria)));
+  const categorias = productos && productos.length > 0 
+    ? Array.from(new Set(productos.map(p => p.categoria).filter(Boolean)))
+    : [];
 
   // Filtrar productos
-  const productosFiltrados = productos.filter(p => {
-    const matchNombre = p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase());
+  const productosFiltrados = (productos || []).filter(p => {
+    if (!p) return false;
+    const matchNombre = p.nombre?.toLowerCase().includes(busquedaProducto.toLowerCase());
     const matchCategoria = !filtroCategoria || p.categoria === filtroCategoria;
     return matchNombre && matchCategoria;
   });
@@ -166,12 +169,14 @@ export default function GestorTransferencias() {
 
   // Obtener stock disponible en sucursal origen
   const obtenerStockOrigen = (productoId: string, sucursalOrigenId: string): number => {
+    if (!productos || productos.length === 0 || !productoId || !sucursalOrigenId) return 0;
+    
     const producto = productos.find(p => p._id === productoId);
-    if (!producto || !sucursalOrigenId) return 0;
+    if (!producto || !producto.stockPorSucursal) return 0;
     
     const stock = producto.stockPorSucursal.find(s => s.sucursalId === sucursalOrigenId);
     return stock?.cantidad || 0;
-  };
+  }
 
   // Validar y ejecutar transferencias masivas
   const ejecutarTransferenciasMasivas = async () => {
@@ -191,9 +196,9 @@ export default function GestorTransferencias() {
     const errores: string[] = [];
     transferenciasValidas.forEach(t => {
       const stockDisponible = obtenerStockOrigen(t.productoId, t.sucursalOrigenId);
-      const producto = productos.find(p => p._id === t.productoId);
+      const producto = productos?.find(p => p._id === t.productoId);
       if (t.cantidad > stockDisponible) {
-        errores.push(`${producto?.nombre}: Stock insuficiente (Disponible: ${stockDisponible}, Solicitado: ${t.cantidad})`);
+        errores.push(`${producto?.nombre || 'Producto'}: Stock insuficiente (Disponible: ${stockDisponible}, Solicitado: ${t.cantidad})`);
       }
     });
 
@@ -215,7 +220,7 @@ export default function GestorTransferencias() {
       let fallidas = 0;
 
       for (const t of transferenciasValidas) {
-        const producto = productos.find(p => p._id === t.productoId);
+        const producto = productos?.find(p => p._id === t.productoId);
         if (!producto) continue;
 
         const res = await fetch('/api/transferencias', {
@@ -446,6 +451,7 @@ export default function GestorTransferencias() {
                   </thead>
                   <tbody>
                     {productosFiltrados.map(producto => {
+                      if (!producto || !producto._id) return null;
                       const transferencia = transferenciasInput[producto._id] || {};
                       const stockOrigen = obtenerStockOrigen(producto._id, transferencia.sucursalOrigenId || '');
 
@@ -467,13 +473,13 @@ export default function GestorTransferencias() {
                             <select
                               value={transferencia.sucursalOrigenId || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'sucursalOrigenId', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                              className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                             >
                               <option value="">Seleccionar</option>
                               {sucursales
                                 .filter(s => s._id !== transferencia.sucursalDestinoId)
                                 .map(s => (
-                                  <option key={s._id} value={s._id}>{s.nombre}</option>
+                                  <option key={s._id} value={s._id} className=''>{s.nombre}</option>
                                 ))}
                             </select>
                           </td>
@@ -486,7 +492,7 @@ export default function GestorTransferencias() {
                             <select
                               value={transferencia.sucursalDestinoId || ''}
                               onChange={(e) => actualizarTransferencia(producto._id, 'sucursalDestinoId', e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                              className="w-full px-2 md:px-3 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                               disabled={!transferencia.sucursalOrigenId}
                             >
                               <option value="">Seleccionar</option>
@@ -558,7 +564,7 @@ export default function GestorTransferencias() {
                     setFiltroSucursal(e.target.value);
                     cargarTransferencias();
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700"
                 >
                   <option value="">Todas las sucursales</option>
                   {sucursales.map(s => (

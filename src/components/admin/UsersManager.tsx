@@ -189,7 +189,7 @@ export default function UsersManager() {
             </thead>
             <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
               {users.map((user) => (
-                <tr key={user._id} className="hover:bg-dark-50 dark:hover:bg-dark-750 transition-colors">
+                <tr key={user._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -220,13 +220,13 @@ export default function UsersManager() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleOpenModal(user)}
-                      className="text-primary hover:text-primary-700 font-semibold transition-colors"
+                      className="text-primary hover:text-green-700 font-semibold transition-colors cursor-pointer text-green-500"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(user._id)}
-                      className="text-error hover:text-error-dark font-semibold transition-colors"
+                      className="text-error hover:text-error-dark font-semibold transition-colors cursor-pointer text-red-500"
                     >
                       Eliminar
                     </button>
