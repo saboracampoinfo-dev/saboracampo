@@ -7,20 +7,34 @@ import { showConfirmAlert, showPromptAlert } from '@/utils/alerts';
 interface Sucursal {
   _id: string;
   nombre: string;
-  direccion: string;
-  telefono: string;
-  activa: boolean;
+  direccion?: {
+    calle?: string;
+    ciudad?: string;
+  };
+  telefono?: string;
+  estado: string;
+  activa?: boolean;
 }
 
 interface Product {
   _id: string;
   nombre: string;
+  stock: number;
+  stockMinimo: number;
+  categoria: string;
   stockPorSucursal: {
     sucursalId: string;
     sucursalNombre: string;
     cantidad: number;
     stockMinimo: number;
   }[];
+}
+
+interface TransferenciaInput {
+  productoId: string;
+  sucursalOrigenId: string;
+  sucursalDestinoId: string;
+  cantidad: number;
 }
 
 interface TransferenciaItem {
@@ -58,16 +72,12 @@ export default function GestorTransferencias() {
   const [productos, setProductos] = useState<Product[]>([]);
   const [transferencias, setTransferencias] = useState<Transferencia[]>([]);
   const [loading, setLoading] = useState(false);
-  const [vista, setVista] = useState<'nueva' | 'historial'>('nueva');
+  const [vista, setVista] = useState<'masiva' | 'historial'>('masiva');
 
-  // Estados para nueva transferencia
-  const [sucursalOrigen, setSucursalOrigen] = useState('');
-  const [sucursalDestino, setSucursalDestino] = useState('');
-  const [productosSeleccionados, setProductosSeleccionados] = useState<
-    { productoId: string; cantidad: number }[]
-  >([]);
-  const [notas, setNotas] = useState('');
+  // Estados para transferencias masivas
+  const [transferenciasInput, setTransferenciasInput] = useState<Record<string, TransferenciaInput>>({});
   const [busquedaProducto, setBusquedaProducto] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
 
   // Estados para filtros de historial
   const [filtroEstado, setFiltroEstado] = useState<string>('todas');
@@ -84,25 +94,31 @@ export default function GestorTransferencias() {
 
   const cargarSucursales = async () => {
     try {
-      const res = await fetch('/api/sucursales');
+      const res = await fetch('/api/sucursales?estado=activa');
       if (res.ok) {
         const data = await res.json();
-        setSucursales(data.sucursales.filter((s: Sucursal) => s.activa));
+        setSucursales(data.data || data.sucursales || []);
       }
     } catch (error) {
       console.error('Error al cargar sucursales:', error);
+      showErrorToast('Error al cargar sucursales');
     }
   };
 
   const cargarProductos = async () => {
     try {
-      const res = await fetch('/api/products?limit=1000');
+      setLoading(true);
+      const res = await fetch('/api/products?limit=10000');
       if (res.ok) {
         const data = await res.json();
-        setProductos(data.products.filter((p: Product) => p.stockPorSucursal?.length > 0));
+        const productosCargados = data.data || data.products || [];
+        setProductos(productosCargados);
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
+      showErrorToast('Error al cargar productos');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,114 +142,116 @@ export default function GestorTransferencias() {
     }
   };
 
-  const productosFiltrados = productos.filter(p =>
-    p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase())
-  );
+  // Obtener categorías únicas
+  const categorias = Array.from(new Set(productos.map(p => p.categoria)));
 
-  const obtenerStockDisponible = (productoId: string) => {
+  // Filtrar productos
+  const productosFiltrados = productos.filter(p => {
+    const matchNombre = p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase());
+    const matchCategoria = !filtroCategoria || p.categoria === filtroCategoria;
+    return matchNombre && matchCategoria;
+  });
+
+  // Actualizar input de transferencia
+  const actualizarTransferencia = (productoId: string, field: keyof TransferenciaInput, value: string | number) => {
+    setTransferenciasInput(prev => ({
+      ...prev,
+      [productoId]: {
+        ...prev[productoId],
+        productoId,
+        [field]: value
+      }
+    }));
+  };
+
+  // Obtener stock disponible en sucursal origen
+  const obtenerStockOrigen = (productoId: string, sucursalOrigenId: string): number => {
     const producto = productos.find(p => p._id === productoId);
-    if (!producto || !sucursalOrigen) return 0;
-
-    const stock = producto.stockPorSucursal.find(
-      s => s.sucursalId === sucursalOrigen
-    );
+    if (!producto || !sucursalOrigenId) return 0;
+    
+    const stock = producto.stockPorSucursal.find(s => s.sucursalId === sucursalOrigenId);
     return stock?.cantidad || 0;
   };
 
-  const agregarProducto = (productoId: string) => {
-    if (productosSeleccionados.find(p => p.productoId === productoId)) {
-      showErrorToast('Este producto ya está en la lista');
-      return;
-    }
-
-    const stockDisponible = obtenerStockDisponible(productoId);
-    if (stockDisponible === 0) {
-      showErrorToast('No hay stock disponible en la sucursal de origen');
-      return;
-    }
-
-    setProductosSeleccionados([
-      ...productosSeleccionados,
-      { productoId, cantidad: 1 }
-    ]);
-    setBusquedaProducto('');
-  };
-
-  const actualizarCantidad = (productoId: string, cantidad: number) => {
-    const stockDisponible = obtenerStockDisponible(productoId);
-    
-    if (cantidad > stockDisponible) {
-      showErrorToast(`Stock máximo disponible: ${stockDisponible}`);
-      return;
-    }
-
-    setProductosSeleccionados(
-      productosSeleccionados.map(p =>
-        p.productoId === productoId ? { ...p, cantidad: Math.max(1, cantidad) } : p
-      )
+  // Validar y ejecutar transferencias masivas
+  const ejecutarTransferenciasMasivas = async () => {
+    const transferenciasValidas = Object.values(transferenciasInput).filter(t => 
+      t.sucursalOrigenId && 
+      t.sucursalDestinoId && 
+      t.cantidad > 0 &&
+      t.sucursalOrigenId !== t.sucursalDestinoId
     );
-  };
 
-  const eliminarProducto = (productoId: string) => {
-    setProductosSeleccionados(
-      productosSeleccionados.filter(p => p.productoId !== productoId)
-    );
-  };
-
-  const crearTransferencia = async (ejecutarInmediatamente: boolean) => {
-    if (!sucursalOrigen || !sucursalDestino) {
-      showErrorToast('Debe seleccionar sucursal origen y destino');
+    if (transferenciasValidas.length === 0) {
+      showErrorToast('No hay transferencias válidas para procesar');
       return;
     }
 
-    if (productosSeleccionados.length === 0) {
-      showErrorToast('Debe agregar al menos un producto');
+    // Validar stocks disponibles
+    const errores: string[] = [];
+    transferenciasValidas.forEach(t => {
+      const stockDisponible = obtenerStockOrigen(t.productoId, t.sucursalOrigenId);
+      const producto = productos.find(p => p._id === t.productoId);
+      if (t.cantidad > stockDisponible) {
+        errores.push(`${producto?.nombre}: Stock insuficiente (Disponible: ${stockDisponible}, Solicitado: ${t.cantidad})`);
+      }
+    });
+
+    if (errores.length > 0) {
+      showErrorToast(`Errores:\n${errores.join('\n')}`);
       return;
     }
 
     const confirmado = await showConfirmAlert(
-      ejecutarInmediatamente ? '¿Ejecutar transferencia ahora?' : '¿Crear transferencia?',
-      ejecutarInmediatamente 
-        ? 'Se transferirá el stock inmediatamente'
-        : 'La transferencia quedará pendiente de aprobación'
+      '¿Ejecutar transferencias masivas?',
+      `Se procesarán ${transferenciasValidas.length} transferencia(s)`
     );
 
     if (!confirmado) return;
 
     try {
       setLoading(true);
+      let exitosas = 0;
+      let fallidas = 0;
 
-      const res = await fetch('/api/transferencias', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sucursalOrigenId: sucursalOrigen,
-          sucursalDestinoId: sucursalDestino,
-          items: productosSeleccionados,
-          notas,
-          ejecutarInmediatamente
-        })
-      });
+      for (const t of transferenciasValidas) {
+        const producto = productos.find(p => p._id === t.productoId);
+        if (!producto) continue;
 
-      const data = await res.json();
+        const res = await fetch('/api/transferencias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sucursalOrigenId: t.sucursalOrigenId,
+            sucursalDestinoId: t.sucursalDestinoId,
+            items: [{
+              productoId: t.productoId,
+              cantidad: t.cantidad
+            }],
+            notas: `Transferencia masiva - ${producto.nombre}`,
+            ejecutarInmediatamente: true
+          })
+        });
 
-      if (res.ok) {
-        showSuccessToast(data.mensaje);
-        // Resetear formulario
-        setSucursalOrigen('');
-        setSucursalDestino('');
-        setProductosSeleccionados([]);
-        setNotas('');
-        cargarProductos(); // Recargar para actualizar stocks
-      } else {
-        showErrorToast(data.error || 'Error al crear transferencia');
-        if (data.errores) {
-          console.error('Errores:', data.errores);
+        if (res.ok) {
+          exitosas++;
+        } else {
+          fallidas++;
         }
+      }
+
+      if (exitosas > 0) {
+        showSuccessToast(`${exitosas} transferencia(s) ejecutada(s) exitosamente`);
+        setTransferenciasInput({});
+        cargarProductos();
+      }
+      
+      if (fallidas > 0) {
+        showErrorToast(`${fallidas} transferencia(s) fallida(s)`);
       }
     } catch (error) {
       console.error('Error:', error);
-      showErrorToast('Error al procesar transferencia');
+      showErrorToast('Error al procesar transferencias');
     } finally {
       setLoading(false);
     }
@@ -307,9 +325,7 @@ export default function GestorTransferencias() {
     }
   };
 
-  const obtenerProductoPorId = (id: string) => {
-    return productos.find(p => p._id === id);
-  };
+  const transferenciasCount = Object.keys(transferenciasInput).length;
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -320,14 +336,14 @@ export default function GestorTransferencias() {
           </h2>
           <div className="flex gap-2">
             <button
-              onClick={() => setVista('nueva')}
+              onClick={() => setVista('masiva')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                vista === 'nueva'
+                vista === 'masiva'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              Nueva Transferencia
+              Transferencias Masivas
             </button>
             <button
               onClick={() => setVista('historial')}
@@ -342,179 +358,169 @@ export default function GestorTransferencias() {
           </div>
         </div>
 
-        {vista === 'nueva' && (
+        {vista === 'masiva' && (
           <div className="space-y-6">
-            {/* Selección de Sucursales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Filtros */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sucursal Origen
+                  Buscar Producto
                 </label>
-                <select
-                  value={sucursalOrigen}
-                  onChange={(e) => {
-                    setSucursalOrigen(e.target.value);
-                    setProductosSeleccionados([]);
-                  }}
+                <input
+                  type="text"
+                  value={busquedaProducto}
+                  onChange={(e) => setBusquedaProducto(e.target.value)}
+                  placeholder="Buscar por nombre..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Seleccionar sucursal</option>
-                  {sucursales
-                    .filter(s => s._id !== sucursalDestino)
-                    .map(s => (
-                      <option key={s._id} value={s._id}>
-                        {s.nombre}
-                      </option>
-                    ))}
-                </select>
+                />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sucursal Destino
+                  Filtrar por Categoría
                 </label>
                 <select
-                  value={sucursalDestino}
-                  onChange={(e) => setSucursalDestino(e.target.value)}
+                  value={filtroCategoria}
+                  onChange={(e) => setFiltroCategoria(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
-                  <option value="">Seleccionar sucursal</option>
-                  {sucursales
-                    .filter(s => s._id !== sucursalOrigen)
-                    .map(s => (
-                      <option key={s._id} value={s._id}>
-                        {s.nombre}
-                      </option>
-                    ))}
+                  <option value="">Todas las categorías</option>
+                  {categorias.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            {sucursalOrigen && sucursalDestino && (
-              <>
-                {/* Búsqueda y Selección de Productos */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Buscar Producto
-                  </label>
-                  <input
-                    type="text"
-                    value={busquedaProducto}
-                    onChange={(e) => setBusquedaProducto(e.target.value)}
-                    placeholder="Buscar por nombre..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
-
-                  {busquedaProducto && (
-                    <div className="mt-2 max-h-60 overflow-y-auto border border-gray-300 rounded-lg">
-                      {productosFiltrados.length === 0 ? (
-                        <div className="p-4 text-gray-500 text-center">
-                          No se encontraron productos
-                        </div>
-                      ) : (
-                        productosFiltrados.slice(0, 10).map(producto => {
-                          const stock = obtenerStockDisponible(producto._id);
-                          return (
-                            <button
-                              key={producto._id}
-                              onClick={() => agregarProducto(producto._id)}
-                              disabled={stock === 0}
-                              className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium">{producto.nombre}</span>
-                                <span className={`text-sm ${stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  Stock: {stock}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
+            {/* Información de sucursales disponibles */}
+            {sucursales.length > 0 && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Sucursales Disponibles:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {sucursales.map(s => (
+                    <span key={s._id} className="bg-blue-200 text-blue-900 px-3 py-1 rounded-full text-sm">
+                      {s.nombre}
+                    </span>
+                  ))}
                 </div>
+              </div>
+            )}
 
-                {/* Lista de Productos Seleccionados */}
-                {productosSeleccionados.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">
-                      Productos a Transferir ({productosSeleccionados.length})
-                    </h3>
-                    <div className="space-y-2">
-                      {productosSeleccionados.map(item => {
-                        const producto = obtenerProductoPorId(item.productoId);
-                        const stockDisponible = obtenerStockDisponible(item.productoId);
-                        
-                        return (
-                          <div key={item.productoId} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                            <div className="flex-1">
-                              <div className="font-medium">{producto?.nombre}</div>
-                              <div className="text-sm text-gray-500">
-                                Disponible: {stockDisponible}
-                              </div>
-                            </div>
+            {/* Botón de Guardar Masivo */}
+            {transferenciasCount > 0 && (
+              <div className="bg-green-50 p-4 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-md">
+                <div>
+                  <p className="font-semibold text-green-900">
+                    {transferenciasCount} transferencia(s) pendiente(s)
+                  </p>
+                  <p className="text-sm text-green-700">
+                    Revisa y presiona "Guardar Todas" para ejecutar
+                  </p>
+                </div>
+                <button
+                  onClick={ejecutarTransferenciasMasivas}
+                  disabled={loading}
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                >
+                  💾 Guardar Todas las Transferencias
+                </button>
+              </div>
+            )}
+
+            {/* Tabla de Productos */}
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">Cargando productos...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white border border-gray-300 rounded-lg">
+                  <thead className="bg-gray-100 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Producto</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Categoría</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Stock Total</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Stock Mínimo</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Sucursal Origen</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Stock Origen</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Sucursal Destino</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productosFiltrados.map(producto => {
+                      const transferencia = transferenciasInput[producto._id] || {};
+                      const stockOrigen = obtenerStockOrigen(producto._id, transferencia.sucursalOrigenId || '');
+
+                      return (
+                        <tr key={producto._id} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {producto.nombre}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {producto.categoria}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
+                            {producto.stock}
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm text-gray-600">
+                            {producto.stockMinimo}
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={transferencia.sucursalOrigenId || ''}
+                              onChange={(e) => actualizarTransferencia(producto._id, 'sucursalOrigenId', e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                            >
+                              <option value="">Seleccionar</option>
+                              {sucursales
+                                .filter(s => s._id !== transferencia.sucursalDestinoId)
+                                .map(s => (
+                                  <option key={s._id} value={s._id}>{s.nombre}</option>
+                                ))}
+                            </select>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`text-sm font-semibold ${stockOrigen === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {stockOrigen}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <select
+                              value={transferencia.sucursalDestinoId || ''}
+                              onChange={(e) => actualizarTransferencia(producto._id, 'sucursalDestinoId', e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                              disabled={!transferencia.sucursalOrigenId}
+                            >
+                              <option value="">Seleccionar</option>
+                              {sucursales
+                                .filter(s => s._id !== transferencia.sucursalOrigenId)
+                                .map(s => (
+                                  <option key={s._id} value={s._id}>{s.nombre}</option>
+                                ))}
+                            </select>
+                          </td>
+                          <td className="px-4 py-3">
                             <input
                               type="number"
-                              min="1"
-                              max={stockDisponible}
-                              value={item.cantidad}
-                              onChange={(e) => actualizarCantidad(item.productoId, parseInt(e.target.value) || 1)}
-                              className="w-24 px-3 py-2 border border-gray-300 rounded-lg"
+                              min="0"
+                              max={stockOrigen}
+                              value={transferencia.cantidad || ''}
+                              onChange={(e) => actualizarTransferencia(producto._id, 'cantidad', parseInt(e.target.value) || 0)}
+                              placeholder="0"
+                              className="w-20 px-2 py-1 text-sm text-center border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                              disabled={!transferencia.sucursalOrigenId || !transferencia.sucursalDestinoId}
                             />
-                            <button
-                              onClick={() => eliminarProducto(item.productoId)}
-                              className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <div className="font-semibold text-blue-900">
-                        Total: {productosSeleccionados.reduce((sum, item) => sum + item.cantidad, 0)} unidades
-                      </div>
-                    </div>
+                {productosFiltrados.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No se encontraron productos
                   </div>
                 )}
-
-                {/* Notas */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notas (opcional)
-                  </label>
-                  <textarea
-                    value={notas}
-                    onChange={(e) => setNotas(e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                    placeholder="Información adicional sobre la transferencia..."
-                  />
-                </div>
-
-                {/* Botones de Acción */}
-                {productosSeleccionados.length > 0 && (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => crearTransferencia(false)}
-                      disabled={loading}
-                      className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Crear Pendiente
-                    </button>
-                    <button
-                      onClick={() => crearTransferencia(true)}
-                      disabled={loading}
-                      className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Ejecutar Ahora
-                    </button>
-                  </div>
-                )}
-              </>
+              </div>
             )}
           </div>
         )}
@@ -577,47 +583,48 @@ export default function GestorTransferencias() {
                   <div key={t._id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            t.estado === 'completada' ? 'bg-green-100 text-green-800' :
-                            t.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {t.estado.toUpperCase()}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(t.fechaCreacion).toLocaleDateString('es-AR')}
-                          </span>
-                        </div>
-                        <div className="text-lg font-semibold">
+                        <h3 className="font-semibold text-lg text-gray-900">
                           {t.sucursalOrigenNombre} → {t.sucursalDestinoNombre}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {t.totalItems} productos • {t.totalCantidad} unidades
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Creado por: {t.creadoPorNombre}
-                        </div>
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {t.totalItems} producto(s) - {t.totalCantidad} unidades
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Creado: {new Date(t.fechaCreacion).toLocaleString()} por {t.creadoPorNombre}
+                        </p>
+                        {t.fechaAprobacion && (
+                          <p className="text-xs text-gray-500">
+                            {t.estado === 'completada' ? 'Aprobado' : 'Cancelado'}: {new Date(t.fechaAprobacion).toLocaleString()} por {t.aprobadoPorNombre}
+                          </p>
+                        )}
                       </div>
 
-                      {t.estado === 'pendiente' && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => aprobarTransferencia(t._id)}
-                            disabled={loading}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                          >
-                            Aprobar
-                          </button>
-                          <button
-                            onClick={() => cancelarTransferencia(t._id)}
-                            disabled={loading}
-                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          t.estado === 'completada' ? 'bg-green-100 text-green-800' :
+                          t.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {t.estado.toUpperCase()}
+                        </span>
+
+                        {t.estado === 'pendiente' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => aprobarTransferencia(t._id)}
+                              className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                            >
+                              ✓ Aprobar
+                            </button>
+                            <button
+                              onClick={() => cancelarTransferencia(t._id)}
+                              className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                            >
+                              ✗ Cancelar
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Detalles de Items */}
@@ -627,9 +634,10 @@ export default function GestorTransferencias() {
                       </summary>
                       <div className="mt-2 space-y-1">
                         {t.items.map((item, idx) => (
-                          <div key={idx} className="text-sm p-2 bg-gray-50 rounded">
-                            <span className="font-medium">{item.nombreProducto}</span>
-                            <span className="text-gray-600"> - Cantidad: {item.cantidad}</span>
+                          <div key={idx} className="text-sm text-gray-700 pl-4">
+                            • {item.nombreProducto}: {item.cantidad} unidades
+                            (Origen: {item.stockOrigenAntes} → {item.stockOrigenDespues} |
+                            Destino: {item.stockDestinoAntes} → {item.stockDestinoDespues})
                           </div>
                         ))}
                       </div>
