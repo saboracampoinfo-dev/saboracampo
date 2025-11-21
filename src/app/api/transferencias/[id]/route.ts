@@ -10,13 +10,28 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('🔄 [API] GET /api/transferencias/[id]');
     const { authenticated, user } = await authenticateRequest(request);
-    if (!authenticated || !user || user.rol !== 'administrador') {
+    console.log('👤 [API] Authenticated:', authenticated, '| User:', user);
+    
+    if (!authenticated || !user) {
+      console.error('❌ [API] Usuario no autenticado');
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       );
     }
+    
+    // Verificar role (en inglés) - El JWT devuelve "role" no "rol"
+    if (user.role !== 'admin' && user.role !== 'vendedor') {
+      console.error('❌ [API] Usuario sin permisos. Role:', user.role);
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+    
+    console.log('✅ [API] Usuario autorizado:', user.userId, '- Role:', user.role);
 
     await connectDB();
 
@@ -50,13 +65,28 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('🔄 [API] PUT /api/transferencias/[id]');
     const { authenticated, user } = await authenticateRequest(request);
-    if (!authenticated || !user || user.rol !== 'administrador') {
+    console.log('👤 [API] Authenticated:', authenticated, '| User:', user);
+    
+    if (!authenticated || !user) {
+      console.error('❌ [API] Usuario no autenticado');
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       );
     }
+    
+    // Verificar role (en inglés) - El JWT devuelve "role" no "rol"
+    if (user.role !== 'admin' && user.role !== 'vendedor') {
+      console.error('❌ [API] Usuario sin permisos. Role:', user.role);
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+    
+    console.log('✅ [API] Usuario autorizado:', user.userId, '- Role:', user.role);
 
     await connectDB();
 
@@ -154,7 +184,7 @@ export async function PUT(
 
       transferencia.estado = 'completada';
       transferencia.aprobadoPor = user.userId;
-      transferencia.aprobadoPorNombre = user.nombre;
+      transferencia.aprobadoPorNombre = user.name || user.email || 'Usuario';
       transferencia.fechaAprobacion = new Date();
 
     } else if (accion === 'cancelar') {
@@ -168,7 +198,7 @@ export async function PUT(
       transferencia.estado = 'cancelada';
       transferencia.motivoCancelacion = motivoCancelacion;
       transferencia.aprobadoPor = user.userId;
-      transferencia.aprobadoPorNombre = user.nombre;
+      transferencia.aprobadoPorNombre = user.name || user.email || 'Usuario';
       transferencia.fechaAprobacion = new Date();
 
     } else {
@@ -203,13 +233,28 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    console.log('🔄 [API] DELETE /api/transferencias/[id]');
     const { authenticated, user } = await authenticateRequest(request);
-    if (!authenticated || !user || user.rol !== 'administrador') {
+    console.log('👤 [API] Authenticated:', authenticated, '| User:', user);
+    
+    if (!authenticated || !user) {
+      console.error('❌ [API] Usuario no autenticado');
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       );
     }
+    
+    // Verificar role (en inglés) - El JWT devuelve "role" no "rol"
+    if (user.role !== 'admin' && user.role !== 'vendedor') {
+      console.error('❌ [API] Usuario sin permisos. Role:', user.role);
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+    
+    console.log('✅ [API] Usuario autorizado:', user.userId, '- Role:', user.role);
 
     await connectDB();
 

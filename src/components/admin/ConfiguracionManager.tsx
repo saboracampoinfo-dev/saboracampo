@@ -270,66 +270,6 @@ export default function ConfiguracionManager() {
                 />
               </div>
 
-              <div className="space-y-4 pt-4 border-t border-dark-200 dark:border-dark-700">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-dark-800 dark:text-light-400">Colores del Sitio</h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateField('colorPrimario', '#10b981');
-                      updateField('colorSecundario', '#059669');
-                      showSuccessToast('Colores restablecidos a valores originales');
-                    }}
-                    className="px-4 py-2 text-sm bg-dark-100 dark:bg-dark-700 text-dark-700 dark:text-dark-300 rounded-lg hover:bg-dark-200 dark:hover:bg-dark-600 transition-colors shadow-md"
-                  >
-                    🔄 Restablecer Colores
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
-                      Color Primario
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="color"
-                        value={configuracion.colorPrimario || '#10b981'}
-                        onChange={(e) => updateField('colorPrimario', e.target.value)}
-                        className="w-20 h-10 border border-dark-300 dark:border-dark-600 rounded-lg cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={configuracion.colorPrimario || '#10b981'}
-                        onChange={(e) => updateField('colorPrimario', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
-                        placeholder="#10b981"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
-                      Color Secundario
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="color"
-                        value={configuracion.colorSecundario || '#059669'}
-                        onChange={(e) => updateField('colorSecundario', e.target.value)}
-                        className="w-20 h-10 border border-dark-300 dark:border-dark-600 rounded-lg cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={configuracion.colorSecundario || '#059669'}
-                        onChange={(e) => updateField('colorSecundario', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
-                        placeholder="#059669"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 

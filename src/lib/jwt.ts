@@ -7,6 +7,7 @@ export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
+  name?: string; // Nombre del usuario (opcional)
   firebaseUid: string;
   [key: string]: any;
 }

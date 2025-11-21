@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
       userId: newUser._id.toString(),
       email: newUser.email,
       role: newUser.role,
+      name: newUser.name, // 👈 Agregar el nombre al token
       firebaseUid: firebaseUser.uid,
     });
 

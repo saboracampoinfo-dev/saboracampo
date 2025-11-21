@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Verificar autenticación
-    const token = request.cookies.get('authToken')?.value;
+    const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json(
         { success: false, error: 'No autorizado' },
@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
     await connectDB();
 
     // Verificar autenticación
-    const token = request.cookies.get('authToken')?.value;
+    const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json(
         { success: false, error: 'No autorizado' },
@@ -125,7 +125,7 @@ export async function DELETE(request: NextRequest) {
     await connectDB();
 
     // Verificar autenticación
-    const token = request.cookies.get('authToken')?.value;
+    const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json(
         { success: false, error: 'No autorizado' },

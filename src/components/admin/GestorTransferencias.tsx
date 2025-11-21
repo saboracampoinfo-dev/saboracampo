@@ -94,17 +94,25 @@ export default function GestorTransferencias() {
 
   const cargarSucursales = async () => {
     try {
+      console.log('🔄 Cargando sucursales...');
+      console.log('🍪 Cookies disponibles:', document.cookie);
+      
       const res = await fetch('/api/sucursales?estado=activa', {
         credentials: 'include'
       });
+      
+      console.log('📥 Response status (sucursales):', res.status);
+      
       if (res.ok) {
         const data = await res.json();
         setSucursales(data.data || data.sucursales || []);
+        console.log('✅ Sucursales cargadas:', data.data?.length || data.sucursales?.length);
       } else if (res.status === 401) {
+        console.error('❌ Error 401: No autenticado al cargar sucursales');
         showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
     } catch (error) {
-      console.error('Error al cargar sucursales:', error);
+      console.error('❌ Error al cargar sucursales:', error);
       showErrorToast('Error al cargar sucursales');
     }
   };
@@ -137,17 +145,27 @@ export default function GestorTransferencias() {
       if (filtroEstado && filtroEstado !== 'todas') params.append('estado', filtroEstado);
       if (filtroSucursal) params.append('sucursalId', filtroSucursal);
 
+      console.log('🔄 Cargando transferencias con filtros:', params.toString());
+      console.log('🍪 Cookies disponibles:', document.cookie);
+
       const res = await fetch(`/api/transferencias?${params.toString()}`, {
         credentials: 'include'
       });
+      
+      console.log('📥 Response status (transferencias):', res.status);
+      
       if (res.ok) {
         const data = await res.json();
         setTransferencias(data.transferencias);
+        console.log('✅ Transferencias cargadas:', data.transferencias?.length);
       } else if (res.status === 401) {
+        console.error('❌ Error 401: No autenticado al cargar transferencias');
+        const errorData = await res.json();
+        console.error('❌ Error data:', errorData);
         showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
     } catch (error) {
-      console.error('Error al cargar transferencias:', error);
+      console.error('❌ Error al cargar transferencias:', error);
       showErrorToast('Error al cargar historial de transferencias');
     } finally {
       setLoading(false);
@@ -231,38 +249,55 @@ export default function GestorTransferencias() {
       let exitosas = 0;
       let fallidas = 0;
 
+      console.log('🔄 Iniciando transferencias masivas...');
+      console.log('📦 Total a procesar:', transferenciasValidas.length);
+      console.log('🍪 Cookies disponibles:', document.cookie);
+
       for (const t of transferenciasValidas) {
         const producto = productos?.find(p => p._id === t.productoId);
         if (!producto) continue;
+
+        const requestBody = {
+          sucursalOrigenId: t.sucursalOrigenId,
+          sucursalDestinoId: t.sucursalDestinoId,
+          items: [{
+            productoId: t.productoId,
+            cantidad: t.cantidad
+          }],
+          notas: `Transferencia masiva - ${producto.nombre}`,
+          ejecutarInmediatamente: true
+        };
+
+        console.log('📤 Enviando transferencia:', producto.nombre, requestBody);
 
         const res = await fetch('/api/transferencias', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({
-            sucursalOrigenId: t.sucursalOrigenId,
-            sucursalDestinoId: t.sucursalDestinoId,
-            items: [{
-              productoId: t.productoId,
-              cantidad: t.cantidad
-            }],
-            notas: `Transferencia masiva - ${producto.nombre}`,
-            ejecutarInmediatamente: true
-          })
+          body: JSON.stringify(requestBody)
         });
 
+        console.log('📥 Response status:', res.status);
+
         if (res.status === 401) {
+          console.error('❌ Error 401: No autenticado');
+          const errorData = await res.json();
+          console.error('❌ Error data:', errorData);
           showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
           fallidas++;
           break;
         } else if (res.status === 403) {
+          console.error('❌ Error 403: Sin permisos');
           showErrorToast('No tienes permisos para realizar transferencias.');
           fallidas++;
           break;
 
         } else if (res.ok) {
+          console.log('✅ Transferencia exitosa:', producto.nombre);
           exitosas++;
         } else {
+          const errorData = await res.json();
+          console.error('❌ Error:', res.status, errorData);
           fallidas++;
         }
       }
@@ -294,6 +329,9 @@ export default function GestorTransferencias() {
 
     try {
       setLoading(true);
+      console.log('🔄 Aprobando transferencia:', id);
+      console.log('🍪 Cookies disponibles:', document.cookie);
+
       const res = await fetch(`/api/transferencias/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -301,21 +339,27 @@ export default function GestorTransferencias() {
         body: JSON.stringify({ accion: 'aprobar' })
       });
 
+      console.log('📥 Response status (aprobar):', res.status);
       const data = await res.json();
+      console.log('📥 Response data:', data);
 
       if (res.ok) {
+        console.log('✅ Transferencia aprobada exitosamente');
         showSuccessToast('Transferencia aprobada exitosamente');
         cargarTransferencias();
         cargarProductos();
       } else if (res.status === 401) {
+        console.error('❌ Error 401: No autenticado');
         showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
       } else if (res.status === 403) {
+        console.error('❌ Error 403: Sin permisos');
         showErrorToast('No tienes permisos para aprobar transferencias.');
       } else {
+        console.error('❌ Error:', data);
         showErrorToast(data.error || 'Error al aprobar transferencia');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error al aprobar:', error);
       showErrorToast('Error al aprobar transferencia');
     } finally {
       setLoading(false);
@@ -332,6 +376,9 @@ export default function GestorTransferencias() {
 
     try {
       setLoading(true);
+      console.log('🔄 Cancelando transferencia:', id);
+      console.log('🍪 Cookies disponibles:', document.cookie);
+
       const res = await fetch(`/api/transferencias/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -342,20 +389,26 @@ export default function GestorTransferencias() {
         })
       });
 
+      console.log('📥 Response status (cancelar):', res.status);
       const data = await res.json();
+      console.log('📥 Response data:', data);
 
       if (res.ok) {
+        console.log('✅ Transferencia cancelada exitosamente');
         showSuccessToast('Transferencia cancelada');
         cargarTransferencias();
       } else if (res.status === 401) {
+        console.error('❌ Error 401: No autenticado');
         showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
       } else if (res.status === 403) {
+        console.error('❌ Error 403: Sin permisos');
         showErrorToast('No tienes permisos para cancelar transferencias.');
       } else {
+        console.error('❌ Error:', data);
         showErrorToast(data.error || 'Error al cancelar transferencia');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error al cancelar:', error);
       showErrorToast('Error al cancelar transferencia');
     } finally {
       setLoading(false);
@@ -456,7 +509,7 @@ export default function GestorTransferencias() {
                 <button
                   onClick={ejecutarTransferenciasMasivas}
                   disabled={loading}
-                  className="bg-secondary hover:bg-secondary-700 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+                  className="bg-secondary hover:bg-secondary-400 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
                 >
                   💾 Guardar Todas las Transferencias
                 </button>

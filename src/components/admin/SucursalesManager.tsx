@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { confirmDelete } from '@/utils/alerts';
 import { uploadToCloudinary } from '@/utils/cloudinaryHelpers';
+import * as XLSX from 'xlsx';
 
 interface HorarioDia {
   apertura: string;
@@ -369,6 +370,147 @@ export default function SucursalesManager() {
     }
   };
 
+  const handleExportToExcel = () => {
+    try {
+      // Preparar datos básicos de sucursales
+      const excelDataBasico = sucursales.map((sucursal) => ({
+        'Nombre': sucursal.nombre,
+        'Estado': sucursal.estado.charAt(0).toUpperCase() + sucursal.estado.slice(1),
+        'Ciudad': sucursal.direccion?.ciudad || '-',
+        'Provincia': sucursal.direccion?.provincia || '-',
+        'Dirección Completa': sucursal.direccion 
+          ? `${sucursal.direccion.calle} ${sucursal.direccion.numero}, ${sucursal.direccion.ciudad}, ${sucursal.direccion.provincia} (CP: ${sucursal.direccion.codigoPostal})`
+          : '-',
+        'Teléfono Principal': sucursal.contacto?.telefono || '-',
+        'Teléfono Alternativo': sucursal.contacto?.telefonoAlternativo || '-',
+        'Email': sucursal.contacto?.email || '-',
+        'WhatsApp': sucursal.contacto?.whatsapp || '-',
+        'Capacidad': sucursal.capacidad || '-',
+        'Servicios': sucursal.servicios?.join(', ') || '-',
+        'Encargado': sucursal.encargado?.nombre || '-',
+        'Tel. Encargado': sucursal.encargado?.telefono || '-',
+        'Latitud': sucursal.direccion?.coordenadas?.latitud || '-',
+        'Longitud': sucursal.direccion?.coordenadas?.longitud || '-',
+        'Descripción': sucursal.descripcion || '-',
+      }));
+
+      // Preparar horarios detallados
+      const horariosData: any[] = [];
+      sucursales.forEach((sucursal) => {
+        const horarios = sucursal.horarios;
+        if (horarios) {
+          // Horarios semanales
+          (['lunes', 'martes', 'miercoles', 'jueves', 'viernes'] as const).forEach((dia) => {
+            const horario = horarios.semanal?.[dia];
+            if (horario) {
+              horariosData.push({
+                'Sucursal': sucursal.nombre,
+                'Día': dia.charAt(0).toUpperCase() + dia.slice(1),
+                'Tipo': 'Semanal',
+                'Apertura': horario.cerrado ? 'Cerrado' : horario.apertura,
+                'Cierre': horario.cerrado ? 'Cerrado' : horario.cierre,
+                'Estado': horario.cerrado ? '❌ Cerrado' : '✅ Abierto',
+              });
+            }
+          });
+
+          // Fin de semana
+          (['sabado', 'domingo'] as const).forEach((dia) => {
+            const horario = horarios.finDeSemana?.[dia];
+            if (horario) {
+              horariosData.push({
+                'Sucursal': sucursal.nombre,
+                'Día': dia.charAt(0).toUpperCase() + dia.slice(1),
+                'Tipo': 'Fin de Semana',
+                'Apertura': horario.cerrado ? 'Cerrado' : horario.apertura,
+                'Cierre': horario.cerrado ? 'Cerrado' : horario.cierre,
+                'Estado': horario.cerrado ? '❌ Cerrado' : '✅ Abierto',
+              });
+            }
+          });
+        }
+      });
+
+      // Preparar resumen de contactos
+      const contactosData = sucursales.map((sucursal) => ({
+        'Sucursal': sucursal.nombre,
+        'Teléfono Principal': sucursal.contacto?.telefono || '-',
+        'Teléfono Alternativo': sucursal.contacto?.telefonoAlternativo || '-',
+        'Email': sucursal.contacto?.email || '-',
+        'WhatsApp': sucursal.contacto?.whatsapp || '-',
+        'Encargado': sucursal.encargado?.nombre || '-',
+        'Tel. Encargado': sucursal.encargado?.telefono || '-',
+        'Email Encargado': sucursal.encargado?.email || '-',
+      }));
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+      
+      // Hoja 1: Información General
+      const ws1 = XLSX.utils.json_to_sheet(excelDataBasico);
+      const colWidths1 = [
+        { wch: 25 }, // Nombre
+        { wch: 15 }, // Estado
+        { wch: 20 }, // Ciudad
+        { wch: 20 }, // Provincia
+        { wch: 50 }, // Dirección Completa
+        { wch: 18 }, // Teléfono Principal
+        { wch: 18 }, // Teléfono Alternativo
+        { wch: 30 }, // Email
+        { wch: 18 }, // WhatsApp
+        { wch: 12 }, // Capacidad
+        { wch: 40 }, // Servicios
+        { wch: 25 }, // Encargado
+        { wch: 18 }, // Tel. Encargado
+        { wch: 15 }, // Latitud
+        { wch: 15 }, // Longitud
+        { wch: 50 }, // Descripción
+      ];
+      ws1['!cols'] = colWidths1;
+      XLSX.utils.book_append_sheet(wb, ws1, 'Información General');
+
+      // Hoja 2: Horarios Detallados
+      if (horariosData.length > 0) {
+        const ws2 = XLSX.utils.json_to_sheet(horariosData);
+        const colWidths2 = [
+          { wch: 25 }, // Sucursal
+          { wch: 12 }, // Día
+          { wch: 15 }, // Tipo
+          { wch: 12 }, // Apertura
+          { wch: 12 }, // Cierre
+          { wch: 15 }, // Estado
+        ];
+        ws2['!cols'] = colWidths2;
+        XLSX.utils.book_append_sheet(wb, ws2, 'Horarios');
+      }
+
+      // Hoja 3: Contactos
+      const ws3 = XLSX.utils.json_to_sheet(contactosData);
+      const colWidths3 = [
+        { wch: 25 }, // Sucursal
+        { wch: 18 }, // Teléfono Principal
+        { wch: 18 }, // Teléfono Alternativo
+        { wch: 30 }, // Email
+        { wch: 18 }, // WhatsApp
+        { wch: 25 }, // Encargado
+        { wch: 18 }, // Tel. Encargado
+        { wch: 30 }, // Email Encargado
+      ];
+      ws3['!cols'] = colWidths3;
+      XLSX.utils.book_append_sheet(wb, ws3, 'Contactos');
+
+      // Generar archivo
+      const fechaActual = new Date().toISOString().split('T')[0];
+      const fileName = `sucursales_${fechaActual}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      showSuccessToast(`Excel descargado: ${sucursales.length} sucursales`);
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      showErrorToast('Error al generar el archivo Excel');
+    }
+  };
+
   const toggleEstado = async (sucursal: Sucursal) => {
     // Simple: alternar entre activa / inactiva (mantenimiento solo desde el formulario)
     const nuevoEstado: Sucursal['estado'] =
@@ -413,16 +555,25 @@ export default function SucursalesManager() {
 
   return (
     <div className="space-y-3 md:space-y-6 px-1 md:px-0">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">
           Gestión de Sucursales
         </h2>
-        <button
-          onClick={() => handleOpenModal()}
-          className="bg-primary hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
-        >
-          + Nueva Sucursal
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportToExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm md:text-base"
+            title="Descargar listado en Excel"
+          >
+            📊 Exportar Excel
+          </button>
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-primary hover:bg-primary-700 text-white px-4 md:px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base"
+          >
+            + Nueva Sucursal
+          </button>
+        </div>
       </div>
 
       <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg overflow-hidden border border-dark-200 dark:border-dark-700">
@@ -531,7 +682,7 @@ export default function SucursalesManager() {
               </div>
 
               {/* Verificación de Cloudinary */}
-              {(!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || !process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) && (
+              {(!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ) && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4">
                   <div className="flex items-start">
                     <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">

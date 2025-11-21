@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { confirmDelete } from '@/utils/alerts';
+import * as XLSX from 'xlsx';
 
 interface User {
   _id: string;
@@ -262,6 +263,109 @@ export default function UsersManager() {
     console.log('=== FIN handleSubmit ===');
   };
 
+  const handleExportToExcel = () => {
+    try {
+      // Preparar datos para el Excel
+      const excelData = filteredUsers.map((user: any) => ({
+        'Nombre': user.name,
+        'Email': user.email,
+        'Rol': user.role,
+        'Teléfono': user.telefono || '-',
+        'Domicilio': user.domicilio || '-',
+        'Tipo Documento': user.tipoDocumento || '-',
+        'Nro. Documento': user.nroDocumento || '-',
+        'Precio por Hora (AR$)': (user.role === 'seller' || user.role === 'cashier' || user.role === 'vendedor' || user.role === 'cajero') 
+          ? (user.precioHora || 0) 
+          : '-',
+        'Horas Acumuladas': (user.role === 'seller' || user.role === 'cashier' || user.role === 'vendedor' || user.role === 'cajero')
+          ? (user.horasAcumuladas || 0)
+          : '-',
+        'Total Salario (AR$)': (user.role === 'seller' || user.role === 'cashier' || user.role === 'vendedor' || user.role === 'cajero')
+          ? ((user.horasAcumuladas || 0) * (user.precioHora || 0)).toFixed(2)
+          : '-',
+        'Porcentaje Comisión (%)': (user.role === 'seller' || user.role === 'cashier' || user.role === 'vendedor' || user.role === 'cajero')
+          ? (user.porcentajeComision || 0)
+          : '-',
+        'Fecha de Registro': new Date(user.createdAt).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+      }));
+
+      // Crear resumen por rol
+      const resumenPorRol: any[] = [];
+      const roles = ['admin', 'seller', 'vendedor', 'cashier', 'cajero', 'user'];
+      
+      roles.forEach(rol => {
+        const usuariosDelRol = filteredUsers.filter((u: User) => u.role === rol);
+        if (usuariosDelRol.length > 0) {
+          const totalHoras = usuariosDelRol.reduce((sum, u) => sum + (u.horasAcumuladas || 0), 0);
+          const totalSalarios = usuariosDelRol.reduce((sum, u) => 
+            sum + ((u.horasAcumuladas || 0) * (u.precioHora || 0)), 0
+          );
+          
+          resumenPorRol.push({
+            'Rol': rol,
+            'Cantidad de Usuarios': usuariosDelRol.length,
+            'Total Horas Acumuladas': totalHoras.toFixed(2),
+            'Total Salarios (AR$)': totalSalarios.toFixed(2),
+          });
+        }
+      });
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+      
+      // Hoja 1: Usuarios
+      const ws1 = XLSX.utils.json_to_sheet(excelData);
+      
+      // Ajustar ancho de columnas
+      const colWidths = [
+        { wch: 25 }, // Nombre
+        { wch: 30 }, // Email
+        { wch: 15 }, // Rol
+        { wch: 15 }, // Teléfono
+        { wch: 30 }, // Domicilio
+        { wch: 15 }, // Tipo Documento
+        { wch: 15 }, // Nro. Documento
+        { wch: 18 }, // Precio por Hora
+        { wch: 18 }, // Horas Acumuladas
+        { wch: 18 }, // Total Salario
+        { wch: 20 }, // Porcentaje Comisión
+        { wch: 20 }, // Fecha de Registro
+      ];
+      ws1['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws1, 'Usuarios');
+
+      // Hoja 2: Resumen por Rol
+      if (resumenPorRol.length > 0) {
+        const ws2 = XLSX.utils.json_to_sheet(resumenPorRol);
+        const colWidths2 = [
+          { wch: 15 }, // Rol
+          { wch: 20 }, // Cantidad
+          { wch: 25 }, // Total Horas
+          { wch: 20 }, // Total Salarios
+        ];
+        ws2['!cols'] = colWidths2;
+        XLSX.utils.book_append_sheet(wb, ws2, 'Resumen por Rol');
+      }
+
+      // Generar archivo
+      const fechaActual = new Date().toISOString().split('T')[0];
+      const fileName = `usuarios_${fechaActual}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      showSuccessToast(`Excel descargado: ${excelData.length} usuarios`);
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      showErrorToast('Error al generar el archivo Excel');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     const confirmed = await confirmDelete('¿Eliminar este usuario?');
     if (!confirmed) return;
@@ -305,6 +409,13 @@ export default function UsersManager() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 md:w-64 px-3 md:px-4 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
           />
+          <button
+            onClick={handleExportToExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+            title="Descargar listado en Excel"
+          >
+            📊 Exportar Excel
+          </button>
           <button
             onClick={() => handleOpenModal()}
             className="bg-primary hover:bg-primary-700 text-white px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base whitespace-nowrap"

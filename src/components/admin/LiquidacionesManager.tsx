@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { confirmDelete } from '@/utils/alerts';
+import * as XLSX from 'xlsx';
 
 interface User {
   _id: string;
@@ -45,6 +46,9 @@ export default function LiquidacionesManager() {
   const [showRegistrarHoras, setShowRegistrarHoras] = useState(false);
   const [showRegistrarCompra, setShowRegistrarCompra] = useState(false);
   const [showLiquidar, setShowLiquidar] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'nombre' | 'horas' | 'total' | 'ultimaLiq' | 'role'>('nombre');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   const [horasForm, setHorasForm] = useState({
     horas: 0,
@@ -101,6 +105,141 @@ export default function LiquidacionesManager() {
       }
     } catch (error) {
       showErrorToast('Error al cargar historial');
+    }
+  };
+
+  const handleExportarHistorial = () => {
+    if (!selectedUser) return;
+
+    try {
+      // Preparar datos de pagos
+      const pagosData = historial.map((pago, index) => ({
+        'N°': index + 1,
+        'Fecha Pago': new Date(pago.createdAt).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        'Período Inicio': new Date(pago.period.start).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        'Período Fin': new Date(pago.period.end).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        'Horas Trabajadas': pago.hoursWorked,
+        'Monto Pagado (AR$)': pago.amount.toFixed(2),
+        'Método de Pago': pago.metodoPago === 'efectivo' ? 'Efectivo' : 'Transferencia',
+        'N° Comprobante': pago.nroComprobante || '-',
+        'Notas': pago.notes || '-',
+      }));
+
+      // Preparar datos de compras
+      const comprasData = historialCompras.map((compra, index) => ({
+        'N°': index + 1,
+        'Fecha Compra': new Date(compra.fecha).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        'Fecha Registro': new Date(compra.createdAt).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        }),
+        'Monto (AR$)': compra.monto.toFixed(2),
+        'Descripción': compra.descripcion,
+      }));
+
+      // Calcular resumen
+      const totalPagos = historial.reduce((sum, pago) => sum + pago.amount, 0);
+      const totalHoras = historial.reduce((sum, pago) => sum + pago.hoursWorked, 0);
+      const totalCompras = historialCompras.reduce((sum, compra) => sum + compra.monto, 0);
+
+      const resumenData = [
+        {
+          'Concepto': 'Total de Pagos Realizados',
+          'Valor': `AR$ ${totalPagos.toFixed(2)}`,
+        },
+        {
+          'Concepto': 'Total de Horas Trabajadas',
+          'Valor': `${totalHoras} horas`,
+        },
+        {
+          'Concepto': 'Total de Compras Descontadas',
+          'Valor': `AR$ ${totalCompras.toFixed(2)}`,
+        },
+        {
+          'Concepto': 'Horas Pendientes Actuales',
+          'Valor': `${selectedUser.horasAcumuladas || 0} horas`,
+        },
+        {
+          'Concepto': 'Compras Pendientes Actuales',
+          'Valor': `AR$ ${(selectedUser.comprasAcumuladas || 0).toFixed(2)}`,
+        },
+        {
+          'Concepto': 'Precio por Hora',
+          'Valor': `AR$ ${selectedUser.precioHora || 0}`,
+        },
+      ];
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+
+      // Hoja 1: Resumen
+      const ws1 = XLSX.utils.json_to_sheet(resumenData);
+      const colWidths1 = [
+        { wch: 35 }, // Concepto
+        { wch: 25 }, // Valor
+      ];
+      ws1['!cols'] = colWidths1;
+      XLSX.utils.book_append_sheet(wb, ws1, 'Resumen');
+
+      // Hoja 2: Pagos
+      if (pagosData.length > 0) {
+        const ws2 = XLSX.utils.json_to_sheet(pagosData);
+        const colWidths2 = [
+          { wch: 5 },  // N°
+          { wch: 15 }, // Fecha Pago
+          { wch: 15 }, // Período Inicio
+          { wch: 15 }, // Período Fin
+          { wch: 18 }, // Horas Trabajadas
+          { wch: 20 }, // Monto Pagado
+          { wch: 18 }, // Método de Pago
+          { wch: 18 }, // N° Comprobante
+          { wch: 40 }, // Notas
+        ];
+        ws2['!cols'] = colWidths2;
+        XLSX.utils.book_append_sheet(wb, ws2, 'Pagos Realizados');
+      }
+
+      // Hoja 3: Compras
+      if (comprasData.length > 0) {
+        const ws3 = XLSX.utils.json_to_sheet(comprasData);
+        const colWidths3 = [
+          { wch: 5 },  // N°
+          { wch: 15 }, // Fecha Compra
+          { wch: 15 }, // Fecha Registro
+          { wch: 15 }, // Monto
+          { wch: 50 }, // Descripción
+        ];
+        ws3['!cols'] = colWidths3;
+        XLSX.utils.book_append_sheet(wb, ws3, 'Compras Realizadas');
+      }
+
+      // Generar archivo
+      const fechaActual = new Date().toISOString().split('T')[0];
+      const nombreSanitizado = selectedUser.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `historial_${nombreSanitizado}_${fechaActual}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      showSuccessToast(`Historial de ${selectedUser.name} descargado exitosamente`);
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      showErrorToast('Error al generar el archivo Excel');
     }
   };
 
@@ -211,14 +350,110 @@ export default function LiquidacionesManager() {
     }
   };
 
+  // Filtrar y ordenar usuarios
+  const filteredAndSortedUsers = users
+    .filter((user) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        user.role.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'nombre':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'role':
+          comparison = a.role.localeCompare(b.role);
+          break;
+        case 'horas':
+          comparison = (a.horasAcumuladas || 0) - (b.horasAcumuladas || 0);
+          break;
+        case 'total':
+          const totalA = ((a.horasAcumuladas || 0) * (a.precioHora || 0)) - (a.comprasAcumuladas || 0);
+          const totalB = ((b.horasAcumuladas || 0) * (b.precioHora || 0)) - (b.comprasAcumuladas || 0);
+          comparison = totalA - totalB;
+          break;
+        case 'ultimaLiq':
+          const dateA = a.ultimaLiquidacion ? new Date(a.ultimaLiquidacion).getTime() : 0;
+          const dateB = b.ultimaLiquidacion ? new Date(b.ultimaLiquidacion).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+  const handleSort = (field: 'nombre' | 'horas' | 'total' | 'ultimaLiq' | 'role') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortBy !== field) {
+      return (
+        <svg className="w-4 h-4 inline-block ml-1 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortOrder === 'asc' ? (
+      <svg className="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-primary">Cargando liquidaciones...</div>;
   }
 
   return (
     <div className="space-y-3 md:space-y-6 px-1 md:px-0">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-dark-900 dark:text-light-500">Liquidación de Pagos</h2>
+        
+        {/* Buscador */}
+        <div className="w-full md:w-auto flex-1 md:max-w-md">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por nombre, email o rol..."
+              className="w-full px-4 py-2 pl-10 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400">
+              🔍
+            </span>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-dark-600 dark:hover:text-dark-200"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Contador de resultados */}
+      <div className="text-sm text-dark-600 dark:text-dark-400">
+        Mostrando {filteredAndSortedUsers.length} {filteredAndSortedUsers.length === 1 ? 'usuario' : 'usuarios'}
+        {searchTerm && ` (filtrados de ${users.length} totales)`}
       </div>
 
       <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg overflow-hidden border border-dark-200 dark:border-dark-700">
@@ -226,27 +461,52 @@ export default function LiquidacionesManager() {
           <table className="min-w-full divide-y divide-dark-200 dark:divide-dark-700 text-xs md:text-sm">
             <thead className="bg-dark-100 dark:bg-dark-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Rol</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Horas</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Precio/H</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Compras</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Total Neto</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Última Liq.</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Acciones</th>
+                <th 
+                  className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('nombre')}
+                >
+                  Nombre <SortIcon field="nombre" />
+                </th>
+                <th 
+                  className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('role')}
+                >
+                  Rol <SortIcon field="role" />
+                </th>
+                <th 
+                  className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('horas')}
+                >
+                  Horas <SortIcon field="horas" />
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Precio/H</th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Compras</th>
+                <th 
+                  className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('total')}
+                >
+                  Total Neto <SortIcon field="total" />
+                </th>
+                <th 
+                  className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('ultimaLiq')}
+                >
+                  Última Liq. <SortIcon field="ultimaLiq" />
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
-              {users.map((user) => {
+              {filteredAndSortedUsers.map((user) => {
                 const montoBruto = (user.horasAcumuladas || 0) * (user.precioHora || 0);
                 const compras = user.comprasAcumuladas || 0;
                 const totalNeto = montoBruto - compras;
                 return (
-                  <tr key={user._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">
+                  <tr key={user._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors text-center">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">
                       {user.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-4 whitespace-nowrap text-center">
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         user.role === 'vendedor' || user.role === 'seller' ? 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-200' :
                         'bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-200'
@@ -254,24 +514,24 @@ export default function LiquidacionesManager() {
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-900 dark:text-light-500 font-semibold">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-dark-900 dark:text-light-500 font-semibold text-center">
                       {user.horasAcumuladas || 0}h
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400 text-center">
                       AR$ {user.precioHora || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-error dark:text-error-400 font-semibold">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-error dark:text-error-400 font-semibold text-center">
                       {compras > 0 ? `-AR$ ${compras.toFixed(2)}` : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm font-bold text-primary">
                       AR$ {totalNeto.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400">
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-dark-600 dark:text-dark-400 text-center">
                       {user.ultimaLiquidacion 
                         ? new Date(user.ultimaLiquidacion).toLocaleDateString()
                         : 'Nunca'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <td className="px-3 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
                       <button
                         onClick={() => {
                           setSelectedUser(user);
@@ -279,14 +539,14 @@ export default function LiquidacionesManager() {
                         }}
                         className="text-secondary hover:text-secondary-700 font-semibold transition-colors cursor-pointer"
                       >
-                        + Horas
+                        + Hs
                       </button>
                       <button
                         onClick={() => {
                           setSelectedUser(user);
                           setShowRegistrarCompra(true);
                         }}
-                        className="text-error hover:text-error-700 font-semibold transition-colors cursor-pointer"
+                        className="text-secondary hover:text-secondary-700 font-semibold transition-colors cursor-pointer"
                       >
                         + Compra
                       </button>
@@ -295,14 +555,14 @@ export default function LiquidacionesManager() {
                           setSelectedUser(user);
                           setShowLiquidar(true);
                         }}
-                        className="text-primary hover:text-primary-700 font-semibold transition-colors cursor-pointer"
+                        className="text-secondary hover:text-secondary-700 font-semibold transition-colors cursor-pointer"
                         disabled={!user.horasAcumuladas || user.horasAcumuladas === 0}
                       >
                         Liquidar
                       </button>
                       <button
                         onClick={() => handleVerHistorial(user)}
-                        className="text-dark-600 hover:text-dark-900 dark:text-dark-400 dark:hover:text-light-500 font-semibold transition-colors cursor-pointer"
+                        className="text-secondary hover:text-secondary-700 font-semibold transition-colors cursor-pointer"
                       >
                         Historial
                       </button>
@@ -317,6 +577,12 @@ export default function LiquidacionesManager() {
         {users.length === 0 && (
           <div className="text-center py-8 text-dark-600 dark:text-dark-400">
             No hay vendedores ni cajeros registrados
+          </div>
+        )}
+
+        {users.length > 0 && filteredAndSortedUsers.length === 0 && (
+          <div className="text-center py-8 text-dark-600 dark:text-dark-400">
+            No se encontraron resultados para "{searchTerm}"
           </div>
         )}
       </div>
@@ -673,7 +939,14 @@ export default function LiquidacionesManager() {
               </div>
             </div>
             
-            <div className="flex justify-end pt-4 mt-4 border-t border-dark-200 dark:border-dark-700">
+            <div className="flex justify-between items-center pt-4 mt-4 border-t border-dark-200 dark:border-dark-700">
+              <button
+                onClick={handleExportarHistorial}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+                disabled={historial.length === 0 && historialCompras.length === 0}
+              >
+                📊 Exportar a Excel
+              </button>
               <button
                 onClick={() => {
                   setShowHistorial(false);

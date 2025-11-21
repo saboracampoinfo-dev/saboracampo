@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { confirmDelete } from '@/utils/alerts';
 import UploadImage from './UploadImage';
+import * as XLSX from 'xlsx';
 
 interface StockSucursal {
   sucursalId: string;
@@ -442,6 +443,71 @@ export default function ProductsManager() {
     cantidad: 0,
   });
 
+  const handleExportToExcel = () => {
+    try {
+      // Preparar datos para el Excel
+      const excelData = products.map((product) => ({
+        'SKU': product.sku || '-',
+        'Nombre': product.nombre,
+        'Categoría': product.categoria,
+        'Subcategoría': product.subcategoria || '-',
+        'Precio': product.precio,
+        'Precio Promoción': product.precioPromocion || '-',
+        'Stock Total': product.stock,
+        'Stock Mínimo': product.stockMinimo,
+        'Unidad': product.unidadMedida,
+        'Destacado': product.destacado ? 'Sí' : 'No',
+        'Estado': product.activo ? 'Activo' : 'Inactivo',
+        'Código Barras': product.codigoBarras || '-',
+        'Proveedor': product.proveedor || '-',
+        'Origen': product.origen || '-',
+        'Peso (kg)': product.peso || '-',
+        'Visitas': product.visitas,
+        'Ventas': product.ventas,
+        'Descripción': product.descripcion || '-',
+      }));
+
+      // Agregar detalle de stock por sucursal en una hoja separada
+      const stockPorSucursalData: any[] = [];
+      products.forEach((product) => {
+        if (product.stockPorSucursal && product.stockPorSucursal.length > 0) {
+          product.stockPorSucursal.forEach((stock) => {
+            stockPorSucursalData.push({
+              'Producto': product.nombre,
+              'SKU': product.sku || '-',
+              'Sucursal': stock.sucursalNombre,
+              'Cantidad': stock.cantidad,
+              'Stock Mínimo': stock.stockMinimo,
+              'Estado': stock.cantidad <= stock.stockMinimo ? '⚠️ Bajo' : '✅ OK',
+            });
+          });
+        }
+      });
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+      
+      // Hoja 1: Productos generales
+      const ws1 = XLSX.utils.json_to_sheet(excelData);
+      XLSX.utils.book_append_sheet(wb, ws1, 'Productos');
+
+      // Hoja 2: Stock por sucursal (si hay datos)
+      if (stockPorSucursalData.length > 0) {
+        const ws2 = XLSX.utils.json_to_sheet(stockPorSucursalData);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Stock por Sucursal');
+      }
+
+      // Generar archivo
+      const fileName = `productos_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      showSuccessToast('Excel descargado correctamente');
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      showErrorToast('Error al generar el archivo Excel');
+    }
+  };
+
   const handleTransferStock = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -450,37 +516,63 @@ export default function ProductsManager() {
     try {
       const destinoSucursal = sucursales.find(s => s._id === transferData.destinoSucursalId);
       
+      // 🔍 LOG: Datos de la transferencia
+      console.log('🔄 INICIANDO TRANSFERENCIA DE STOCK');
+      console.log('📦 Producto:', transferProduct.nombre, '(ID:', transferProduct._id, ')');
+      console.log('🏢 Origen:', transferData.origenSucursalId);
+      console.log('🏢 Destino:', transferData.destinoSucursalId, '-', destinoSucursal?.nombre);
+      console.log('📊 Cantidad:', transferData.cantidad);
+      
+      // 🔍 LOG: Verificar cookies antes de la petición
+      console.log('🍪 Cookies disponibles:', document.cookie);
+      const hasAuthToken = document.cookie.includes('authToken');
+      console.log('✅ ¿Tiene authToken?:', hasAuthToken);
+      
+      const requestBody = {
+        productoId: transferProduct._id,
+        origenSucursalId: transferData.origenSucursalId,
+        destinoSucursalId: transferData.destinoSucursalId,
+        destinoSucursalNombre: destinoSucursal?.nombre,
+        cantidad: transferData.cantidad,
+      };
+      
+      console.log('📤 Body de la petición:', requestBody);
+      
       const response = await fetch('/api/products/transfer', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Importante: incluir cookies de autenticación
-        body: JSON.stringify({
-          productoId: transferProduct._id,
-          origenSucursalId: transferData.origenSucursalId,
-          destinoSucursalId: transferData.destinoSucursalId,
-          destinoSucursalNombre: destinoSucursal?.nombre,
-          cantidad: transferData.cantidad,
-        }),
+        body: JSON.stringify(requestBody),
       });
+      
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response ok:', response.ok);
 
       const data = await response.json();
+      console.log('📥 Response data:', data);
 
       if (response.ok && data.success) {
+        console.log('✅ TRANSFERENCIA EXITOSA');
         showSuccessToast(data.message || 'Transferencia realizada');
         fetchProducts();
         handleCloseTransferModal();
         setTransferData({ origenSucursalId: '', destinoSucursalId: '', cantidad: 0 });
       } else if (response.status === 401) {
+        console.error('❌ ERROR 401: No autenticado');
+        console.error('🔍 Verifica que la cookie authToken esté presente');
+        console.error('🍪 Cookies actuales:', document.cookie);
         showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
       } else if (response.status === 403) {
+        console.error('❌ ERROR 403: Sin permisos');
         showErrorToast('No tienes permisos para realizar transferencias.');
       } else {
+        console.error('❌ ERROR:', response.status, data);
         showErrorToast(data.error || 'Error en la transferencia');
       }
     } catch (error) {
-      console.error('Error al transferir stock:', error);
+      console.error('❌ EXCEPCIÓN al transferir stock:', error);
       showErrorToast('Error al transferir stock. Verifica tu conexión.');
     }
   };
@@ -494,6 +586,13 @@ export default function ProductsManager() {
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Productos</h2>
         <div className="flex gap-2">
+          <button
+            onClick={handleExportToExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+            title="Descargar listado en Excel"
+          >
+            📊 Exportar Excel
+          </button>
           {selectedProducts.length > 0 && (
             <button
               onClick={() => setIsMassiveEditOpen(true)}
@@ -585,9 +684,15 @@ export default function ProductsManager() {
                       <div className="mt-1 space-y-1">
                         {product.stockPorSucursal.map((stockSuc: StockSucursal) => (
                           <div key={stockSuc.sucursalId} className="text-xs">
-                            <span className={stockSuc.cantidad <= stockSuc.stockMinimo ? 'text-error font-semibold' : 'text-dark-500'}>
-                              {stockSuc.sucursalNombre}: {stockSuc.cantidad}
-                            </span>
+                            {stockSuc.cantidad < stockSuc.stockMinimo ? (
+                              <span className="text-error font-semibold text-red-400">
+                                {stockSuc.sucursalNombre}: {stockSuc.cantidad} ❌
+                              </span>
+                            ) : (
+                              <span className="text-green-400 dark:text-success-400 font-semibold">
+                                {stockSuc.sucursalNombre}: {stockSuc.cantidad} ✅
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>

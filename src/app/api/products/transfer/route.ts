@@ -7,30 +7,55 @@ import { verifyToken } from '@/lib/jwt';
 // POST /api/products/transfer - Transferir stock entre sucursales
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔄 [API] POST /api/products/transfer - Iniciando transferencia');
+    
     await connectDB();
 
-    // Verificar autenticación
-    const token = request.cookies.get('authToken')?.value;
+    // 🔍 LOG: Verificar cookies recibidas
+    const allCookies = request.cookies.getAll();
+    console.log('🍪 [API] Cookies recibidas:', allCookies.map(c => ({ name: c.name, hasValue: !!c.value })));
+    
+    // Verificar autenticación - IMPORTANTE: usar 'auth-token' con guión
+    const token = request.cookies.get('auth-token')?.value;
+    console.log('🔑 [API] auth-token encontrado:', !!token);
+    
     if (!token) {
+      console.error('❌ [API] No se encontró auth-token en las cookies');
+      console.error('🔍 [API] Cookies disponibles:', allCookies.map(c => c.name).join(', '));
       return NextResponse.json(
         { success: false, error: 'No autorizado' },
         { status: 401 }
       );
     }
 
+    console.log('🔓 [API] Verificando token...');
     const decoded = await verifyToken(token);
+    console.log('👤 [API] Token decodificado:', decoded ? { userId: decoded.userId, role: decoded.role } : null);
+    
     if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'vendedor')) {
+      console.error('❌ [API] Token inválido o sin permisos. Role:', decoded?.role);
       return NextResponse.json(
         { success: false, error: 'Sin permisos suficientes' },
         { status: 403 }
       );
     }
+    
+    console.log('✅ [API] Usuario autenticado:', decoded.userId, '- Role:', decoded.role);
 
     const body = await request.json();
     const { productoId, origenSucursalId, destinoSucursalId, cantidad } = body;
+    
+    console.log('📦 [API] Datos recibidos:', {
+      productoId,
+      origenSucursalId,
+      destinoSucursalId,
+      cantidad,
+      destinoSucursalNombre: body.destinoSucursalNombre
+    });
 
     // Validaciones
     if (!productoId || !origenSucursalId || !destinoSucursalId || !cantidad) {
+      console.error('❌ [API] Faltan datos requeridos');
       return NextResponse.json(
         { success: false, error: 'Faltan datos requeridos' },
         { status: 400 }
@@ -145,6 +170,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log('✅ [API] Transferencia completada exitosamente');
+    
     return NextResponse.json({
       success: true,
       data: producto,
@@ -152,7 +179,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error en transferencia de stock:', error);
+    console.error('❌ [API] Error en transferencia de stock:', error);
+    console.error('❌ [API] Stack trace:', error.stack);
     return NextResponse.json(
       { success: false, error: error.message || 'Error al transferir stock' },
       { status: 500 }

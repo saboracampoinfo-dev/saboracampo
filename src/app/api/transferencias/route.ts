@@ -8,13 +8,28 @@ import { authenticateRequest } from '@/lib/auth';
 // GET - Listar transferencias con filtros
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔄 [API] GET /api/transferencias');
     const { authenticated, user } = await authenticateRequest(request);
-    if (!authenticated || !user || user.rol !== 'administrador') {
+    console.log('👤 [API] Authenticated:', authenticated, '| User:', user);
+    
+    if (!authenticated || !user) {
+      console.error('❌ [API] Usuario no autenticado');
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       );
     }
+    
+    // Verificar role (en inglés) - El JWT devuelve "role" no "rol"
+    if (user.role !== 'admin' && user.role !== 'vendedor') {
+      console.error('❌ [API] Usuario sin permisos. Role:', user.role);
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+    
+    console.log('✅ [API] Usuario autorizado:', user.userId, '- Role:', user.role);
 
     await connectDB();
 
@@ -74,13 +89,28 @@ export async function GET(request: NextRequest) {
 // POST - Crear nueva transferencia masiva
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔄 [API] POST /api/transferencias');
     const { authenticated, user } = await authenticateRequest(request);
-    if (!authenticated || !user || user.rol !== 'administrador') {
+    console.log('👤 [API] Authenticated:', authenticated, '| User:', user);
+    
+    if (!authenticated || !user) {
+      console.error('❌ [API] Usuario no autenticado');
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       );
     }
+    
+    // Verificar role (en inglés) - El JWT devuelve "role" no "rol"
+    if (user.role !== 'admin' && user.role !== 'vendedor') {
+      console.error('❌ [API] Usuario sin permisos. Role:', user.role);
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+    
+    console.log('✅ [API] Usuario autorizado:', user.userId, '- Role:', user.role);
 
     await connectDB();
 
@@ -188,8 +218,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🔍 LOG: Datos del usuario para crear transferencia
+    console.log('👤 [API] Datos del usuario completos:', JSON.stringify(user, null, 2));
+    console.log('📝 [API] user.userId:', user.userId);
+    console.log('📝 [API] user.name:', user.name);
+    console.log('📝 [API] user.email:', user.email);
+    console.log('📝 [API] user.role:', user.role);
+    
+    // Verificar si existe el nombre
+    if (!user.name) {
+      console.error('⚠️ [API] ADVERTENCIA: Usuario no tiene nombre en el token');
+      console.error('⚠️ [API] Se usará el email como fallback');
+    }
+
     // Crear registro de transferencia
-    const transferencia = new TransferenciaStock({
+    const transferenciaData = {
       sucursalOrigenId,
       sucursalOrigenNombre: sucursalOrigen.nombre,
       sucursalDestinoId,
@@ -199,14 +242,18 @@ export async function POST(request: NextRequest) {
       totalCantidad: itemsDetallados.reduce((sum, item) => sum + item.cantidad, 0),
       estado: ejecutarInmediatamente ? 'completada' : 'pendiente',
       creadoPor: user.userId,
-      creadoPorNombre: user.nombre,
+      creadoPorNombre: user.name || user.email || 'Usuario',
       notas
-    });
+    };
+    
+    console.log('📦 [API] Datos de la transferencia a crear:', JSON.stringify(transferenciaData, null, 2));
+    
+    const transferencia = new TransferenciaStock(transferenciaData);
 
     // Si se ejecuta inmediatamente, actualizar stock
     if (ejecutarInmediatamente) {
       transferencia.aprobadoPor = user.userId;
-      transferencia.aprobadoPorNombre = user.nombre;
+      transferencia.aprobadoPorNombre = user.name || user.email || 'Usuario';
       transferencia.fechaAprobacion = new Date();
 
       // Actualizar stock de todos los productos
