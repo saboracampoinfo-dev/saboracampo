@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { showConfirmAlert, showPromptAlert } from '@/utils/alerts';
+import * as XLSX from 'xlsx';
 
 interface Sucursal {
   _id: string;
@@ -82,6 +83,11 @@ export default function GestorTransferencias() {
   // Estados para filtros de historial
   const [filtroEstado, setFiltroEstado] = useState<string>('todas');
   const [filtroSucursal, setFiltroSucursal] = useState<string>('');
+  const [filtroSucursalOrigen, setFiltroSucursalOrigen] = useState<string>('');
+  const [filtroSucursalDestino, setFiltroSucursalDestino] = useState<string>('');
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState<string>('');
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState<string>('');
+  const [busquedaProductoHistorial, setBusquedaProductoHistorial] = useState<string>('');
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -169,6 +175,185 @@ export default function GestorTransferencias() {
       showErrorToast('Error al cargar historial de transferencias');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Filtrar transferencias localmente con los nuevos filtros
+  const transferenciasFiltradas = transferencias.filter(t => {
+    // Filtro por sucursal origen
+    if (filtroSucursalOrigen && t.sucursalOrigenId !== filtroSucursalOrigen) return false;
+    
+    // Filtro por sucursal destino
+    if (filtroSucursalDestino && t.sucursalDestinoId !== filtroSucursalDestino) return false;
+    
+    // Filtro por fecha desde
+    if (filtroFechaDesde && new Date(t.fechaCreacion) < new Date(filtroFechaDesde)) return false;
+    
+    // Filtro por fecha hasta
+    if (filtroFechaHasta) {
+      const fechaHasta = new Date(filtroFechaHasta);
+      fechaHasta.setHours(23, 59, 59, 999); // Incluir todo el día
+      if (new Date(t.fechaCreacion) > fechaHasta) return false;
+    }
+    
+    // Filtro por búsqueda de producto
+    if (busquedaProductoHistorial) {
+      const busquedaLower = busquedaProductoHistorial.toLowerCase();
+      const tieneProducto = t.items.some(item => 
+        item.nombreProducto.toLowerCase().includes(busquedaLower)
+      );
+      if (!tieneProducto) return false;
+    }
+    
+    return true;
+  });
+
+  const handleExportarHistorial = () => {
+    try {
+      if (transferenciasFiltradas.length === 0) {
+        showErrorToast('No hay transferencias para exportar');
+        return;
+      }
+
+      // Preparar datos generales de transferencias
+      const transferenciasData = transferenciasFiltradas.map((t, index) => ({
+        'N°': index + 1,
+        'Fecha': new Date(t.fechaCreacion).toLocaleDateString('es-AR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        'Sucursal Origen': t.sucursalOrigenNombre,
+        'Sucursal Destino': t.sucursalDestinoNombre,
+        'Total Productos': t.totalItems,
+        'Total Unidades': t.totalCantidad,
+        'Estado': t.estado.toUpperCase(),
+        'Creado Por': t.creadoPorNombre,
+        'Aprobado Por': t.aprobadoPorNombre || '-',
+        'Fecha Aprobación': t.fechaAprobacion 
+          ? new Date(t.fechaAprobacion).toLocaleDateString('es-AR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : '-',
+        'Notas': t.notas || '-',
+        'Motivo Cancelación': t.motivoCancelacion || '-',
+      }));
+
+      // Preparar detalles de items por transferencia
+      const itemsData: any[] = [];
+      transferenciasFiltradas.forEach((t, idx) => {
+        t.items.forEach(item => {
+          itemsData.push({
+            'N° Transferencia': idx + 1,
+            'Fecha': new Date(t.fechaCreacion).toLocaleDateString('es-AR'),
+            'Producto': item.nombreProducto,
+            'Cantidad Transferida': item.cantidad,
+            'Origen': t.sucursalOrigenNombre,
+            'Stock Origen Antes': item.stockOrigenAntes,
+            'Stock Origen Después': item.stockOrigenDespues,
+            'Destino': t.sucursalDestinoNombre,
+            'Stock Destino Antes': item.stockDestinoAntes,
+            'Stock Destino Después': item.stockDestinoDespues,
+            'Estado': t.estado.toUpperCase(),
+          });
+        });
+      });
+
+      // Preparar resumen por sucursal
+      const resumenPorSucursal: Record<string, { enviadas: number, recibidas: number, unidadesEnviadas: number, unidadesRecibidas: number }> = {};
+      
+      transferenciasFiltradas.forEach(t => {
+        if (t.estado === 'completada') {
+          // Origen
+          if (!resumenPorSucursal[t.sucursalOrigenNombre]) {
+            resumenPorSucursal[t.sucursalOrigenNombre] = { enviadas: 0, recibidas: 0, unidadesEnviadas: 0, unidadesRecibidas: 0 };
+          }
+          resumenPorSucursal[t.sucursalOrigenNombre].enviadas++;
+          resumenPorSucursal[t.sucursalOrigenNombre].unidadesEnviadas += t.totalCantidad;
+
+          // Destino
+          if (!resumenPorSucursal[t.sucursalDestinoNombre]) {
+            resumenPorSucursal[t.sucursalDestinoNombre] = { enviadas: 0, recibidas: 0, unidadesEnviadas: 0, unidadesRecibidas: 0 };
+          }
+          resumenPorSucursal[t.sucursalDestinoNombre].recibidas++;
+          resumenPorSucursal[t.sucursalDestinoNombre].unidadesRecibidas += t.totalCantidad;
+        }
+      });
+
+      const resumenData = Object.entries(resumenPorSucursal).map(([sucursal, datos]) => ({
+        'Sucursal': sucursal,
+        'Transferencias Enviadas': datos.enviadas,
+        'Unidades Enviadas': datos.unidadesEnviadas,
+        'Transferencias Recibidas': datos.recibidas,
+        'Unidades Recibidas': datos.unidadesRecibidas,
+        'Balance Neto': datos.unidadesRecibidas - datos.unidadesEnviadas,
+      }));
+
+      // Preparar estadísticas generales
+      const totalCompletadas = transferenciasFiltradas.filter(t => t.estado === 'completada').length;
+      const totalPendientes = transferenciasFiltradas.filter(t => t.estado === 'pendiente').length;
+      const totalCanceladas = transferenciasFiltradas.filter(t => t.estado === 'cancelada').length;
+      const totalUnidades = transferenciasFiltradas.reduce((sum, t) => sum + t.totalCantidad, 0);
+
+      const estadisticasData = [
+        { 'Concepto': 'Total de Transferencias', 'Valor': transferenciasFiltradas.length },
+        { 'Concepto': 'Transferencias Completadas', 'Valor': totalCompletadas },
+        { 'Concepto': 'Transferencias Pendientes', 'Valor': totalPendientes },
+        { 'Concepto': 'Transferencias Canceladas', 'Valor': totalCanceladas },
+        { 'Concepto': 'Total de Unidades Transferidas', 'Valor': totalUnidades },
+        { 'Concepto': 'Promedio Unidades por Transferencia', 'Valor': (totalUnidades / transferenciasFiltradas.length).toFixed(2) },
+      ];
+
+      // Crear libro de trabajo
+      const wb = XLSX.utils.book_new();
+
+      // Hoja 1: Estadísticas
+      const ws1 = XLSX.utils.json_to_sheet(estadisticasData);
+      ws1['!cols'] = [{ wch: 40 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Estadísticas');
+
+      // Hoja 2: Transferencias Generales
+      const ws2 = XLSX.utils.json_to_sheet(transferenciasData);
+      ws2['!cols'] = [
+        { wch: 5 }, { wch: 18 }, { wch: 25 }, { wch: 25 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 20 }, { wch: 18 }, 
+        { wch: 30 }, { wch: 30 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws2, 'Transferencias');
+
+      // Hoja 3: Detalle de Productos
+      const ws3 = XLSX.utils.json_to_sheet(itemsData);
+      ws3['!cols'] = [
+        { wch: 18 }, { wch: 12 }, { wch: 30 }, { wch: 18 }, { wch: 25 }, 
+        { wch: 18 }, { wch: 20 }, { wch: 25 }, { wch: 18 }, { wch: 20 }, 
+        { wch: 12 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws3, 'Detalle de Productos');
+
+      // Hoja 4: Resumen por Sucursal
+      if (resumenData.length > 0) {
+        const ws4 = XLSX.utils.json_to_sheet(resumenData);
+        ws4['!cols'] = [
+          { wch: 25 }, { wch: 22 }, { wch: 18 }, { wch: 22 }, { wch: 18 }, { wch: 15 }
+        ];
+        XLSX.utils.book_append_sheet(wb, ws4, 'Resumen por Sucursal');
+      }
+
+      // Generar archivo
+      const fechaActual = new Date().toISOString().split('T')[0];
+      const fileName = `historial_transferencias_${fechaActual}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      showSuccessToast(`Excel descargado: ${transferenciasFiltradas.length} transferencias`);
+    } catch (error) {
+      console.error('Error al generar Excel:', error);
+      showErrorToast('Error al generar el archivo Excel');
     }
   };
 
@@ -620,59 +805,155 @@ export default function GestorTransferencias() {
 
         {vista === 'historial' && (
           <div className="space-y-4">
-            {/* Filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dark-50 dark:bg-dark-900 p-4 rounded-lg border border-dark-200 dark:border-dark-700">
-              <div>
-                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
-                  Estado
-                </label>
-                <select
-                  value={filtroEstado}
-                  onChange={(e) => {
-                    setFiltroEstado(e.target.value);
-                    cargarTransferencias();
-                  }}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
-                >
-                  <option value="todas">Todas</option>
-                  <option value="pendiente">Pendientes</option>
-                  <option value="completada">Completadas</option>
-                  <option value="cancelada">Canceladas</option>
-                </select>
+            {/* Botón de Exportar Excel */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleExportarHistorial}
+                disabled={transferenciasFiltradas.length === 0}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                📊 Exportar a Excel
+              </button>
+            </div>
+
+            {/* Filtros Expandidos */}
+            <div className="bg-dark-50 dark:bg-dark-900 p-4 rounded-lg border border-dark-200 dark:border-dark-700 space-y-4">
+              <h3 className="font-semibold text-dark-900 dark:text-light-500 mb-3">Filtros de Búsqueda</h3>
+              
+              {/* Primera fila de filtros */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                    Estado
+                  </label>
+                  <select
+                    value={filtroEstado}
+                    onChange={(e) => {
+                      setFiltroEstado(e.target.value);
+                      cargarTransferencias();
+                    }}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  >
+                    <option value="todas">Todas</option>
+                    <option value="pendiente">Pendientes</option>
+                    <option value="completada">Completadas</option>
+                    <option value="cancelada">Canceladas</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                    Sucursal Origen
+                  </label>
+                  <select
+                    value={filtroSucursalOrigen}
+                    onChange={(e) => setFiltroSucursalOrigen(e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  >
+                    <option value="">Todas las sucursales</option>
+                    {sucursales.map(s => (
+                      <option key={s._id} value={s._id}>
+                        {s.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                    Sucursal Destino
+                  </label>
+                  <select
+                    value={filtroSucursalDestino}
+                    onChange={(e) => setFiltroSucursalDestino(e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  >
+                    <option value="">Todas las sucursales</option>
+                    {sucursales.map(s => (
+                      <option key={s._id} value={s._id}>
+                        {s.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
-                  Sucursal
-                </label>
-                <select
-                  value={filtroSucursal}
-                  onChange={(e) => {
-                    setFiltroSucursal(e.target.value);
-                    cargarTransferencias();
+              {/* Segunda fila de filtros */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                    Fecha Desde
+                  </label>
+                  <input
+                    type="date"
+                    value={filtroFechaDesde}
+                    onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                    Fecha Hasta
+                  </label>
+                  <input
+                    type="date"
+                    value={filtroFechaHasta}
+                    onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                    Buscar Producto
+                  </label>
+                  <input
+                    type="text"
+                    value={busquedaProductoHistorial}
+                    onChange={(e) => setBusquedaProductoHistorial(e.target.value)}
+                    placeholder="Nombre del producto..."
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+              </div>
+
+              {/* Botones de acción de filtros */}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    setFiltroEstado('todas');
+                    setFiltroSucursalOrigen('');
+                    setFiltroSucursalDestino('');
+                    setFiltroFechaDesde('');
+                    setFiltroFechaHasta('');
+                    setBusquedaProductoHistorial('');
+                    setFiltroSucursal('');
                   }}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  className="px-4 py-2 bg-dark-200 dark:bg-dark-700 hover:bg-dark-300 dark:hover:bg-dark-600 text-dark-900 dark:text-light-500 rounded-lg font-medium transition-colors text-sm"
                 >
-                  <option value="">Todas las sucursales</option>
-                  {sucursales.map(s => (
-                    <option key={s._id} value={s._id}>
-                      {s.nombre}
-                    </option>
-                  ))}
-                </select>
+                  🔄 Limpiar Filtros
+                </button>
+              </div>
+
+              {/* Contador de resultados */}
+              <div className="text-sm text-dark-600 dark:text-dark-400 pt-2 border-t border-dark-200 dark:border-dark-700">
+                Mostrando {transferenciasFiltradas.length} de {transferencias.length} transferencias
               </div>
             </div>
 
             {/* Lista de Transferencias */}
             {loading ? (
               <div className="text-center py-8 text-primary">Cargando...</div>
-            ) : transferencias.length === 0 ? (
+            ) : transferenciasFiltradas.length === 0 ? (
               <div className="text-center py-8 text-dark-600 dark:text-dark-400">
-                No hay transferencias registradas
+                {transferencias.length === 0 
+                  ? 'No hay transferencias registradas'
+                  : 'No se encontraron transferencias con los filtros aplicados'}
               </div>
             ) : (
               <div className="space-y-4">
-                {transferencias.map(t => (
+                {transferenciasFiltradas.map(t => (
                   <div key={t._id} className="bg-surface dark:bg-dark-800 border border-dark-200 dark:border-dark-700 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>

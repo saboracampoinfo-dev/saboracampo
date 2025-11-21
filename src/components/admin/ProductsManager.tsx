@@ -66,6 +66,11 @@ export default function ProductsManager() {
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   
+  // Estados para búsqueda y ordenamiento
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'nombre' | 'categoria' | 'precio' | 'stock' | 'ventas'>('nombre');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -351,10 +356,10 @@ export default function ProductsManager() {
   };
 
   const handleSelectAll = () => {
-    if (selectedProducts.length === products.length) {
+    if (selectedProducts.length === filteredAndSortedProducts.length && filteredAndSortedProducts.length > 0) {
       setSelectedProducts([]);
     } else {
-      setSelectedProducts(products.map(p => p._id));
+      setSelectedProducts(filteredAndSortedProducts.map(p => p._id));
     }
   };
 
@@ -442,6 +447,70 @@ export default function ProductsManager() {
     destinoSucursalId: '',
     cantidad: 0,
   });
+
+  // Filtrar y ordenar productos
+  const filteredAndSortedProducts = products
+    .filter((product) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        product.nombre.toLowerCase().includes(searchLower) ||
+        product.categoria.toLowerCase().includes(searchLower) ||
+        (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
+        (product.descripcion && product.descripcion.toLowerCase().includes(searchLower)) ||
+        (product.codigoBarras && product.codigoBarras.toLowerCase().includes(searchLower))
+      );
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'nombre':
+          comparison = a.nombre.localeCompare(b.nombre);
+          break;
+        case 'categoria':
+          comparison = a.categoria.localeCompare(b.categoria);
+          break;
+        case 'precio':
+          comparison = a.precio - b.precio;
+          break;
+        case 'stock':
+          comparison = a.stock - b.stock;
+          break;
+        case 'ventas':
+          comparison = a.ventas - b.ventas;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+  const handleSort = (field: 'nombre' | 'categoria' | 'precio' | 'stock' | 'ventas') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: string }) => {
+    if (sortBy !== field) {
+      return (
+        <svg className="w-4 h-4 inline-block ml-1 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return sortOrder === 'asc' ? (
+      <svg className="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
+  };
 
   const handleExportToExcel = () => {
     try {
@@ -583,30 +652,62 @@ export default function ProductsManager() {
 
   return (
     <div className="space-y-3 md:space-y-6 px-1 md:px-0">
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Productos</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={handleExportToExcel}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-            title="Descargar listado en Excel"
-          >
-            📊 Exportar Excel
-          </button>
-          {selectedProducts.length > 0 && (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
+          <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Productos</h2>
+          <div className="flex gap-2 flex-wrap">
             <button
-              onClick={() => setIsMassiveEditOpen(true)}
-              className="bg-warning hover:bg-warning-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+              onClick={handleExportToExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              title="Descargar listado en Excel"
             >
-              ✏️ Editar {selectedProducts.length} seleccionados
+              📊 Exportar Excel
             </button>
-          )}
-          <button
-            onClick={() => handleOpenModal()}
-            className="bg-secondary hover:bg-secondary-700 text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
-          >
-            + Nuevo Producto
-          </button>
+            {selectedProducts.length > 0 && (
+              <button
+                onClick={() => setIsMassiveEditOpen(true)}
+                className="bg-warning hover:bg-warning-700 text-white px-4 md:px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+              >
+                ✏️ Editar {selectedProducts.length}
+              </button>
+            )}
+            <button
+              onClick={() => handleOpenModal()}
+              className="bg-secondary hover:bg-secondary-700 text-white px-4 md:px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+            >
+              + Nuevo Producto
+            </button>
+          </div>
+        </div>
+
+        {/* Buscador */}
+        <div className="w-full">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por nombre, categoría, SKU, código de barras o descripción..."
+              className="w-full px-4 py-2 pl-10 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary focus:border-transparent"
+            />
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400">
+              🔍
+            </span>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-dark-600 dark:hover:text-dark-200"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Contador de resultados */}
+        <div className="text-sm text-dark-600 dark:text-dark-400">
+          Mostrando {filteredAndSortedProducts.length} de {products.length} productos
+          {searchTerm && ` (filtrados por "${searchTerm}")`}
         </div>
       </div>
 
@@ -618,22 +719,42 @@ export default function ProductsManager() {
                 <th className="px-6 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedProducts.length === products.length && products.length > 0}
+                    checked={selectedProducts.length === filteredAndSortedProducts.length && filteredAndSortedProducts.length > 0}
                     onChange={handleSelectAll}
                     className="w-4 h-4 text-secondary bg-white dark:bg-dark-700 border-dark-300 dark:border-dark-600 rounded focus:ring-secondary"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Producto</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Categoría</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Precio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Stock</th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('nombre')}
+                >
+                  Producto <SortIcon field="nombre" />
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('categoria')}
+                >
+                  Categoría <SortIcon field="categoria" />
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('precio')}
+                >
+                  Precio <SortIcon field="precio" />
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
+                  onClick={() => handleSort('stock')}
+                >
+                  Stock <SortIcon field="stock" />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">SKU</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
-              {products.map((product) => (
+              {filteredAndSortedProducts.map((product) => (
                 <tr key={product._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors">
                   <td className="px-6 py-4">
                     <input
@@ -740,9 +861,11 @@ export default function ProductsManager() {
           </table>
         </div>
 
-        {products.length === 0 && (
+        {filteredAndSortedProducts.length === 0 && (
           <div className="text-center py-8 text-dark-600 dark:text-dark-400">
-            No hay productos registrados
+            {products.length === 0 
+              ? 'No hay productos registrados'
+              : `No se encontraron productos que coincidan con "${searchTerm}"`}
           </div>
         )}
       </div>
