@@ -66,13 +66,15 @@ export default function DashboardAdmin() {
           <div className="flex justify-between items-center h-16">
             {/* Logo y título */}
             <div className="flex items-center">
-              <img 
-                src="/logo/logo.png" 
-                alt="Sabor a Campo" 
-                className="w-10 h-10 object-contain mr-3 rounded-full"
-              />
-              <h1 className="text-lg md:text-xl font-bold text-white hidden sm:block">Dashboard Administrador</h1>
-              <h1 className="text-lg font-bold text-white sm:hidden">Admin</h1>
+              <a href="/" className="flex items-center">
+                <img 
+                  src="/logo/logo.png" 
+                  alt="Sabor a Campo" 
+                  className="w-10 h-10 object-contain mr-3 rounded-full"
+                  />
+                <h1 className="text-lg md:text-xl font-bold text-white hidden sm:block">Administrador</h1>
+                <h1 className="text-lg font-bold text-white sm:hidden">Admin</h1>
+              </a>
             </div>
 
             {/* Desktop Navigation */}
@@ -171,7 +173,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('dashboard')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'dashboard'
-                    ? 'bg-primary text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -181,7 +183,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('usuarios')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'usuarios'
-                    ? 'bg-primary text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -191,7 +193,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('sucursales')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'sucursales'
-                    ? 'bg-primary text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -201,7 +203,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('productos')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'productos'
-                    ? 'bg-secondary text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -211,7 +213,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('ventas')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'ventas'
-                    ? 'bg-primary-700 text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -221,7 +223,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('liquidaciones')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'liquidaciones'
-                    ? 'bg-warning text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -231,7 +233,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('transferencias')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'transferencias'
-                    ? 'bg-primary-600 text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
@@ -241,7 +243,7 @@ export default function DashboardAdmin() {
                 onClick={() => setActiveTab('configuracion')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'configuracion'
-                    ? 'bg-warning text-white shadow-md'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >

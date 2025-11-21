@@ -365,29 +365,29 @@ export default function GestorTransferencias() {
   const transferenciasCount = Object.keys(transferenciasInput).length;
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Gestor de Transferencias de Stock
+    <div className="space-y-3 md:space-y-6 px-1 md:px-0">
+      <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-6 border border-dark-200 dark:border-dark-700">
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+          <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">
+            Transferencias de Stock
           </h2>
           <div className="flex gap-2">
             <button
               onClick={() => setVista('masiva')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg ${
                 vista === 'masiva'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-secondary hover:bg-secondary-700 text-white'
+                  : 'bg-dark-100 dark:bg-dark-700 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-600'
               }`}
             >
               Transferencias Masivas
             </button>
             <button
               onClick={() => setVista('historial')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg ${
                 vista === 'historial'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-secondary hover:bg-secondary-700 text-white'
+                  : 'bg-dark-100 dark:bg-dark-700 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-600'
               }`}
             >
               Historial
@@ -398,9 +398,9 @@ export default function GestorTransferencias() {
         {vista === 'masiva' && (
           <div className="space-y-6">
             {/* Filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dark-50 dark:bg-dark-900 p-4 rounded-lg border border-dark-200 dark:border-dark-700">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
                   Buscar Producto
                 </label>
                 <input
@@ -408,17 +408,17 @@ export default function GestorTransferencias() {
                   value={busquedaProducto}
                   onChange={(e) => setBusquedaProducto(e.target.value)}
                   placeholder="Buscar por nombre..."
-                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
                   Filtrar por Categoría
                 </label>
                 <select
                   value={filtroCategoria}
                   onChange={(e) => setFiltroCategoria(e.target.value)}
-                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 >
                   <option value="">Todas las categorías</option>
                   {categorias.map(cat => (
@@ -430,11 +430,11 @@ export default function GestorTransferencias() {
 
             {/* Información de sucursales disponibles */}
             {sucursales.length > 0 && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Sucursales Disponibles:</h3>
+              <div className="bg-secondary-50 dark:bg-secondary-900 p-4 rounded-lg border border-secondary-200 dark:border-secondary-800">
+                <h3 className="font-semibold text-secondary-900 dark:text-secondary-200 mb-2">Sucursales Disponibles:</h3>
                 <div className="flex flex-wrap gap-2">
                   {sucursales.map(s => (
-                    <span key={s._id} className="bg-blue-200 text-blue-900 px-3 py-1 rounded-full text-sm">
+                    <span key={s._id} className="bg-secondary-200 dark:bg-secondary-800 text-secondary-900 dark:text-secondary-100 px-3 py-1 rounded-full text-sm">
                       {s.nombre}
                     </span>
                   ))}
@@ -444,19 +444,19 @@ export default function GestorTransferencias() {
 
             {/* Botón de Guardar Masivo */}
             {transferenciasCount > 0 && (
-              <div className="bg-green-50 p-4 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-md">
+              <div className="bg-success-50 dark:bg-success-900 p-4 rounded-lg flex justify-between items-center sticky top-0 z-10 shadow-lg border border-success-200 dark:border-success-800">
                 <div>
-                  <p className="font-semibold text-green-900">
+                  <p className="font-semibold text-success-900 dark:text-success-100">
                     {transferenciasCount} transferencia(s) pendiente(s)
                   </p>
-                  <p className="text-sm text-green-700">
+                  <p className="text-sm text-success-700 dark:text-success-300">
                     Revisa y presiona "Guardar Todas" para ejecutar
                   </p>
                 </div>
                 <button
                   onClick={ejecutarTransferenciasMasivas}
                   disabled={loading}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                  className="bg-secondary hover:bg-secondary-700 text-white px-6 py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
                 >
                   💾 Guardar Todas las Transferencias
                 </button>
@@ -465,96 +465,98 @@ export default function GestorTransferencias() {
 
             {/* Tabla de Productos */}
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Cargando productos...</div>
+              <div className="text-center py-8 text-primary">Cargando productos...</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-300 rounded-lg">
-                  <thead className="bg-gray-100 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Producto</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 border-b">Categoría</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Stock Total</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Stock Mínimo</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Sucursal Origen</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Stock Origen</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Sucursal Destino</th>
-                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 border-b">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productosFiltrados.map(producto => {
-                      if (!producto || !producto._id) return null;
-                      const transferencia = transferenciasInput[producto._id] || {};
-                      const stockOrigen = obtenerStockOrigen(producto._id, transferencia.sucursalOrigenId || '');
+              <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg overflow-hidden border border-dark-200 dark:border-dark-700">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-dark-200 dark:divide-dark-700">
+                    <thead className="bg-dark-100 dark:bg-dark-900">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Producto</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Categoría</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Stock Total</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Stock Mínimo</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Sucursal Origen</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Stock Origen</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Sucursal Destino</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Cantidad</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
+                      {productosFiltrados.map(producto => {
+                        if (!producto || !producto._id) return null;
+                        const transferencia = transferenciasInput[producto._id] || {};
+                        const stockOrigen = obtenerStockOrigen(producto._id, transferencia.sucursalOrigenId || '');
 
-                      return (
-                        <tr key={producto._id} className="border-b hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                            {producto.nombre}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {producto.categoria}
-                          </td>
-                          <td className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
-                            {producto.stock}
-                          </td>
-                          <td className="px-4 py-3 text-center text-sm text-gray-600">
-                            {producto.stockMinimo}
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={transferencia.sucursalOrigenId || ''}
-                              onChange={(e) => actualizarTransferencia(producto._id, 'sucursalOrigenId', e.target.value)}
-                              className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                            >
-                              <option value="">Seleccionar</option>
-                              {sucursales
-                                .filter(s => s._id !== transferencia.sucursalDestinoId)
-                                .map(s => (
-                                  <option key={s._id} value={s._id}>{s.nombre}</option>
-                                ))}
-                            </select>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`text-sm font-semibold ${stockOrigen === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                              {stockOrigen}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <select
-                              value={transferencia.sucursalDestinoId || ''}
-                              onChange={(e) => actualizarTransferencia(producto._id, 'sucursalDestinoId', e.target.value)}
-                              className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                              disabled={!transferencia.sucursalOrigenId}
-                            >
-                              <option value="">Seleccionar</option>
-                              {sucursales
-                                .filter(s => s._id !== transferencia.sucursalOrigenId)
-                                .map(s => (
-                                  <option key={s._id} value={s._id}>{s.nombre}</option>
-                                ))}
-                            </select>
-                          </td>
-                          <td className="px-4 py-3">
-                            <input
-                              type="number"
-                              min="0"
-                              max={stockOrigen}
-                              value={transferencia.cantidad || ''}
-                              onChange={(e) => actualizarTransferencia(producto._id, 'cantidad', parseInt(e.target.value) || 0)}
-                              placeholder="0"
-                              className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                              disabled={!transferencia.sucursalOrigenId || !transferencia.sucursalDestinoId}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        return (
+                          <tr key={producto._id} className="hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors">
+                            <td className="px-4 py-3 text-sm font-medium text-dark-900 dark:text-light-500">
+                              {producto.nombre}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-dark-600 dark:text-dark-400">
+                              {producto.categoria}
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm font-semibold text-secondary-700 dark:text-secondary-400">
+                              {producto.stock}
+                            </td>
+                            <td className="px-4 py-3 text-center text-sm text-dark-600 dark:text-dark-400">
+                              {producto.stockMinimo}
+                            </td>
+                            <td className="px-4 py-3">
+                              <select
+                                value={transferencia.sucursalOrigenId || ''}
+                                onChange={(e) => actualizarTransferencia(producto._id, 'sucursalOrigenId', e.target.value)}
+                                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary text-sm"
+                              >
+                                <option value="">Seleccionar</option>
+                                {sucursales
+                                  .filter(s => s._id !== transferencia.sucursalDestinoId)
+                                  .map(s => (
+                                    <option key={s._id} value={s._id}>{s.nombre}</option>
+                                  ))}
+                              </select>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`text-sm font-semibold ${stockOrigen === 0 ? 'text-error' : 'text-success-600 dark:text-success-400'}`}>
+                                {stockOrigen}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <select
+                                value={transferencia.sucursalDestinoId || ''}
+                                onChange={(e) => actualizarTransferencia(producto._id, 'sucursalDestinoId', e.target.value)}
+                                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary text-sm"
+                                disabled={!transferencia.sucursalOrigenId}
+                              >
+                                <option value="">Seleccionar</option>
+                                {sucursales
+                                  .filter(s => s._id !== transferencia.sucursalOrigenId)
+                                  .map(s => (
+                                    <option key={s._id} value={s._id}>{s.nombre}</option>
+                                  ))}
+                              </select>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="number"
+                                min="0"
+                                max={stockOrigen}
+                                value={transferencia.cantidad || ''}
+                                onChange={(e) => actualizarTransferencia(producto._id, 'cantidad', parseInt(e.target.value) || 0)}
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary text-sm"
+                                disabled={!transferencia.sucursalOrigenId || !transferencia.sucursalDestinoId}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
 
                 {productosFiltrados.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-dark-600 dark:text-dark-400">
                     No se encontraron productos
                   </div>
                 )}
@@ -566,9 +568,9 @@ export default function GestorTransferencias() {
         {vista === 'historial' && (
           <div className="space-y-4">
             {/* Filtros */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dark-50 dark:bg-dark-900 p-4 rounded-lg border border-dark-200 dark:border-dark-700">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
                   Estado
                 </label>
                 <select
@@ -577,7 +579,7 @@ export default function GestorTransferencias() {
                     setFiltroEstado(e.target.value);
                     cargarTransferencias();
                   }}
-                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 >
                   <option value="todas">Todas</option>
                   <option value="pendiente">Pendientes</option>
@@ -587,7 +589,7 @@ export default function GestorTransferencias() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
                   Sucursal
                 </label>
                 <select
@@ -596,7 +598,7 @@ export default function GestorTransferencias() {
                     setFiltroSucursal(e.target.value);
                     cargarTransferencias();
                   }}
-                  className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 >
                   <option value="">Todas las sucursales</option>
                   {sucursales.map(s => (
@@ -610,28 +612,28 @@ export default function GestorTransferencias() {
 
             {/* Lista de Transferencias */}
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Cargando...</div>
+              <div className="text-center py-8 text-primary">Cargando...</div>
             ) : transferencias.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-dark-600 dark:text-dark-400">
                 No hay transferencias registradas
               </div>
             ) : (
               <div className="space-y-4">
                 {transferencias.map(t => (
-                  <div key={t._id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={t._id} className="bg-surface dark:bg-dark-800 border border-dark-200 dark:border-dark-700 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-semibold text-lg text-gray-900">
+                        <h3 className="font-semibold text-lg text-dark-900 dark:text-light-500">
                           {t.sucursalOrigenNombre} → {t.sucursalDestinoNombre}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-dark-600 dark:text-dark-400">
                           {t.totalItems} producto(s) - {t.totalCantidad} unidades
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-dark-500 dark:text-dark-500">
                           Creado: {new Date(t.fechaCreacion).toLocaleString()} por {t.creadoPorNombre}
                         </p>
                         {t.fechaAprobacion && (
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-dark-500 dark:text-dark-500">
                             {t.estado === 'completada' ? 'Aprobado' : 'Cancelado'}: {new Date(t.fechaAprobacion).toLocaleString()} por {t.aprobadoPorNombre}
                           </p>
                         )}
@@ -639,9 +641,9 @@ export default function GestorTransferencias() {
 
                       <div className="flex flex-col items-end gap-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          t.estado === 'completada' ? 'bg-green-100 text-green-800' :
-                          t.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                          t.estado === 'completada' ? 'bg-success-100 text-success-800 dark:bg-success-900 dark:text-success-200' :
+                          t.estado === 'pendiente' ? 'bg-warning-100 text-warning-800 dark:bg-warning-900 dark:text-warning-200' :
+                          'bg-error-100 text-error-800 dark:bg-error-900 dark:text-error-200'
                         }`}>
                           {t.estado.toUpperCase()}
                         </span>
@@ -650,13 +652,13 @@ export default function GestorTransferencias() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => aprobarTransferencia(t._id)}
-                              className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                              className="bg-success-600 hover:bg-success-700 text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md"
                             >
                               ✓ Aprobar
                             </button>
                             <button
                               onClick={() => cancelarTransferencia(t._id)}
-                              className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                              className="bg-error hover:bg-error-dark text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md"
                             >
                               ✗ Cancelar
                             </button>
@@ -667,29 +669,31 @@ export default function GestorTransferencias() {
 
                     {/* Detalles de Items */}
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-700">
+                      <summary className="cursor-pointer text-sm font-medium text-secondary hover:text-secondary-700 dark:text-secondary-400 dark:hover:text-secondary-300">
                         Ver detalles de productos
                       </summary>
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-2 space-y-1 bg-dark-50 dark:bg-dark-900 p-3 rounded-lg">
                         {t.items.map((item, idx) => (
-                          <div key={idx} className="text-sm text-gray-700 pl-4">
-                            • {item.nombreProducto}: {item.cantidad} unidades
-                            (Origen: {item.stockOrigenAntes} → {item.stockOrigenDespues} |
-                            Destino: {item.stockDestinoAntes} → {item.stockDestinoDespues})
+                          <div key={idx} className="text-sm text-dark-700 dark:text-dark-300 pl-4">
+                            • <span className="font-medium">{item.nombreProducto}</span>: {item.cantidad} unidades
+                            <div className="text-xs text-dark-500 dark:text-dark-500 pl-2">
+                              (Origen: {item.stockOrigenAntes} → {item.stockOrigenDespues} |
+                              Destino: {item.stockDestinoAntes} → {item.stockDestinoDespues})
+                            </div>
                           </div>
                         ))}
                       </div>
                     </details>
 
                     {t.notas && (
-                      <div className="mt-2 text-sm text-gray-600 italic">
-                        Notas: {t.notas}
+                      <div className="mt-2 text-sm text-dark-600 dark:text-dark-400 italic bg-dark-50 dark:bg-dark-900 p-2 rounded">
+                        <span className="font-medium">Notas:</span> {t.notas}
                       </div>
                     )}
 
                     {t.motivoCancelacion && (
-                      <div className="mt-2 text-sm text-red-600">
-                        Motivo cancelación: {t.motivoCancelacion}
+                      <div className="mt-2 text-sm text-error bg-error-light/10 dark:bg-error-dark/10 p-2 rounded">
+                        <span className="font-medium">Motivo cancelación:</span> {t.motivoCancelacion}
                       </div>
                     )}
                   </div>

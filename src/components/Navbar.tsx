@@ -236,7 +236,7 @@ export default function Navbar() {
             )}
 
             {/* Dark Mode Toggle */}
-            <button
+            {/* <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full bg-dark-100 dark:bg-dark-700 hover:bg-dark-200 dark:hover:bg-dark-600 transition-colors"
               aria-label="Toggle dark mode"
@@ -250,12 +250,12 @@ export default function Navbar() {
                   <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
               )}
-            </button>
+            </button> */}
           </div>
 
           {/* Dark Mode Toggle - Mobile */}
-          <div className="md:hidden flex items-center space-x-2">
-            <button
+           <div className="md:hidden flex items-center space-x-2">
+            {/*<button
               onClick={toggleDarkMode}
               className="p-2 rounded-full bg-dark-100 dark:bg-dark-700 hover:bg-dark-200 dark:hover:bg-dark-600 transition-colors"
               aria-label="Toggle dark mode"

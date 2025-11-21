@@ -55,7 +55,7 @@ export default function Hero() {
           </div>
 
           <div className="bg-surface dark:bg-dark-800 p-4 rounded-lg shadow-md hover:shadow-xl text-center transition-all duration-300 hover:-translate-y-1 border border-dark-200 dark:border-dark-700">
-            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
               <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -66,7 +66,7 @@ export default function Hero() {
             </p>
           </div>
             <div className="bg-surface dark:bg-dark-800 p-4 rounded-lg shadow-md hover:shadow-xl text-center transition-all duration-300 hover:-translate-y-1 border border-dark-200 dark:border-dark-700">
-            <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
+            <div className="w-16 h-16 bg-primary-100 dark:bg-secondary-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
               <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
               </svg>

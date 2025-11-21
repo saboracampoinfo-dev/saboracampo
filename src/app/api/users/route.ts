@@ -6,7 +6,7 @@ import { auth } from '@/lib/firebase-admin';
 export async function GET() {
   try {
     await dbConnect();
-    const users = await User.find({}).select('-password').limit(10);
+    const users = await User.find({}).select('-password').sort({ createdAt: -1 });
     
     return NextResponse.json({
       success: true,

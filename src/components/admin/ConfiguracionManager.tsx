@@ -185,331 +185,332 @@ export default function ConfiguracionManager() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
       </div>
     );
   }
 
   if (!configuracion) {
-    return <div className="text-center text-red-500">No se pudo cargar la configuración</div>;
+    return <div className="text-center text-error">No se pudo cargar la configuración</div>;
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md md:p-6 p-1">
-      <h2 className="text-2xl font-bold text-gray-800 mb-3 md:mb-6 px-2 md:px-0">Configuración General</h2>
+    <div className="space-y-3 md:space-y-6 px-1 md:px-0">
+      <div className="bg-white dark:bg-dark-800 rounded-lg shadow-lg p-6 border border-dark-200 dark:border-dark-700">
+        <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500 mb-6">Configuración General</h2>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-3 md:mb-6 px-2 md:px-0">
-        <nav className="-mb-px flex space-x-2 md:space-x-8 overflow-x-auto">
-          {[
-            { id: 'general', label: 'General' },
-            { id: 'contacto', label: 'Contacto' },
-            { id: 'whatsapp', label: 'WhatsApp' },
-            { id: 'redes', label: 'Redes Sociales' },
-            { id: 'horarios', label: 'Horarios' },
-            { id: 'avanzado', label: 'Avanzado' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-2 px-1 md:px-3 border-b-2 font-medium text-xs md:text-sm whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+        {/* Tabs */}
+        <div className="border-b border-dark-200 dark:border-dark-700 mb-6">
+          <nav className="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto">
+            {[
+              { id: 'general', label: 'General' },
+              { id: 'contacto', label: 'Contacto' },
+              { id: 'whatsapp', label: 'WhatsApp' },
+              { id: 'redes', label: 'Redes Sociales' },
+              { id: 'horarios', label: 'Horarios' },
+              { id: 'avanzado', label: 'Avanzado' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-2 px-3 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-secondary text-secondary'
+                    : 'border-transparent text-dark-600 dark:text-dark-400 hover:text-secondary hover:border-dark-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3 md:space-y-6 px-2 md:px-0">
-        {/* Tab: General */}
-        {activeTab === 'general' && (
-          <div className="space-y-3 md:space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre de la Empresa *
-              </label>
-              <input
-                type="text"
-                required
-                value={configuracion.nombreEmpresa}
-                onChange={(e) => updateField('nombreEmpresa', e.target.value)}
-                className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción Corta
-              </label>
-              <input
-                type="text"
-                maxLength={200}
-                value={configuracion.descripcionCorta || ''}
-                onChange={(e) => updateField('descripcionCorta', e.target.value)}
-                className="w-full px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm md:text-base dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                placeholder="Máximo 200 caracteres"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción Larga
-              </label>
-              <textarea
-                maxLength={1000}
-                rows={4}
-                value={configuracion.descripcionLarga || ''}
-                onChange={(e) => updateField('descripcionLarga', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                placeholder="Máximo 1000 caracteres"
-              />
-            </div>
-
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Tab: General */}
+          {activeTab === 'general' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-800">Colores del Sitio</h3>
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateField('colorPrimario', '#10b981');
-                    updateField('colorSecundario', '#059669');
-                    showSuccessToast('Colores restablecidos a valores originales');
-                  }}
-                  className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  🔄 Restablecer Colores
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Nombre de la Empresa *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={configuracion.nombreEmpresa}
+                  onChange={(e) => updateField('nombreEmpresa', e.target.value)}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                />
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Descripción Corta
+                </label>
+                <input
+                  type="text"
+                  maxLength={200}
+                  value={configuracion.descripcionCorta || ''}
+                  onChange={(e) => updateField('descripcionCorta', e.target.value)}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  placeholder="Máximo 200 caracteres"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                  Descripción Larga
+                </label>
+                <textarea
+                  maxLength={1000}
+                  rows={4}
+                  value={configuracion.descripcionLarga || ''}
+                  onChange={(e) => updateField('descripcionLarga', e.target.value)}
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  placeholder="Máximo 1000 caracteres"
+                />
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-dark-200 dark:border-dark-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-dark-800 dark:text-light-400">Colores del Sitio</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateField('colorPrimario', '#10b981');
+                      updateField('colorSecundario', '#059669');
+                      showSuccessToast('Colores restablecidos a valores originales');
+                    }}
+                    className="px-4 py-2 text-sm bg-dark-100 dark:bg-dark-700 text-dark-700 dark:text-dark-300 rounded-lg hover:bg-dark-200 dark:hover:bg-dark-600 transition-colors shadow-md"
+                  >
+                    🔄 Restablecer Colores
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                      Color Primario
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="color"
+                        value={configuracion.colorPrimario || '#10b981'}
+                        onChange={(e) => updateField('colorPrimario', e.target.value)}
+                        className="w-20 h-10 border border-dark-300 dark:border-dark-600 rounded-lg cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={configuracion.colorPrimario || '#10b981'}
+                        onChange={(e) => updateField('colorPrimario', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                        placeholder="#10b981"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                      Color Secundario
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="color"
+                        value={configuracion.colorSecundario || '#059669'}
+                        onChange={(e) => updateField('colorSecundario', e.target.value)}
+                        className="w-20 h-10 border border-dark-300 dark:border-dark-600 rounded-lg cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={configuracion.colorSecundario || '#059669'}
+                        onChange={(e) => updateField('colorSecundario', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                        placeholder="#059669"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab: Contacto */}
+          {activeTab === 'contacto' && (
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Color Primario
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Correo Administración *
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={configuracion.colorPrimario || '#10b981'}
-                      onChange={(e) => updateField('colorPrimario', e.target.value)}
-                      className="w-20 h-10 border border-gray-300 rounded-lg cursor-pointer"
-                    />
+                  <input
+                    type="email"
+                    required
+                    value={configuracion.correoAdministracion}
+                    onChange={(e) => updateField('correoAdministracion', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Correo Ventas *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={configuracion.correoVentas}
+                    onChange={(e) => updateField('correoVentas', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Correo Soporte
+                  </label>
+                  <input
+                    type="email"
+                    value={configuracion.correoSoporte || ''}
+                    onChange={(e) => updateField('correoSoporte', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Correo Contacto
+                  </label>
+                  <input
+                    type="email"
+                    value={configuracion.correoContacto || ''}
+                    onChange={(e) => updateField('correoContacto', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Teléfono Administración *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={configuracion.telefonoAdministracion}
+                    onChange={(e) => updateField('telefonoAdministracion', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Teléfono Ventas *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={configuracion.telefonoVentas}
+                    onChange={(e) => updateField('telefonoVentas', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Teléfono Soporte
+                  </label>
+                  <input
+                    type="tel"
+                    value={configuracion.telefonoSoporte || ''}
+                    onChange={(e) => updateField('telefonoSoporte', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    WhatsApp
+                  </label>
+                  <input
+                    type="tel"
+                    value={configuracion.telefonoWhatsApp || ''}
+                    onChange={(e) => updateField('telefonoWhatsApp', e.target.value)}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    placeholder="+52 123 456 7890"
+                  />
+                </div>
+              </div>
+
+              {/* Dirección */}
+              <div className="pt-4 border-t border-dark-200 dark:border-dark-700">
+                <h3 className="text-lg font-semibold text-dark-800 dark:text-light-400 mb-3">Dirección</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Calle</label>
                     <input
                       type="text"
-                      value={configuracion.colorPrimario || '#10b981'}
-                      onChange={(e) => updateField('colorPrimario', e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                      placeholder="#10b981"
+                      value={configuracion.direccion?.calle || ''}
+                      onChange={(e) => updateNestedField('direccion', 'calle', e.target.value)}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Ciudad</label>
+                    <input
+                      type="text"
+                      value={configuracion.direccion?.ciudad || ''}
+                      onChange={(e) => updateNestedField('direccion', 'ciudad', e.target.value)}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Estado</label>
+                    <input
+                      type="text"
+                      value={configuracion.direccion?.estado || ''}
+                      onChange={(e) => updateNestedField('direccion', 'estado', e.target.value)}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Código Postal</label>
+                    <input
+                      type="text"
+                      value={configuracion.direccion?.codigoPostal || ''}
+                      onChange={(e) => updateNestedField('direccion', 'codigoPostal', e.target.value)}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">País</label>
+                    <input
+                      type="text"
+                      value={configuracion.direccion?.pais || ''}
+                      onChange={(e) => updateNestedField('direccion', 'pais', e.target.value)}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                     />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Color Secundario
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      value={configuracion.colorSecundario || '#059669'}
-                      onChange={(e) => updateField('colorSecundario', e.target.value)}
-                      className="w-20 h-10 border border-gray-300 rounded-lg cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={configuracion.colorSecundario || '#059669'}
-                      onChange={(e) => updateField('colorSecundario', e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                      placeholder="#059669"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Tab: Contacto */}
-        {activeTab === 'contacto' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo Administración *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={configuracion.correoAdministracion}
-                  onChange={(e) => updateField('correoAdministracion', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
+          {/* Tab: WhatsApp */}
+          {activeTab === 'whatsapp' && (
+            <div className="space-y-6">
+              <div className="bg-secondary-50 dark:bg-secondary-900 border border-secondary-200 dark:border-secondary-800 rounded-lg p-4">
+                <p className="text-sm text-secondary-900 dark:text-secondary-100">
+                  💬 Configura los números de WhatsApp para el botón flotante de contacto.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo Ventas *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={configuracion.correoVentas}
-                  onChange={(e) => updateField('correoVentas', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo Soporte
-                </label>
-                <input
-                  type="email"
-                  value={configuracion.correoSoporte || ''}
-                  onChange={(e) => updateField('correoSoporte', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Correo Contacto
-                </label>
-                <input
-                  type="email"
-                  value={configuracion.correoContacto || ''}
-                  onChange={(e) => updateField('correoContacto', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono Administración *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={configuracion.telefonoAdministracion}
-                  onChange={(e) => updateField('telefonoAdministracion', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono Ventas *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={configuracion.telefonoVentas}
-                  onChange={(e) => updateField('telefonoVentas', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono Soporte
-                </label>
-                <input
-                  type="tel"
-                  value={configuracion.telefonoSoporte || ''}
-                  onChange={(e) => updateField('telefonoSoporte', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  WhatsApp
-                </label>
-                <input
-                  type="tel"
-                  value={configuracion.telefonoWhatsApp || ''}
-                  onChange={(e) => updateField('telefonoWhatsApp', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                  placeholder="+52 123 456 7890"
-                />
-              </div>
-            </div>
-
-            {/* Dirección */}
-            <div className="pt-4 border-t">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Dirección</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Calle</label>
-                  <input
-                    type="text"
-                    value={configuracion.direccion?.calle || ''}
-                    onChange={(e) => updateNestedField('direccion', 'calle', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
-                  <input
-                    type="text"
-                    value={configuracion.direccion?.ciudad || ''}
-                    onChange={(e) => updateNestedField('direccion', 'ciudad', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                  <input
-                    type="text"
-                    value={configuracion.direccion?.estado || ''}
-                    onChange={(e) => updateNestedField('direccion', 'estado', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
-                  <input
-                    type="text"
-                    value={configuracion.direccion?.codigoPostal || ''}
-                    onChange={(e) => updateNestedField('direccion', 'codigoPostal', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
-                  <input
-                    type="text"
-                    value={configuracion.direccion?.pais || ''}
-                    onChange={(e) => updateNestedField('direccion', 'pais', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab: WhatsApp */}
-        {activeTab === 'whatsapp' && (
-          <div className="space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                💬 Configura los números de WhatsApp para el botón flotante de contacto.
-              </p>
-            </div>
-
-            {/* WhatsApp Administración */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">📋 Administración</h3>
+              {/* WhatsApp Administración */}
+              <div className="border border-dark-200 dark:border-dark-700 rounded-lg p-4 bg-white dark:bg-dark-800">
+                <h3 className="text-lg font-semibold text-dark-800 dark:text-light-400 mb-4">📋 Administración</h3>
               
               <div className="space-y-4">
                 <div className="flex items-center mb-4">
@@ -521,16 +522,16 @@ export default function ConfiguracionManager() {
                       ...configuracion.whatsapp?.administracion,
                       activo: e.target.checked
                     })}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-secondary focus:ring-secondary border-dark-300 dark:border-dark-600 rounded"
                   />
-                  <label htmlFor="whatsapp-admin-activo" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="whatsapp-admin-activo" className="ml-2 block text-sm text-dark-700 dark:text-dark-300">
                     Activar botón de Administración
                   </label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                       Código de País
                     </label>
                     <input
@@ -540,13 +541,13 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.administracion,
                         codigoPais: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                       placeholder="54"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                       Número de WhatsApp
                     </label>
                     <input
@@ -556,14 +557,14 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.administracion,
                         numero: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                       placeholder="2235032141"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                     Texto Predefinido
                   </label>
                   <textarea
@@ -573,7 +574,7 @@ export default function ConfiguracionManager() {
                       ...configuracion.whatsapp?.administracion,
                       textoPredefinido: e.target.value
                     })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                     placeholder="Hola, me gustaría contactar con administración."
                   />
                 </div>
@@ -581,8 +582,8 @@ export default function ConfiguracionManager() {
             </div>
 
             {/* WhatsApp Ventas */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">💰 Ventas</h3>
+            <div className="border border-dark-200 dark:border-dark-700 rounded-lg p-4 bg-white dark:bg-dark-800">
+              <h3 className="text-lg font-semibold text-dark-800 dark:text-light-400 mb-4">💰 Ventas</h3>
               
               <div className="space-y-4">
                 <div className="flex items-center mb-4">
@@ -594,16 +595,16 @@ export default function ConfiguracionManager() {
                       ...configuracion.whatsapp?.ventas,
                       activo: e.target.checked
                     })}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-secondary focus:ring-secondary border-dark-300 dark:border-dark-600 rounded"
                   />
-                  <label htmlFor="whatsapp-ventas-activo" className="ml-2 block text-sm text-gray-700">
+                  <label htmlFor="whatsapp-ventas-activo" className="ml-2 block text-sm text-dark-700 dark:text-dark-300">
                     Activar botón de Ventas
                   </label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                       Código de País
                     </label>
                     <input
@@ -613,13 +614,13 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.ventas,
                         codigoPais: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                       placeholder="54"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                       Número de WhatsApp
                     </label>
                     <input
@@ -629,14 +630,14 @@ export default function ConfiguracionManager() {
                         ...configuracion.whatsapp?.ventas,
                         numero: e.target.value
                       })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                       placeholder="2231234567"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                     Texto Predefinido
                   </label>
                   <textarea
@@ -646,7 +647,7 @@ export default function ConfiguracionManager() {
                       ...configuracion.whatsapp?.ventas,
                       textoPredefinido: e.target.value
                     })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                     placeholder="Hola, me interesa saber más sobre productos o servicios."
                   />
                 </div>
@@ -659,67 +660,67 @@ export default function ConfiguracionManager() {
         {activeTab === 'redes' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Facebook</label>
               <input
                 type="url"
                 value={configuracion.redesSociales?.facebook || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'facebook', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 placeholder="https://facebook.com/tu-pagina"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Instagram</label>
               <input
                 type="url"
                 value={configuracion.redesSociales?.instagram || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'instagram', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 placeholder="https://instagram.com/tu-usuario"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Twitter / X</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Twitter / X</label>
               <input
                 type="url"
                 value={configuracion.redesSociales?.twitter || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'twitter', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 placeholder="https://twitter.com/tu-usuario"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">LinkedIn</label>
               <input
                 type="url"
                 value={configuracion.redesSociales?.linkedin || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'linkedin', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 placeholder="https://linkedin.com/company/tu-empresa"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">YouTube</label>
               <input
                 type="url"
                 value={configuracion.redesSociales?.youtube || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'youtube', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 placeholder="https://youtube.com/@tu-canal"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">TikTok</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">TikTok</label>
               <input
                 type="url"
                 value={configuracion.redesSociales?.tiktok || ''}
                 onChange={(e) => updateNestedField('redesSociales', 'tiktok', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                 placeholder="https://tiktok.com/@tu-usuario"
               />
             </div>
@@ -731,14 +732,14 @@ export default function ConfiguracionManager() {
           <div className="space-y-4">
             {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((dia) => (
               <div key={dia}>
-                <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1 capitalize">
                   {dia}
                 </label>
                 <input
                   type="text"
                   value={(configuracion.horarioAtencion as any)?.[dia] || ''}
                   onChange={(e) => updateNestedField('horarioAtencion', dia, e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
                   placeholder="9:00 AM - 6:00 PM"
                 />
               </div>
@@ -750,72 +751,72 @@ export default function ConfiguracionManager() {
         {activeTab === 'avanzado' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">URL del Logo</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">URL del Logo</label>
               <input
                 type="url"
                 value={configuracion.logoUrl || ''}
                 onChange={(e) => updateField('logoUrl', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">URL del Favicon</label>
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">URL del Favicon</label>
               <input
                 type="url"
                 value={configuracion.faviconUrl || ''}
                 onChange={(e) => updateField('faviconUrl', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                 Términos y Condiciones (URL)
               </label>
               <input
                 type="url"
                 value={configuracion.terminosCondiciones || ''}
                 onChange={(e) => updateField('terminosCondiciones', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                 Política de Privacidad (URL)
               </label>
               <input
                 type="url"
                 value={configuracion.politicaPrivacidad || ''}
                 onChange={(e) => updateField('politicaPrivacidad', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                 Política de Devolución (URL)
               </label>
               <input
                 type="url"
                 value={configuracion.politicaDevolucion || ''}
                 onChange={(e) => updateField('politicaDevolucion', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100"
+                className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-secondary"
               />
             </div>
 
-            <div className="pt-4 border-t">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Notificaciones</h3>
+            <div className="pt-4 border-t border-dark-200 dark:border-dark-700">
+              <h3 className="text-lg font-semibold text-dark-800 dark:text-light-400 mb-3">Notificaciones</h3>
               <div className="space-y-3">
                 <label className="flex items-center space-x-3">
                   <input
                     type="checkbox"
                     checked={configuracion.notificaciones?.emailActivo}
                     onChange={(e) => updateNestedField('notificaciones', 'emailActivo', e.target.checked)}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="w-4 h-4 text-secondary border-dark-300 dark:border-dark-600 rounded focus:ring-secondary"
                   />
-                  <span className="text-sm text-gray-700">Notificaciones por Email</span>
+                  <span className="text-sm text-dark-700 dark:text-dark-300">Notificaciones por Email</span>
                 </label>
 
 
@@ -824,41 +825,42 @@ export default function ConfiguracionManager() {
                     type="checkbox"
                     checked={configuracion.notificaciones?.whatsappActivo}
                     onChange={(e) => updateNestedField('notificaciones', 'whatsappActivo', e.target.checked)}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="w-4 h-4 text-secondary border-dark-300 dark:border-dark-600 rounded focus:ring-secondary"
                   />
-                  <span className="text-sm text-gray-700">Notificaciones por WhatsApp</span>
+                  <span className="text-sm text-dark-700 dark:text-dark-300">Notificaciones por WhatsApp</span>
                 </label>
               </div>
             </div>
           </div>
         )}
 
-        {/* Botones */}
-        <div className="flex justify-end space-x-2 md:space-x-3 pt-3 md:pt-6 border-t">
-          <button
-            type="button"
-            onClick={cargarConfiguracion}
-            disabled={saving}
-            className="px-3 md:px-6 py-1.5 md:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 text-sm md:text-base"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-3 md:px-6 py-1.5 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2 text-sm md:text-base"
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Guardando...</span>
-              </>
-            ) : (
-              <span>Guardar Cambios</span>
-            )}
-          </button>
-        </div>
-      </form>
+          {/* Botones */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-dark-200 dark:border-dark-700">
+            <button
+              type="button"
+              onClick={cargarConfiguracion}
+              disabled={saving}
+              className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 disabled:opacity-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-2 bg-secondary hover:bg-secondary-700 text-white rounded-lg disabled:opacity-50 flex items-center space-x-2 font-semibold transition-colors shadow-md hover:shadow-lg"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <span>Guardar Cambios</span>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
