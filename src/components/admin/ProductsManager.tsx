@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
 import { confirmDelete } from '@/utils/alerts';
 import UploadImage from './UploadImage';
+import ImportadorCSV from './ImportadorCSV';
 import * as XLSX from 'xlsx';
 
 interface StockSucursal {
@@ -656,6 +657,10 @@ export default function ProductsManager() {
         <div className="flex flex-wrap justify-between items-center gap-4">
           <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Productos</h2>
           <div className="flex gap-2 flex-wrap">
+            <ImportadorCSV 
+              onImportComplete={fetchProducts}
+              sucursales={sucursales}
+            />
             <button
               onClick={handleExportToExcel}
               className="bg-green-600 hover:bg-green-700 text-white px-4 md:px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center gap-2"

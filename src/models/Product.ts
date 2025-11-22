@@ -83,7 +83,7 @@ const ProductSchema = new Schema<IProduct>(
     },
     stockMinimo: {
       type: Number,
-      default: 5,
+      default: 1,
       min: [0, 'El stock mínimo no puede ser negativo'],
     },
     stockPorSucursal: {
@@ -100,11 +100,11 @@ const ProductSchema = new Schema<IProduct>(
           type: Number,
           required: true,
           min: [0, 'La cantidad no puede ser negativa'],
-          default: 0,
+          default: 1,
         },
         stockMinimo: {
           type: Number,
-          default: 5,
+          default: 1,
           min: [0, 'El stock mínimo no puede ser negativo'],
         },
       }],

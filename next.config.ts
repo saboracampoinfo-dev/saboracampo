@@ -19,6 +19,12 @@ const nextConfig: NextConfig = {
     unoptimized: true
   },
   compress: true,
+  // Aumentar el tamaño máximo del body para importaciones grandes
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
+  },
 };
 
 export default nextConfig;

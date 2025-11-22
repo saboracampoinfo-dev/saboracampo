@@ -1,0 +1,31 @@
+id_comercio|id_bandera|id_sucursal|id_producto|productos_ean|productos_descripcion|productos_cantidad_presentacion|productos_unidad_medida_presentacion|productos_marca|productos_precio_lista|productos_precio_referencia|productos_cantidad_referencia|productos_unidad_medida_referencia|productos_precio_unitario_promo1|productos_leyenda_promo1|productos_precio_unitario_promo2|productos_leyenda_promo2
+1|1|101|PROD001|7790001234567|Leche Entera La Serenisima 1L|50|litro|La Serenisima|350.50|350.50|1|litro|320.00|Promo especial|0||
+1|1|101|PROD002|7790002345678|Pan Lactal Bimbo 500g|30|paquete|Bimbo|280.00|280.00|1|paquete|250.00|Oferta|240.00|Super oferta
+1|1|101|PROD003|7790003456789|Carne Picada Premium|25|kg|Frigorífico San Jorge|1850.00|1850.00|1|kg|0||0||
+1|1|101|PROD004|7790004567890|Manzanas Rojas|100|kg|Del Campo|420.00|420.00|1|kg|380.00|Promo fin de semana|0||
+1|1|101|PROD005|7790005678901|Yogur Entero Sancor 1L|40|litro|Sancor|380.00|380.00|1|litro|350.00|Promo|0||
+1|1|101|PROD006|7790006789012|Queso Cremoso La Paulina 500g|20|kg|La Paulina|1250.00|1250.00|1|kg|0||0||
+1|1|101|PROD007|7790007890123|Fideos Matarazzo 500g|80|paquete|Matarazzo|180.00|180.00|1|paquete|160.00|Oferta|0||
+1|1|101|PROD008|7790008901234|Arroz Gallo Oro 1kg|60|kg|Gallo Oro|420.00|420.00|1|kg|400.00|Promo|0||
+1|1|101|PROD009|7790009012345|Aceite Girasol Cocinero 900ml|35|litro|Cocinero|650.00|650.00|1|litro|620.00|Oferta|0||
+1|1|101|PROD010|7790010123456|Azúcar Ledesma 1kg|55|kg|Ledesma|380.00|380.00|1|kg|0||0||
+1|1|101|PROD011|7790011234567|Yerba Mate Taragui 1kg|45|kg|Taragui|1280.00|1280.00|1|kg|1200.00|Promo|0||
+1|1|101|PROD012|7790012345678|Coca Cola 2.25L|90|litro|Coca Cola|680.00|680.00|1|litro|650.00|Oferta|620.00|Super oferta
+1|1|101|PROD013|7790013456789|Cerveza Quilmes 1L|100|litro|Quilmes|420.00|420.00|1|litro|400.00|Promo|0||
+1|1|101|PROD014|7790014567890|Vino Tinto Escorihuela 750ml|25|litro|Escorihuela|1850.00|1850.00|1|litro|1750.00|Oferta|0||
+1|1|101|PROD015|7790015678901|Galletitas Oreo 118g|70|paquete|Oreo|320.00|320.00|1|paquete|290.00|Promo|0||
+1|1|101|PROD016|7790016789012|Tomate Redondo|120|kg|Huerta Local|280.00|280.00|1|kg|0||0||
+1|1|101|PROD017|7790017890123|Lechuga Mantecosa|80|unidad|Huerta Local|180.00|180.00|1|unidad|0||0||
+1|1|101|PROD018|7790018901234|Pollo Entero|30|kg|Granja Tres Arroyos|1420.00|1420.00|1|kg|1350.00|Oferta|0||
+1|1|101|PROD019|7790019012345|Huevos Blancos x12|50|paquete|Granja Avicol|580.00|580.00|1|paquete|0||0||
+1|1|101|PROD020|7790020123456|Manteca La Serenísima 200g|40|kg|La Serenisima|650.00|650.00|1|kg|620.00|Promo|0||
+1|1|101|PROD021|7790021234567|Jamón Cocido Paladini|15|kg|Paladini|2800.00|2800.00|1|kg|2650.00|Oferta|0||
+1|1|101|PROD022|7790022345678|Salchichas Viena Paladini|45|paquete|Paladini|480.00|480.00|1|paquete|450.00|Promo|0||
+1|1|101|PROD023|7790023456789|Harina 000 Pureza 1kg|65|kg|Pureza|280.00|280.00|1|kg|0||0||
+1|1|101|PROD024|7790024567890|Sal Fina Celusal 500g|90|kg|Celusal|120.00|120.00|1|kg|0||0||
+1|1|101|PROD025|7790025678901|Pimienta Negra Molida 50g|40|kg|Alicante|320.00|320.00|1|kg|0||0||
+1|1|101|PROD026|7790026789012|Atún La Campagnola 170g|60|lata|La Campagnola|480.00|480.00|1|lata|450.00|Oferta|0||
+1|1|101|PROD027|7790027890123|Arvejas Arcor 300g|55|lata|Arcor|280.00|280.00|1|lata|260.00|Promo|0||
+1|1|101|PROD028|7790028901234|Dulce de Leche Sancor 400g|50|kg|Sancor|580.00|580.00|1|kg|550.00|Oferta|0||
+1|1|101|PROD029|7790029012345|Mermelada Arcor Frutilla 390g|45|kg|Arcor|420.00|420.00|1|kg|400.00|Promo|0||
+1|1|101|PROD030|7790030123456|Café Torrado Nescafé 170g|40|kg|Nescafé|1280.00|1280.00|1|kg|1200.00|Oferta|0||
