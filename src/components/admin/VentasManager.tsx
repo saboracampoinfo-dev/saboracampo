@@ -56,6 +56,8 @@ export default function VentasManager() {
   const [filtroEstado, setFiltroEstado] = useState('todas');
   const [filtroSucursal, setFiltroSucursal] = useState('todas');
   const [filtroVendedor, setFiltroVendedor] = useState('todos');
+  const [ventaSeleccionada, setVentaSeleccionada] = useState<Venta | null>(null);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -308,6 +310,16 @@ export default function VentasManager() {
     }
   };
 
+  const abrirModalProductos = (venta: Venta) => {
+    setVentaSeleccionada(venta);
+    setModalAbierto(true);
+  };
+
+  const cerrarModal = () => {
+    setModalAbierto(false);
+    setVentaSeleccionada(null);
+  };
+
   if (loading) {
     return <div className="text-center py-8 text-primary">Cargando ventas...</div>;
   }
@@ -428,19 +440,23 @@ export default function VentasManager() {
                       {new Date(fechaMostrar).toLocaleDateString('es-AR')} <br />
                       <span className="text-xs text-dark-500">{new Date(fechaMostrar).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span>
                     </td>
-                    <td className="px-3 md:px-6 py-4 text-xs md:text-sm text-dark-600 dark:text-dark-400">
-                      <ul className="list-disc list-inside max-h-20 overflow-y-auto">
-                        {venta.productos.slice(0, 3).map((prod, idx) => (
-                          <li key={idx} className="text-xs">
-                            {prod.nombre} x{prod.cantidad}
-                          </li>
-                        ))}
-                        {venta.productos.length > 3 && (
-                          <li className="text-xs text-primary-600 dark:text-primary-400">
-                            +{venta.productos.length - 3} más...
-                          </li>
-                        )}
-                      </ul>
+                    <td className="px-1 py-4 text-xs text-dark-600 dark:text-dark-400">
+                      {venta.productos.length <= 2 ? (
+                        <ul className="list-disc list-inside">
+                          {venta.productos.map((prod, idx) => (
+                            <li key={idx} className="text-xs lowercase">
+                              {prod.nombre} x{prod.cantidad}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <button
+                          onClick={() => abrirModalProductos(venta)}
+                          className="cursor-pointer bg-primary hover:bg-primary-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                          Ver detalle ({venta.productos.length})
+                        </button>
+                      )}
                     </td>
                     <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm text-dark-600 dark:text-dark-400">
                       {venta.sucursal?.nombre || 'N/A'}
@@ -552,6 +568,76 @@ export default function VentasManager() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Detalle de Productos */}
+      {modalAbierto && ventaSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={cerrarModal}>
+          <div 
+            className="bg-white dark:bg-dark-800 rounded-lg shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del Modal */}
+            <div className="bg-primary text-white px-6 py-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-bold">Detalle de Productos</h3>
+                <p className="text-sm opacity-90">Orden: {ventaSeleccionada.numeroOrden}</p>
+              </div>
+              <button
+                onClick={cerrarModal}
+                className="text-white hover:text-gray-200 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Contenido del Modal */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+              <div className="space-y-3">
+                {ventaSeleccionada.productos.map((prod, idx) => (
+                  <div 
+                    key={idx} 
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-700 rounded-lg border border-gray-200 dark:border-dark-600"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-dark-900 dark:text-light-500">{prod.nombre}</h4>
+                      <div className="text-sm text-dark-600 dark:text-dark-400 mt-1">
+                        <span>Precio unitario: ${prod.precio.toFixed(2)}</span>
+                        <span className="mx-2">•</span>
+                        <span>Cantidad: {prod.cantidad}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">
+                        ${prod.subtotal.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total */}
+              <div className="mt-6 pt-4 border-t-2 border-gray-300 dark:border-dark-600">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-dark-900 dark:text-light-500">Total:</span>
+                  <span className="text-2xl font-bold text-primary">${ventaSeleccionada.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer del Modal */}
+            <div className="bg-gray-50 dark:bg-dark-700 px-6 py-4 flex justify-end">
+              <button
+                onClick={cerrarModal}
+                className="cursor-pointer bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

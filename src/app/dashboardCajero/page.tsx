@@ -167,6 +167,14 @@ export default function DashboardCajero() {
               >
                 💰 Órdenes de Cobro
               </button>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => router.push('/dashboardAdmin')}
+                  className="bg-warning hover:bg-warning-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer"
+                >
+                  ⚙️ Volver Admin
+                </button>
+              )}
 
             </div>
           </div>
