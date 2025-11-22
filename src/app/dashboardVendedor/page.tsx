@@ -7,6 +7,8 @@ import dynamic from 'next/dynamic';
 // Importar componentes con dynamic para evitar SSR issues
 const MisDatosVendedor = dynamic(() => import('@/components/vendedor/MisDatosVendedor'), { ssr: false });
 const ProductosVendedor = dynamic(() => import('@/components/vendedor/ProductosVendedor'), { ssr: false });
+const CrearOrden = dynamic(() => import('@/components/vendedor/CrearOrden'), { ssr: false });
+const EditarOrden = dynamic(() => import('@/components/vendedor/EditarOrden'), { ssr: false });
 const OrdenesVendedor = dynamic(() => import('@/components/vendedor/OrdenesVendedor'), { ssr: false });
 const HistorialVendedor = dynamic(() => import('@/components/vendedor/HistorialVendedor'), { ssr: false });
 
@@ -15,10 +17,24 @@ export default function DashboardVendedor() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'inicio' | 'productos' | 'ordenes' | 'historial'>('inicio');
+  const [activeTab, setActiveTab] = useState<'inicio' | 'productos' | 'crear_orden' | 'editar_orden' | 'ordenes' | 'historial'>('inicio');
+  const [ordenIdEditar, setOrdenIdEditar] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUser();
+    // Manejar el parámetro de query tab
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const ordenId = params.get('ordenId');
+    
+    if (tab === 'crear_orden') {
+      setActiveTab('crear_orden');
+    } else if (tab === 'ordenes') {
+      setActiveTab('ordenes');
+    } else if (tab === 'editar_orden' && ordenId) {
+      setActiveTab('editar_orden');
+      setOrdenIdEditar(ordenId);
+    }
   }, []);
 
   const fetchUser = async () => {
@@ -162,14 +178,14 @@ export default function DashboardVendedor() {
               <button
                 onClick={() => setActiveTab('ordenes')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === 'ordenes'
+                  activeTab === 'ordenes' || activeTab === 'crear_orden' || activeTab === 'editar_orden'
                     ? 'bg-primary-600 text-gray-200 shadow-md'
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                📋 Órdenes
+                📋 Mis Órdenes
               </button>
-              <button
+              {/* <button
                 onClick={() => setActiveTab('historial')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'historial'
@@ -178,7 +194,7 @@ export default function DashboardVendedor() {
                 }`}
               >
                 📜 Historial
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -192,6 +208,18 @@ export default function DashboardVendedor() {
           {activeTab === 'productos' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <ProductosVendedor />
+            </div>
+          )}
+
+          {activeTab === 'crear_orden' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <CrearOrden />
+            </div>
+          )}
+
+          {activeTab === 'editar_orden' && ordenIdEditar && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <EditarOrden ordenId={ordenIdEditar} />
             </div>
           )}
 

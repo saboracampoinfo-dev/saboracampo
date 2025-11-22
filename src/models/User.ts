@@ -27,6 +27,8 @@ export interface IUser {
   email: string;
   imgProfile?: string;
   role: 'user' | 'admin' | 'seller' | 'cashier';
+  sucursalId?: string;
+  sucursalNombre?: string;
   telefono?: string;
   domicilio?: string;
   tipoDocumento?: string;
@@ -71,6 +73,14 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ['user', 'admin', 'seller', 'cashier'],
       default: 'user',
+    },
+    sucursalId: {
+      type: String,
+      trim: true,
+    },
+    sucursalNombre: {
+      type: String,
+      trim: true,
     },
     telefono: {
       type: String,

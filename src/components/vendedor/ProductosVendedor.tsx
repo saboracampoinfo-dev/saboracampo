@@ -170,11 +170,11 @@ export default function ProductosVendedor() {
       </div>
 
       {/* Selección de Sucursal */}
-      <div className="bg-primary-50 dark:bg-primary-900 rounded-lg p-6 mb-6 shadow-md border-l-4 border-primary">
+      <div className="rounded-lg p-6 mb-6 shadow-lg border-l-4 border-primary">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">🏢</span>
           <div>
-            <h3 className="text-lg font-bold text-primary-900 dark:text-primary-200">
+            <h3 className="text-lg font-bold text-primary-700 dark:text-primary-200">
               Sucursal de Trabajo
             </h3>
             <p className="text-sm text-primary-700 dark:text-primary-300">

@@ -229,7 +229,7 @@ export default function MisDatosVendedor() {
           </div>
         </form>
       ) : (
-        <div className="bg-white dark:bg-dark-700 rounded-lg p-6 shadow-md border border-dark-200 dark:border-dark-600">
+        <div className="bg-white dark:bg-dark-700 rounded-lg p-2 md:p-6 shadow-md border border-dark-200 dark:border-dark-600">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

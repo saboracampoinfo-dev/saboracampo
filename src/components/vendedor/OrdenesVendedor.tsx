@@ -1,128 +1,129 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
+import { showSuccessToast, showErrorToast, showInfoToast } from '@/utils/toastHelpers';
+
+interface ProductoOrden {
+  productoId: string;
+  nombre: string;
+  codigoBarras?: string; // Opcional
+  cantidad: number;
+  precio: number;
+  subtotal: number;
+  imagen?: string;
+}
 
 interface Orden {
   _id: string;
-  cliente: {
+  numeroOrden: string;
+  vendedor: {
+    id: string;
     nombre: string;
     email: string;
-    telefono?: string;
   };
-  productos: {
-    productoId: string;
-    nombre: string;
-    cantidad: number;
-    precio: number;
-    subtotal: number;
-  }[];
+  productos: ProductoOrden[];
   total: number;
-  estado: 'pendiente' | 'en_proceso' | 'completada' | 'cancelada';
-  metodoPago: string;
+  estado: 'en_proceso' | 'pendiente_cobro' | 'completada' | 'cancelada';
   fechaCreacion: string;
-  vendedor?: {
+  fechaCierre?: string;
+  fechaCompletada?: string;
+  metodoPago?: string;
+  cajero?: {
     id: string;
     nombre: string;
   };
   notas?: string;
 }
 
+interface Sucursal {
+  _id: string;
+  nombre: string;
+  estado: string;
+}
+
 export default function OrdenesVendedor() {
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrden, setSelectedOrden] = useState<Orden | null>(null);
-  const [filtroEstado, setFiltroEstado] = useState<'todas' | 'pendiente' | 'en_proceso' | 'completada' | 'cancelada'>('todas');
+  const [filtroEstado, setFiltroEstado] = useState<'todas' | 'en_proceso' | 'pendiente_cobro' | 'completada' | 'cancelada'>('todas');
+  
+  // Estados para selector de sucursal
+  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [sucursalSeleccionada, setSucursalSeleccionada] = useState<string>('');
+  const [loadingSucursales, setLoadingSucursales] = useState(false);
 
   useEffect(() => {
+    fetchSucursales();
     fetchOrdenes();
+    // Cargar sucursal guardada en localStorage
+    const sucursalGuardada = localStorage.getItem('sucursalActiva');
+    if (sucursalGuardada) {
+      setSucursalSeleccionada(sucursalGuardada);
+    }
   }, []);
+
+  const fetchSucursales = async () => {
+    setLoadingSucursales(true);
+    try {
+      const response = await fetch('/api/sucursales?estado=activa');
+      const data = await response.json();
+      
+      if (data.success) {
+        setSucursales(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error al cargar sucursales:', error);
+    } finally {
+      setLoadingSucursales(false);
+    }
+  };
+
+  const handleSucursalChange = async (sucursalId: string) => {
+    setSucursalSeleccionada(sucursalId);
+    const sucursal = sucursales.find(s => s._id === sucursalId);
+    
+    // Guardar en localStorage para persistencia
+    localStorage.setItem('sucursalActiva', sucursalId);
+    localStorage.setItem('sucursalActivaNombre', sucursal?.nombre || '');
+    
+    // Actualizar sucursal del usuario en el backend
+    try {
+      const response = await fetch('/api/users/update-sucursal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sucursalId,
+          sucursalNombre: sucursal?.nombre || ''
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showSuccessToast(`Sucursal cambiada a: ${sucursal?.nombre}`);
+      }
+    } catch (error) {
+      console.error('Error al actualizar sucursal:', error);
+    }
+  };
+
+  const crearNuevaOrden = () => {
+    if (!sucursalSeleccionada) {
+      showInfoToast('Por favor, selecciona una sucursal antes de crear una orden');
+      return;
+    }
+    window.location.href = '/dashboardVendedor?tab=crear_orden';
+  };
 
   const fetchOrdenes = async () => {
     try {
-      // Por ahora, simulamos datos de órdenes
-      // En producción, esto vendría de una API real
-      const ordenesSimuladas: Orden[] = [
-        {
-          _id: '1',
-          cliente: {
-            nombre: 'Juan Pérez',
-            email: 'juan@email.com',
-            telefono: '555-1234'
-          },
-          productos: [
-            {
-              productoId: 'prod1',
-              nombre: 'Leche Entera 1L',
-              cantidad: 2,
-              precio: 150,
-              subtotal: 300
-            },
-            {
-              productoId: 'prod2',
-              nombre: 'Pan Integral',
-              cantidad: 1,
-              precio: 80,
-              subtotal: 80
-            }
-          ],
-          total: 380,
-          estado: 'pendiente',
-          metodoPago: 'Efectivo',
-          fechaCreacion: new Date().toISOString(),
-          notas: 'Entregar antes de las 18:00'
-        },
-        {
-          _id: '2',
-          cliente: {
-            nombre: 'María García',
-            email: 'maria@email.com',
-            telefono: '555-5678'
-          },
-          productos: [
-            {
-              productoId: 'prod3',
-              nombre: 'Queso Fresco 500g',
-              cantidad: 1,
-              precio: 280,
-              subtotal: 280
-            }
-          ],
-          total: 280,
-          estado: 'en_proceso',
-          metodoPago: 'Tarjeta',
-          fechaCreacion: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          _id: '3',
-          cliente: {
-            nombre: 'Carlos López',
-            email: 'carlos@email.com'
-          },
-          productos: [
-            {
-              productoId: 'prod4',
-              nombre: 'Manzanas 1kg',
-              cantidad: 3,
-              precio: 120,
-              subtotal: 360
-            },
-            {
-              productoId: 'prod5',
-              nombre: 'Naranjas 1kg',
-              cantidad: 2,
-              precio: 100,
-              subtotal: 200
-            }
-          ],
-          total: 560,
-          estado: 'completada',
-          metodoPago: 'Transferencia',
-          fechaCreacion: new Date(Date.now() - 86400000).toISOString()
-        }
-      ];
+      const response = await fetch('/api/ordenes');
+      const data = await response.json();
       
-      setOrdenes(ordenesSimuladas);
+      if (data.success) {
+        setOrdenes(data.ordenes);
+      } else {
+        showErrorToast('Error al cargar órdenes');
+      }
     } catch (error) {
       showErrorToast('Error al cargar órdenes');
     } finally {
@@ -132,14 +133,25 @@ export default function OrdenesVendedor() {
 
   const handleEstadoChange = async (ordenId: string, nuevoEstado: string) => {
     try {
-      // Aquí iría la llamada a la API para actualizar el estado
-      // Por ahora solo actualizamos localmente
-      setOrdenes(ordenes.map(orden => 
-        orden._id === ordenId 
-          ? { ...orden, estado: nuevoEstado as any }
-          : orden
-      ));
-      showSuccessToast('Estado actualizado correctamente');
+      const response = await fetch('/api/ordenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'cambiar_estado',
+          ordenId,
+          estado: nuevoEstado
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Recargar órdenes
+        fetchOrdenes();
+        showSuccessToast(data.message || 'Estado actualizado correctamente');
+      } else {
+        showErrorToast(data.error || 'Error al actualizar estado');
+      }
     } catch (error) {
       showErrorToast('Error al actualizar estado');
     }
@@ -147,10 +159,10 @@ export default function OrdenesVendedor() {
 
   const getEstadoColor = (estado: string) => {
     switch (estado) {
-      case 'pendiente':
-        return { bg: 'bg-warning/10', text: 'text-warning', label: 'Pendiente' };
       case 'en_proceso':
-        return { bg: 'bg-primary-100', text: 'text-primary', label: 'En Proceso' };
+        return { bg: 'bg-primary-600', text: 'text-primary', label: 'En Proceso' };
+      case 'pendiente_cobro':
+        return { bg: 'bg-warning/10', text: 'text-warning', label: 'Pendiente Cobro' };
       case 'completada':
         return { bg: 'bg-success-dark/10', text: 'text-success-light', label: 'Completada' };
       case 'cancelada':
@@ -181,12 +193,58 @@ export default function OrdenesVendedor() {
         </p>
       </div>
 
+      {/* Selector de Sucursal y Botón Nueva Orden */}
+      <div className="bg-white dark:bg-dark-700 rounded-lg p-4 mb-6 shadow-md border border-dark-200 dark:border-dark-600">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          {/* Selector de Sucursal */}
+          <div className="flex-1 w-full md:w-auto">
+            <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
+              📍 Sucursal Activa
+            </label>
+            {loadingSucursales ? (
+              <div className="animate-pulse bg-dark-200 dark:bg-dark-600 h-10 rounded-lg"></div>
+            ) : (
+              <select
+                value={sucursalSeleccionada}
+                onChange={(e) => handleSucursalChange(e.target.value)}
+                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-500 rounded-lg bg-white dark:bg-dark-800 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              >
+                <option value="">Seleccionar sucursal...</option>
+                {sucursales.map((sucursal) => (
+                  <option key={sucursal._id} value={sucursal._id}>
+                    {sucursal.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Botón Nueva Orden */}
+          <div className="w-full md:w-auto">
+            <label className="block text-sm font-semibold text-transparent mb-2 md:invisible">
+              .
+            </label>
+            <button
+              onClick={crearNuevaOrden}
+              disabled={!sucursalSeleccionada}
+              className={`w-full md:w-auto px-6 py-2 rounded-lg font-semibold transition-all duration-300 whitespace-nowrap cursor-pointer hover:bg-amber-600 ${
+                sucursalSeleccionada
+                  ? 'bg-success-light hover:bg-success-dark text-white shadow-md hover:shadow-xl'
+                  : 'bg-dark-300 dark:bg-dark-600 text-dark-500 dark:text-dark-400 cursor-not-allowed'
+              }`}
+            >
+              ➕ Nueva Orden
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Filtros */}
       <div className="bg-white dark:bg-dark-700 rounded-lg p-4 mb-6 shadow-md border border-dark-200 dark:border-dark-600">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFiltroEstado('todas')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer ${
               filtroEstado === 'todas'
                 ? 'bg-primary text-white'
                 : 'bg-dark-100 dark:bg-dark-600 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-500'
@@ -195,18 +253,18 @@ export default function OrdenesVendedor() {
             Todas ({ordenes.length})
           </button>
           <button
-            onClick={() => setFiltroEstado('pendiente')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-              filtroEstado === 'pendiente'
+            onClick={() => setFiltroEstado('pendiente_cobro')}
+            className={`px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer ${
+              filtroEstado === 'pendiente_cobro'
                 ? 'bg-warning text-white'
                 : 'bg-dark-100 dark:bg-dark-600 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-500'
             }`}
           >
-            Pendientes ({ordenes.filter(o => o.estado === 'pendiente').length})
+            Pendiente Cobro ({ordenes.filter(o => o.estado === 'pendiente_cobro').length})
           </button>
           <button
             onClick={() => setFiltroEstado('en_proceso')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer ${
               filtroEstado === 'en_proceso'
                 ? 'bg-primary text-white'
                 : 'bg-dark-100 dark:bg-dark-600 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-500'
@@ -216,7 +274,7 @@ export default function OrdenesVendedor() {
           </button>
           <button
             onClick={() => setFiltroEstado('completada')}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            className={`px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer${
               filtroEstado === 'completada'
                 ? 'bg-success-light text-white'
                 : 'bg-dark-100 dark:bg-dark-600 text-dark-700 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-500'
@@ -239,13 +297,13 @@ export default function OrdenesVendedor() {
             return (
               <div
                 key={orden._id}
-                className="bg-white dark:bg-dark-700 rounded-lg p-6 shadow-md border border-dark-200 dark:border-dark-600 hover:shadow-lg transition-all"
+                className="bg-white dark:bg-dark-700 rounded-lg p-2 md:p-6 shadow-md border border-dark-200 dark:border-dark-600 hover:shadow-lg transition-all"
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-bold text-dark-900 dark:text-light-500">
-                        {orden.cliente.nombre}
+                        Orden #{orden.numeroOrden}
                       </h3>
                       <span className={`px-3 py-1 ${estadoInfo.bg} ${estadoInfo.text} rounded-full text-xs font-medium`}>
                         {estadoInfo.label}
@@ -253,10 +311,16 @@ export default function OrdenesVendedor() {
                     </div>
                     
                     <div className="space-y-1 text-sm text-dark-600 dark:text-dark-400">
-                      <div>📧 {orden.cliente.email}</div>
-                      {orden.cliente.telefono && <div>📱 {orden.cliente.telefono}</div>}
-                      <div>📅 {new Date(orden.fechaCreacion).toLocaleString('es-ES')}</div>
-                      <div>💳 {orden.metodoPago}</div>
+                      <div>� Vendedor: {orden.vendedor.nombre}</div>
+                      <div>📅 Creada: {new Date(orden.fechaCreacion).toLocaleString('es-ES')}</div>
+                      {orden.fechaCierre && (
+                        <div>� Cerrada: {new Date(orden.fechaCierre).toLocaleString('es-ES')}</div>
+                      )}
+                      {orden.fechaCompletada && (
+                        <div>✅ Completada: {new Date(orden.fechaCompletada).toLocaleString('es-ES')}</div>
+                      )}
+                      {orden.metodoPago && <div>💳 {orden.metodoPago}</div>}
+                      {orden.cajero && <div>💰 Cajero: {orden.cajero.nombre}</div>}
                     </div>
 
                     <div className="mt-3">
@@ -285,27 +349,23 @@ export default function OrdenesVendedor() {
                       ${orden.total.toFixed(2)}
                     </div>
 
-                    {orden.estado !== 'completada' && orden.estado !== 'cancelada' && (
+                    {orden.estado === 'en_proceso' && (
                       <div className="flex flex-col gap-2">
-                        {orden.estado === 'pendiente' && (
-                          <button
-                            onClick={() => handleEstadoChange(orden._id, 'en_proceso')}
-                            className="bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap"
-                          >
-                            Iniciar Proceso
-                          </button>
-                        )}
-                        {orden.estado === 'en_proceso' && (
-                          <button
-                            onClick={() => handleEstadoChange(orden._id, 'completada')}
-                            className="bg-success-light hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap"
-                          >
-                            Completar
-                          </button>
-                        )}
+                        <button
+                          onClick={() => window.location.href = `/dashboardVendedor?tab=editar_orden&ordenId=${orden._id}`}
+                          className="cursor-pointer bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap"
+                        >
+                          ✏️ Editar Orden
+                        </button>
+                        <button
+                          onClick={() => handleEstadoChange(orden._id, 'pendiente_cobro')}
+                          className="cursor-pointer bg-green-600 hover:bg-green-800 dark:text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap"
+                        >
+                          Enviar a Caja
+                        </button>
                         <button
                           onClick={() => handleEstadoChange(orden._id, 'cancelada')}
-                          className="bg-error-light hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap"
+                          className="cursor-pointer bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap"
                         >
                           Cancelar
                         </button>
@@ -314,7 +374,7 @@ export default function OrdenesVendedor() {
 
                     <button
                       onClick={() => setSelectedOrden(orden)}
-                      className="w-full bg-dark-300 hover:bg-dark-400 dark:bg-dark-600 dark:hover:bg-dark-500 text-dark-900 dark:text-light-500 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300"
+                      className="cursor-pointer w-full bg-dark-300 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-800 text-dark-900 dark:text-light-500 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300"
                     >
                       Ver Detalle
                     </button>
@@ -341,16 +401,28 @@ export default function OrdenesVendedor() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Cliente */}
+              {/* Info Orden */}
               <div>
                 <h4 className="text-lg font-bold text-dark-900 dark:text-light-500 mb-3">
-                  Información del Cliente
+                  Información de la Orden
                 </h4>
                 <div className="bg-dark-50 dark:bg-dark-700 p-4 rounded-lg space-y-2">
-                  <div><strong>Nombre:</strong> {selectedOrden.cliente.nombre}</div>
-                  <div><strong>Email:</strong> {selectedOrden.cliente.email}</div>
-                  {selectedOrden.cliente.telefono && (
-                    <div><strong>Teléfono:</strong> {selectedOrden.cliente.telefono}</div>
+                  <div><strong>Número:</strong> {selectedOrden.numeroOrden}</div>
+                  <div><strong>Vendedor:</strong> {selectedOrden.vendedor.nombre}</div>
+                  <div><strong>Email:</strong> {selectedOrden.vendedor.email}</div>
+                  <div><strong>Estado:</strong> {getEstadoColor(selectedOrden.estado).label}</div>
+                  <div><strong>Fecha Creación:</strong> {new Date(selectedOrden.fechaCreacion).toLocaleString('es-ES')}</div>
+                  {selectedOrden.fechaCierre && (
+                    <div><strong>Fecha Cierre:</strong> {new Date(selectedOrden.fechaCierre).toLocaleString('es-ES')}</div>
+                  )}
+                  {selectedOrden.fechaCompletada && (
+                    <div><strong>Fecha Completada:</strong> {new Date(selectedOrden.fechaCompletada).toLocaleString('es-ES')}</div>
+                  )}
+                  {selectedOrden.metodoPago && (
+                    <div><strong>Método Pago:</strong> {selectedOrden.metodoPago}</div>
+                  )}
+                  {selectedOrden.cajero && (
+                    <div><strong>Cajero:</strong> {selectedOrden.cajero.nombre}</div>
                   )}
                 </div>
               </div>
