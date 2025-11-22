@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     
     // Parámetros de paginación
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '50');
     const skip = (page - 1) * limit;
     
     // Parámetros de ordenamiento
@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
       filter.$or = [
         { nombre: { $regex: search, $options: 'i' } },
         { descripcion: { $regex: search, $options: 'i' } },
+        { sku: { $regex: search, $options: 'i' } },
+        { codigoBarras: { $regex: search, $options: 'i' } },
         { etiquetas: { $in: [new RegExp(search, 'i')] } }
       ];
     }

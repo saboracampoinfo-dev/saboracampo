@@ -79,6 +79,15 @@ export default function GestorTransferencias() {
   const [transferenciasInput, setTransferenciasInput] = useState<Record<string, TransferenciaInput>>({});
   const [busquedaProducto, setBusquedaProducto] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
+  
+  // Estados para paginación de productos
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [itemsPerPage] = useState(50);
+  
+  // Caché de productos por página
+  const [productCache, setProductCache] = useState<Map<string, Product[]>>(new Map());
 
   // Estados para filtros de historial
   const [filtroEstado, setFiltroEstado] = useState<string>('todas');
@@ -92,11 +101,20 @@ export default function GestorTransferencias() {
   // Cargar datos iniciales
   useEffect(() => {
     cargarSucursales();
-    cargarProductos();
+    cargarProductos(1);
     if (vista === 'historial') {
       cargarTransferencias();
     }
   }, [vista]);
+
+  // Reiniciar a página 1 cuando cambien búsqueda o filtros
+  useEffect(() => {
+    if (vista === 'masiva') {
+      setCurrentPage(1);
+      setProductCache(new Map()); // Limpiar caché al cambiar filtros
+      cargarProductos(1);
+    }
+  }, [busquedaProducto, filtroCategoria]);
 
   const cargarSucursales = async () => {
     try {
@@ -123,16 +141,63 @@ export default function GestorTransferencias() {
     }
   };
 
-  const cargarProductos = async () => {
+  const cargarProductos = async (page: number = currentPage) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/products?limit=10000', {
+      
+      // Crear clave de caché basada en página y filtros
+      const cacheKey = `${page}-${busquedaProducto}-${filtroCategoria}`;
+      
+      // Verificar si los datos están en caché
+      if (productCache.has(cacheKey)) {
+        setProductos(productCache.get(cacheKey) || []);
+        setLoading(false);
+        return;
+      }
+      
+      // Construir URL con parámetros de paginación y filtros
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        sortBy: 'nombre',
+        sortOrder: 'asc'
+      });
+      
+      if (busquedaProducto) {
+        params.append('search', busquedaProducto);
+      }
+      
+      if (filtroCategoria) {
+        params.append('categoria', filtroCategoria);
+      }
+      
+      const res = await fetch(`/api/products?${params.toString()}`, {
         credentials: 'include'
       });
+      
       if (res.ok) {
         const data = await res.json();
         const productosCargados = data.data || data.products || [];
         setProductos(productosCargados);
+        setTotalPages(data.pagination.pages);
+        setTotalProducts(data.pagination.total);
+        setCurrentPage(page);
+        
+        // Guardar en caché
+        setProductCache(prev => {
+          const newCache = new Map(prev);
+          newCache.set(cacheKey, productosCargados);
+          
+          // Limitar caché a 10 páginas para no consumir mucha memoria
+          if (newCache.size > 10) {
+            const firstKey = newCache.keys().next().value;
+            if (firstKey) {
+              newCache.delete(firstKey);
+            }
+          }
+          
+          return newCache;
+        });
       } else if (res.status === 401) {
         showErrorToast('Sesión expirada. Por favor, inicia sesión nuevamente.');
       }
@@ -357,18 +422,24 @@ export default function GestorTransferencias() {
     }
   };
 
-  // Obtener categorías únicas
-  const categorias = productos && productos.length > 0 
-    ? Array.from(new Set(productos.map(p => p.categoria).filter(Boolean)))
-    : [];
+  // Obtener categorías únicas - necesitamos todas para el selector
+  const [categorias, setCategorias] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Cargar todas las categorías disponibles
+    fetch('/api/products?limit=1000&sortBy=categoria')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const cats = Array.from(new Set(data.data.map((p: Product) => p.categoria).filter(Boolean)));
+          setCategorias(cats as string[]);
+        }
+      })
+      .catch(err => console.error('Error cargando categorías:', err));
+  }, []);
 
-  // Filtrar productos
-  const productosFiltrados = (productos || []).filter(p => {
-    if (!p) return false;
-    const matchNombre = p.nombre?.toLowerCase().includes(busquedaProducto.toLowerCase());
-    const matchCategoria = !filtroCategoria || p.categoria === filtroCategoria;
-    return matchNombre && matchCategoria;
-  });
+  // Los productos ya vienen filtrados del backend
+  const productosFiltrados = productos || [];
 
   // Actualizar input de transferencia
   const actualizarTransferencia = (productoId: string, field: keyof TransferenciaInput, value: string | number) => {
@@ -490,7 +561,9 @@ export default function GestorTransferencias() {
       if (exitosas > 0) {
         showSuccessToast(`${exitosas} transferencia(s) ejecutada(s) exitosamente`);
         setTransferenciasInput({});
-        cargarProductos();
+        // Limpiar caché y recargar página actual
+        setProductCache(new Map());
+        cargarProductos(currentPage);
       }
       
       if (fallidas > 0) {
@@ -532,7 +605,9 @@ export default function GestorTransferencias() {
         console.log('✅ Transferencia aprobada exitosamente');
         showSuccessToast('Transferencia aprobada exitosamente');
         cargarTransferencias();
-        cargarProductos();
+        // Limpiar caché y recargar productos
+        setProductCache(new Map());
+        cargarProductos(currentPage);
       } else if (res.status === 401) {
         console.error('❌ Error 401: No autenticado');
         showErrorToast('No estás autenticado. Por favor, inicia sesión nuevamente.');
@@ -701,6 +776,14 @@ export default function GestorTransferencias() {
               </div>
             )}
 
+            {/* Contador de productos */}
+            {!loading && (
+              <div className="text-sm text-dark-600 dark:text-dark-400">
+                Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalProducts)} de {totalProducts} productos
+                {(busquedaProducto || filtroCategoria) && ' (filtrados)'}
+              </div>
+            )}
+
             {/* Tabla de Productos */}
             {loading ? (
               <div className="text-center py-8 text-primary">Cargando productos...</div>
@@ -795,9 +878,152 @@ export default function GestorTransferencias() {
 
                 {productosFiltrados.length === 0 && (
                   <div className="text-center py-8 text-dark-600 dark:text-dark-400">
-                    No se encontraron productos
+                    {totalProducts === 0 
+                      ? 'No hay productos registrados'
+                      : 'No se encontraron productos con los filtros aplicados'}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Paginador */}
+            {totalPages > 1 && !loading && (
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 bg-surface dark:bg-dark-800 rounded-lg shadow-md p-4 border border-dark-200 dark:border-dark-700">
+                {/* Info de página actual */}
+                <div className="text-sm text-dark-600 dark:text-dark-400">
+                  Página {currentPage} de {totalPages}
+                </div>
+
+                {/* Controles de navegación */}
+                <div className="flex items-center gap-2">
+                  {/* Botón Primera página */}
+                  <button
+                    onClick={() => cargarProductos(1)}
+                    disabled={currentPage === 1 || loading}
+                    className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    title="Primera página"
+                  >
+                    ⏮️
+                  </button>
+
+                  {/* Botón Anterior */}
+                  <button
+                    onClick={() => cargarProductos(currentPage - 1)}
+                    disabled={currentPage === 1 || loading}
+                    className="px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                  >
+                    ← Anterior
+                  </button>
+
+                  {/* Números de página */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    {(() => {
+                      const pages = [];
+                      const maxVisiblePages = 5;
+                      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                      // Ajustar si estamos cerca del final
+                      if (endPage - startPage < maxVisiblePages - 1) {
+                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                      }
+
+                      // Primera página si no está visible
+                      if (startPage > 1) {
+                        pages.push(
+                          <button
+                            key={1}
+                            onClick={() => cargarProductos(1)}
+                            className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 transition-all"
+                          >
+                            1
+                          </button>
+                        );
+                        if (startPage > 2) {
+                          pages.push(<span key="dots1" className="px-2 text-dark-400">...</span>);
+                        }
+                      }
+
+                      // Páginas visibles
+                      for (let i = startPage; i <= endPage; i++) {
+                        pages.push(
+                          <button
+                            key={i}
+                            onClick={() => cargarProductos(i)}
+                            disabled={i === currentPage || loading}
+                            className={`px-3 py-2 rounded-lg border transition-all ${
+                              i === currentPage
+                                ? 'bg-secondary text-white border-secondary font-bold shadow-md'
+                                : 'bg-white dark:bg-dark-700 border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600'
+                            } disabled:cursor-default`}
+                          >
+                            {i}
+                          </button>
+                        );
+                      }
+
+                      // Última página si no está visible
+                      if (endPage < totalPages) {
+                        if (endPage < totalPages - 1) {
+                          pages.push(<span key="dots2" className="px-2 text-dark-400">...</span>);
+                        }
+                        pages.push(
+                          <button
+                            key={totalPages}
+                            onClick={() => cargarProductos(totalPages)}
+                            className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 transition-all"
+                          >
+                            {totalPages}
+                          </button>
+                        );
+                      }
+
+                      return pages;
+                    })()}
+                  </div>
+
+                  {/* Input para ir a página específica (móvil) */}
+                  <div className="sm:hidden flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={currentPage}
+                      onChange={(e) => {
+                        const page = parseInt(e.target.value);
+                        if (page >= 1 && page <= totalPages) {
+                          cargarProductos(page);
+                        }
+                      }}
+                      className="w-16 px-2 py-2 text-center border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
+                    />
+                    <span className="text-sm text-dark-600 dark:text-dark-400">/ {totalPages}</span>
+                  </div>
+
+                  {/* Botón Siguiente */}
+                  <button
+                    onClick={() => cargarProductos(currentPage + 1)}
+                    disabled={currentPage === totalPages || loading}
+                    className="px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                  >
+                    Siguiente →
+                  </button>
+
+                  {/* Botón Última página */}
+                  <button
+                    onClick={() => cargarProductos(totalPages)}
+                    disabled={currentPage === totalPages || loading}
+                    className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    title="Última página"
+                  >
+                    ⏭️
+                  </button>
+                </div>
+
+                {/* Indicador de caché */}
+                <div className="text-xs text-dark-500 dark:text-dark-500">
+                  {productCache.size > 0 && `📦 ${productCache.size} página${productCache.size > 1 ? 's' : ''} en caché`}
+                </div>
               </div>
             )}
           </div>

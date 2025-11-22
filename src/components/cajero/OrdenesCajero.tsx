@@ -273,9 +273,9 @@ export default function OrdenesCajero() {
 
       {/* Selector de Sucursal y Botón Nueva Orden */}
       <div className="bg-white dark:bg-dark-700 rounded-lg p-4 mb-6 shadow-md border border-dark-200 dark:border-dark-600">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between h-24">
           {/* Selector de Sucursal */}
-          <div className="flex-1 w-full md:w-auto">
+          <div className="flex-1 w-full md:w-auto align-top self-start">
             <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
               📍 Sucursal Activa
             </label>

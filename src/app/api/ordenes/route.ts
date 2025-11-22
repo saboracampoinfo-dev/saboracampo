@@ -101,9 +101,9 @@ export async function POST(request: NextRequest) {
 
     // CREAR NUEVA ORDEN
     if (action === 'crear') {
-      if (user.role !== 'seller' && user.role !== 'cashier') {
+      if (user.role !== 'seller' && user.role !== 'cashier' && user.role !== 'admin') {
         return NextResponse.json(
-          { error: 'Solo vendedores y cajeros pueden crear órdenes' },
+          { error: 'Solo vendedores, cajeros y administradores pueden crear órdenes' },
           { status: 403 }
         );
       }

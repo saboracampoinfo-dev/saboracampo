@@ -72,6 +72,15 @@ export default function ProductsManager() {
   const [sortBy, setSortBy] = useState<'nombre' | 'categoria' | 'precio' | 'stock' | 'ventas'>('nombre');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [itemsPerPage] = useState(50);
+  
+  // Caché de productos por página
+  const [productCache, setProductCache] = useState<Map<string, Product[]>>(new Map());
+  
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -130,16 +139,67 @@ export default function ProductsManager() {
   const unidadesMedida = ['kg', 'unidad', 'litro', 'paquete', 'caja'];
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(1);
     fetchSucursales();
   }, []);
 
-  const fetchProducts = async () => {
+  // Reiniciar a página 1 cuando cambien búsqueda u ordenamiento
+  useEffect(() => {
+    setCurrentPage(1);
+    setProductCache(new Map()); // Limpiar caché al cambiar filtros
+    fetchProducts(1);
+  }, [searchTerm, sortBy, sortOrder]);
+
+  const fetchProducts = async (page: number = currentPage) => {
     try {
-      const response = await fetch('/api/products');
+      setLoading(true);
+      
+      // Crear clave de caché basada en página y filtros
+      const cacheKey = `${page}-${searchTerm}-${sortBy}-${sortOrder}`;
+      
+      // Verificar si los datos están en caché
+      if (productCache.has(cacheKey)) {
+        setProducts(productCache.get(cacheKey) || []);
+        setLoading(false);
+        return;
+      }
+      
+      // Construir URL con parámetros de paginación y filtros
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        sortBy: sortBy,
+        sortOrder: sortOrder
+      });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      const response = await fetch(`/api/products?${params.toString()}`);
       const data = await response.json();
+      
       if (data.success) {
         setProducts(data.data);
+        setTotalPages(data.pagination.pages);
+        setTotalProducts(data.pagination.total);
+        setCurrentPage(page);
+        
+        // Guardar en caché
+        setProductCache(prev => {
+          const newCache = new Map(prev);
+          newCache.set(cacheKey, data.data);
+          
+          // Limitar caché a 10 páginas para no consumir mucha memoria
+          if (newCache.size > 10) {
+            const firstKey = newCache.keys().next().value;
+            if (firstKey) {
+              newCache.delete(firstKey);
+            }
+          }
+          
+          return newCache;
+        });
       }
     } catch (error) {
       showErrorToast('Error al cargar productos');
@@ -302,7 +362,9 @@ export default function ProductsManager() {
 
       if (data.success) {
         showSuccessToast(editingProduct ? 'Producto actualizado' : 'Producto creado');
-        fetchProducts();
+        // Limpiar caché y recargar página actual
+        setProductCache(new Map());
+        fetchProducts(currentPage);
         handleCloseModal();
       } else {
         showErrorToast(data.error || 'Error al guardar producto');
@@ -322,7 +384,9 @@ export default function ProductsManager() {
 
       if (data.success) {
         showSuccessToast('Producto eliminado');
-        fetchProducts();
+        // Limpiar caché y recargar
+        setProductCache(new Map());
+        fetchProducts(currentPage);
       } else {
         showErrorToast(data.error || 'Error al eliminar producto');
       }
@@ -343,7 +407,9 @@ export default function ProductsManager() {
 
       if (data.success) {
         showSuccessToast(`Producto ${!product.activo ? 'activado' : 'desactivado'}`);
-        fetchProducts();
+        // Limpiar caché y recargar
+        setProductCache(new Map());
+        fetchProducts(currentPage);
       }
     } catch (error) {
       showErrorToast('Error al actualizar producto');
@@ -409,7 +475,9 @@ export default function ProductsManager() {
       await Promise.all(promises);
       
       showSuccessToast(`${selectedProducts.length} productos actualizados`);
-      fetchProducts();
+      // Limpiar caché y recargar
+      setProductCache(new Map());
+      fetchProducts(currentPage);
       setSelectedProducts([]);
       setIsMassiveEditOpen(false);
       setMassiveEditData({
@@ -449,41 +517,8 @@ export default function ProductsManager() {
     cantidad: 0,
   });
 
-  // Filtrar y ordenar productos
-  const filteredAndSortedProducts = products
-    .filter((product) => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        product.nombre.toLowerCase().includes(searchLower) ||
-        product.categoria.toLowerCase().includes(searchLower) ||
-        (product.sku && product.sku.toLowerCase().includes(searchLower)) ||
-        (product.descripcion && product.descripcion.toLowerCase().includes(searchLower)) ||
-        (product.codigoBarras && product.codigoBarras.toLowerCase().includes(searchLower))
-      );
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'nombre':
-          comparison = a.nombre.localeCompare(b.nombre);
-          break;
-        case 'categoria':
-          comparison = a.categoria.localeCompare(b.categoria);
-          break;
-        case 'precio':
-          comparison = a.precio - b.precio;
-          break;
-        case 'stock':
-          comparison = a.stock - b.stock;
-          break;
-        case 'ventas':
-          comparison = a.ventas - b.ventas;
-          break;
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
+  // Los productos ya vienen filtrados y ordenados del backend
+  const filteredAndSortedProducts = products;
 
   const handleSort = (field: 'nombre' | 'categoria' | 'precio' | 'stock' | 'ventas') => {
     if (sortBy === field) {
@@ -626,7 +661,9 @@ export default function ProductsManager() {
       if (response.ok && data.success) {
         console.log('✅ TRANSFERENCIA EXITOSA');
         showSuccessToast(data.message || 'Transferencia realizada');
-        fetchProducts();
+        // Limpiar caché y recargar
+        setProductCache(new Map());
+        fetchProducts(currentPage);
         handleCloseTransferModal();
         setTransferData({ origenSucursalId: '', destinoSucursalId: '', cantidad: 0 });
       } else if (response.status === 401) {
@@ -658,7 +695,10 @@ export default function ProductsManager() {
           <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">Gestión de Productos</h2>
           <div className="flex gap-2 flex-wrap">
             <ImportadorCSV 
-              onImportComplete={fetchProducts}
+              onImportComplete={() => {
+                setProductCache(new Map());
+                fetchProducts(1);
+              }}
               sucursales={sucursales}
             />
             <button
@@ -711,7 +751,7 @@ export default function ProductsManager() {
 
         {/* Contador de resultados */}
         <div className="text-sm text-dark-600 dark:text-dark-400">
-          Mostrando {filteredAndSortedProducts.length} de {products.length} productos
+          Mostrando {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalProducts)} de {totalProducts} productos
           {searchTerm && ` (filtrados por "${searchTerm}")`}
         </div>
       </div>
@@ -868,12 +908,153 @@ export default function ProductsManager() {
 
         {filteredAndSortedProducts.length === 0 && (
           <div className="text-center py-8 text-dark-600 dark:text-dark-400">
-            {products.length === 0 
+            {totalProducts === 0 
               ? 'No hay productos registrados'
               : `No se encontraron productos que coincidan con "${searchTerm}"`}
           </div>
         )}
       </div>
+
+      {/* Paginador */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 bg-surface dark:bg-dark-800 rounded-lg shadow-md p-4 border border-dark-200 dark:border-dark-700">
+          {/* Info de página actual */}
+          <div className="text-sm text-dark-600 dark:text-dark-400">
+            Página {currentPage} de {totalPages}
+          </div>
+
+          {/* Controles de navegación */}
+          <div className="flex items-center gap-2">
+            {/* Botón Primera página */}
+            <button
+              onClick={() => fetchProducts(1)}
+              disabled={currentPage === 1 || loading}
+              className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              title="Primera página"
+            >
+              ⏮️
+            </button>
+
+            {/* Botón Anterior */}
+            <button
+              onClick={() => fetchProducts(currentPage - 1)}
+              disabled={currentPage === 1 || loading}
+              className="px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+            >
+              ← Anterior
+            </button>
+
+            {/* Números de página */}
+            <div className="hidden sm:flex items-center gap-1">
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+                // Ajustar si estamos cerca del final
+                if (endPage - startPage < maxVisiblePages - 1) {
+                  startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+
+                // Primera página si no está visible
+                if (startPage > 1) {
+                  pages.push(
+                    <button
+                      key={1}
+                      onClick={() => fetchProducts(1)}
+                      className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 transition-all"
+                    >
+                      1
+                    </button>
+                  );
+                  if (startPage > 2) {
+                    pages.push(<span key="dots1" className="px-2 text-dark-400">...</span>);
+                  }
+                }
+
+                // Páginas visibles
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <button
+                      key={i}
+                      onClick={() => fetchProducts(i)}
+                      disabled={i === currentPage || loading}
+                      className={`px-3 py-2 rounded-lg border transition-all ${
+                        i === currentPage
+                          ? 'bg-secondary text-white border-secondary font-bold shadow-md'
+                          : 'bg-white dark:bg-dark-700 border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600'
+                      } disabled:cursor-default`}
+                    >
+                      {i}
+                    </button>
+                  );
+                }
+
+                // Última página si no está visible
+                if (endPage < totalPages) {
+                  if (endPage < totalPages - 1) {
+                    pages.push(<span key="dots2" className="px-2 text-dark-400">...</span>);
+                  }
+                  pages.push(
+                    <button
+                      key={totalPages}
+                      onClick={() => fetchProducts(totalPages)}
+                      className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 transition-all"
+                    >
+                      {totalPages}
+                    </button>
+                  );
+                }
+
+                return pages;
+              })()}
+            </div>
+
+            {/* Input para ir a página específica (móvil) */}
+            <div className="sm:hidden flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                max={totalPages}
+                value={currentPage}
+                onChange={(e) => {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= totalPages) {
+                    fetchProducts(page);
+                  }
+                }}
+                className="w-16 px-2 py-2 text-center border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
+              />
+              <span className="text-sm text-dark-600 dark:text-dark-400">/ {totalPages}</span>
+            </div>
+
+            {/* Botón Siguiente */}
+            <button
+              onClick={() => fetchProducts(currentPage + 1)}
+              disabled={currentPage === totalPages || loading}
+              className="px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+            >
+              Siguiente →
+            </button>
+
+            {/* Botón Última página */}
+            <button
+              onClick={() => fetchProducts(totalPages)}
+              disabled={currentPage === totalPages || loading}
+              className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              title="Última página"
+            >
+              ⏭️
+            </button>
+          </div>
+
+          {/* Indicador de caché */}
+          <div className="text-xs text-dark-500 dark:text-dark-500">
+            {productCache.size > 0 && `📦 ${productCache.size} página${productCache.size > 1 ? 's' : ''} en caché`}
+          </div>
+        </div>
+      )}
 
       {/* Modal Edición Individual */}
       {isModalOpen && (

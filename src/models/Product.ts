@@ -212,6 +212,9 @@ ProductSchema.index({ nombre: 'text', descripcion: 'text', etiquetas: 'text' });
 ProductSchema.index({ categoria: 1, activo: 1 });
 ProductSchema.index({ precio: 1 });
 ProductSchema.index({ destacado: 1, activo: 1 });
+ProductSchema.index({ sku: 1 });
+ProductSchema.index({ codigoBarras: 1 });
+ProductSchema.index({ createdAt: -1 }); // Para ordenamiento por fecha de creación
 
 // Virtual para verificar si hay stock disponible
 ProductSchema.virtual('disponible').get(function() {
