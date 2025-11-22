@@ -576,6 +576,163 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // CAMBIAR SUCURSAL
+    if (action === 'cambiar_sucursal') {
+      if (!ordenId || !sucursalId || !sucursalNombre) {
+        return NextResponse.json(
+          { error: 'Faltan datos requeridos' },
+          { status: 400 }
+        );
+      }
+
+      const orden = await Orden.findById(ordenId);
+      if (!orden) {
+        return NextResponse.json(
+          { error: 'Orden no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      // Solo se puede cambiar sucursal en órdenes en proceso o pendiente de cobro
+      if (orden.estado === 'completada' || orden.estado === 'cancelada') {
+        return NextResponse.json(
+          { error: 'No se puede cambiar la sucursal de órdenes completadas o canceladas' },
+          { status: 400 }
+        );
+      }
+
+      // Verificar permisos: admin o cajero
+      if (user.role !== 'admin' && user.role !== 'cajero' && user.role !== 'cashier') {
+        return NextResponse.json(
+          { error: 'Solo administradores y cajeros pueden cambiar sucursal' },
+          { status: 403 }
+        );
+      }
+
+      // Si la orden está en pendiente_cobro, necesitamos ajustar stock
+      if (orden.estado === 'pendiente_cobro') {
+        console.log('🔄 Ajustando stock al cambiar sucursal...');
+        
+        // 1. Devolver stock a la sucursal anterior
+        if (orden.sucursal && orden.sucursal.id) {
+          for (const prod of orden.productos) {
+            const producto = await Product.findById(prod.productoId);
+            if (producto && producto.stockPorSucursal && Array.isArray(producto.stockPorSucursal)) {
+              const stockSucursalIndex = producto.stockPorSucursal.findIndex(
+                (s: any) => s.sucursalId === orden.sucursal?.id.toString()
+              );
+              
+              if (stockSucursalIndex !== -1) {
+                console.log(`🔄 Devolviendo ${prod.cantidad} unidades a ${orden.sucursal.nombre}`);
+                producto.stockPorSucursal[stockSucursalIndex].cantidad += prod.cantidad;
+              }
+            }
+          }
+        }
+
+        // 2. Descontar stock de la nueva sucursal
+        for (const prod of orden.productos) {
+          const producto = await Product.findById(prod.productoId);
+          if (producto && producto.stockPorSucursal && Array.isArray(producto.stockPorSucursal)) {
+            const stockSucursalIndex = producto.stockPorSucursal.findIndex(
+              (s: any) => s.sucursalId === sucursalId
+            );
+            
+            if (stockSucursalIndex !== -1) {
+              const stockDisponible = producto.stockPorSucursal[stockSucursalIndex].cantidad;
+              
+              if (stockDisponible < prod.cantidad) {
+                return NextResponse.json(
+                  { error: `Stock insuficiente para "${prod.nombre}" en la nueva sucursal. Disponible: ${stockDisponible}` },
+                  { status: 400 }
+                );
+              }
+              
+              console.log(`📦 Descontando ${prod.cantidad} unidades de nueva sucursal`);
+              producto.stockPorSucursal[stockSucursalIndex].cantidad -= prod.cantidad;
+            } else {
+              return NextResponse.json(
+                { error: `Producto "${prod.nombre}" no tiene stock en la nueva sucursal` },
+                { status: 400 }
+              );
+            }
+            
+            // Actualizar stock total
+            producto.stock = producto.stockPorSucursal.reduce(
+              (total: number, s: any) => total + s.cantidad, 
+              0
+            );
+            
+            await producto.save();
+          }
+        }
+        console.log('✅ Stock ajustado correctamente');
+      }
+
+      // Actualizar sucursal
+      orden.sucursal = {
+        id: new mongoose.Types.ObjectId(sucursalId),
+        nombre: sucursalNombre
+      };
+
+      await orden.save();
+
+      return NextResponse.json({
+        success: true,
+        orden,
+        message: 'Sucursal actualizada exitosamente'
+      });
+    }
+
+    // COMPLETAR ORDEN (usado por cajeros)
+    if (action === 'completar_orden') {
+      if (!ordenId || !metodoPago) {
+        return NextResponse.json(
+          { error: 'Faltan datos requeridos' },
+          { status: 400 }
+        );
+      }
+
+      const orden = await Orden.findById(ordenId);
+      if (!orden) {
+        return NextResponse.json(
+          { error: 'Orden no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      if (orden.estado !== 'pendiente_cobro') {
+        return NextResponse.json(
+          { error: 'Solo órdenes pendientes de cobro pueden completarse' },
+          { status: 400 }
+        );
+      }
+
+      if (user.role !== 'admin' && user.role !== 'cajero' && user.role !== 'cashier') {
+        return NextResponse.json(
+          { error: 'Solo cajeros pueden completar órdenes' },
+          { status: 403 }
+        );
+      }
+
+      // Guardar info del cajero
+      orden.cajero = {
+        id: user.userId as any,
+        nombre: user.name || 'Cajero'
+      };
+      orden.metodoPago = metodoPago;
+      orden.estado = 'completada';
+      orden.fechaCompletada = new Date();
+
+      await orden.save();
+
+      return NextResponse.json({
+        success: true,
+        orden,
+        message: 'Orden completada exitosamente'
+      });
+    }
+
     // CAMBIAR ESTADO
     if (action === 'cambiar_estado') {
       if (!ordenId || !estado) {

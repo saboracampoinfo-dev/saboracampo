@@ -2,17 +2,33 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ProfileEditorCajero from '@/components/ProfileEditorCajero';
+import dynamic from 'next/dynamic';
+
+// Importar componentes con dynamic para evitar SSR issues
+const MisDatosCajero = dynamic(() => import('@/components/cajero/MisDatosCajero'), { ssr: false });
+const OrdenesCajero = dynamic(() => import('@/components/cajero/OrdenesCajero'), { ssr: false });
+const CrearOrden = dynamic(() => import('@/components/vendedor/CrearOrden'), { ssr: false });
 
 export default function DashboardCajero() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'inicio' | 'perfil'>('inicio');
+  const [activeTab, setActiveTab] = useState<'inicio' | 'ordenes' | 'crear_orden'>('ordenes');
 
   useEffect(() => {
     fetchUser();
+    // Manejar el parámetro de query tab
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    
+    if (tab === 'ordenes') {
+      setActiveTab('ordenes');
+    } else if (tab === 'inicio') {
+      setActiveTab('inicio');
+    } else if (tab === 'crear_orden') {
+      setActiveTab('crear_orden');
+    }
   }, []);
 
   const fetchUser = async () => {
@@ -67,31 +83,11 @@ export default function DashboardCajero() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-4">
-              <button
-                onClick={() => setActiveTab('inicio')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'inicio' 
-                    ? 'bg-white text-secondary' 
-                    : 'text-white hover:bg-secondary-800'
-                }`}
-              >
-                Inicio
-              </button>
-              <button
-                onClick={() => setActiveTab('perfil')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'perfil' 
-                    ? 'bg-white text-secondary' 
-                    : 'text-white hover:bg-secondary-800'
-                }`}
-              >
-                Mi Perfil
-              </button>
+            <div className="hidden md:flex items-center space-x-4">
               <span className="text-white font-medium text-sm">{user?.name}</span>
               <button
                 onClick={handleLogout}
-                className="bg-white hover:bg-light-600 text-secondary px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                className="bg-primary-500 cursor-pointer hover:bg-primary-600 text-secondary px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 Cerrar Sesión
               </button>
@@ -135,26 +131,6 @@ export default function DashboardCajero() {
                   {user?.name}
                 </div>
                 <button
-                  onClick={() => { setActiveTab('inicio'); setIsMenuOpen(false); }}
-                  className={`w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-colors ${
-                    activeTab === 'inicio' 
-                      ? 'bg-white text-secondary' 
-                      : 'text-white hover:bg-secondary-800'
-                  }`}
-                >
-                  Inicio
-                </button>
-                <button
-                  onClick={() => { setActiveTab('perfil'); setIsMenuOpen(false); }}
-                  className={`w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-colors ${
-                    activeTab === 'perfil' 
-                      ? 'bg-white text-secondary' 
-                      : 'text-white hover:bg-secondary-800'
-                  }`}
-                >
-                  Mi Perfil
-                </button>
-                <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 rounded-md text-white hover:bg-secondary-800 font-medium text-sm transition-colors"
                 >
@@ -167,28 +143,51 @@ export default function DashboardCajero() {
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 px-2 md:px-6">
-        <div className="px-2 py-6 ">
-          {activeTab === 'inicio' ? (
-            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
-              <h2 className="text-3xl font-bold mb-2 text-secondary dark:text-secondary-400">Panel de Cajero</h2>
-              <p className="text-dark-600 dark:text-dark-400 mb-6">Gestiona cobros y pagos</p>
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Nombre:</span>
-                  <span className="text-dark-900 dark:text-light-500">{user?.name}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Email:</span>
-                  <span className="text-dark-900 dark:text-light-500">{user?.email}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Rol:</span>
-                  <span className="px-3 py-1 bg-secondary-100 dark:bg-secondary-800 text-secondary dark:text-secondary-400 rounded-full text-sm font-medium inline-block">{user?.role}</span>
-                </div>
-              </div>
+        <div className="px-2 py-6">
+          {/* Tabs Navigation */}
+          <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg mb-6 border border-dark-200 dark:border-dark-700 overflow-x-auto">
+            <div className="flex space-x-1 p-2 min-w-max">
+              <button
+                onClick={() => setActiveTab('inicio')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all cursor-pointer ${
+                  activeTab === 'inicio'
+                    ? 'bg-primary-500 text-white shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                📊 Mis Datos
+              </button>
+              <button
+                onClick={() => setActiveTab('ordenes')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'ordenes'
+                    ? 'bg-primary-500 text-white shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                💰 Órdenes de Cobro
+              </button>
+
             </div>
-          ) : (
-            <ProfileEditorCajero />
+          </div>
+
+          {/* Content */}
+          {activeTab === 'ordenes' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <OrdenesCajero />
+            </div>
+          )}
+
+          {activeTab === 'crear_orden' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <CrearOrden />
+            </div>
+          )}
+
+          {activeTab === 'inicio' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <MisDatosCajero />
+            </div>
           )}
         </div>
       </main>

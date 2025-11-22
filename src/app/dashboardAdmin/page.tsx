@@ -12,13 +12,14 @@ const VentasManager = dynamic(() => import('@/components/admin/VentasManager'), 
 const LiquidacionesManager = dynamic(() => import('@/components/admin/LiquidacionesManager'), { ssr: false });
 const ConfiguracionManager = dynamic(() => import('@/components/admin/ConfiguracionManager'), { ssr: false });
 const GestorTransferencias = dynamic(() => import('@/components/admin/GestorTransferencias'), { ssr: false });
+const OrdenesCajero = dynamic(() => import('@/components/cajero/OrdenesCajero'), { ssr: false });
 
 export default function DashboardAdmin() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion' | 'transferencias'>('liquidaciones');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion' | 'transferencias' | 'ordenes'>('liquidaciones');
 
   useEffect(() => {
     fetchUser();
@@ -187,7 +188,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                👥 Usuarios
+                👥 Usua
               </button>
               <button
                 onClick={() => setActiveTab('sucursales')}
@@ -197,7 +198,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                🏢 Sucursales
+                🏢 Sucurs
               </button>
               <button
                 onClick={() => setActiveTab('productos')}
@@ -207,7 +208,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                📦 Productos
+                📦 Prod
               </button>
               <button
                 onClick={() => setActiveTab('ventas')}
@@ -220,6 +221,16 @@ export default function DashboardAdmin() {
                 💰 Ventas
               </button>
               <button
+                onClick={() => setActiveTab('ordenes')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'ordenes'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                💰 Órdenes
+              </button>
+              <button
                 onClick={() => setActiveTab('liquidaciones')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   activeTab === 'liquidaciones'
@@ -227,7 +238,7 @@ export default function DashboardAdmin() {
                     : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
                 }`}
               >
-                💵 Liquidaciones
+                💵 Liquid
               </button>
               <button
                 onClick={() => setActiveTab('transferencias')}
@@ -345,6 +356,12 @@ export default function DashboardAdmin() {
           {activeTab === 'ventas' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <VentasManager />
+            </div>
+          )}
+
+          {activeTab === 'ordenes' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <OrdenesCajero />
             </div>
           )}
 

@@ -47,6 +47,17 @@ export default function CrearOrden() {
   const [procesando, setProcesando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
+  // Detectar dashboard actual para redirección
+  const getDashboardUrl = () => {
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      if (currentPath.includes('dashboardCajero')) {
+        return '/dashboardCajero?tab=ordenes';
+      }
+    }
+    return '/dashboardVendedor?tab=ordenes';
+  };
+  
   // Estados para búsqueda por nombre
   const [busqueda, setBusqueda] = useState('');
   const [productosBusqueda, setProductosBusqueda] = useState<ProductoBusqueda[]>([]);
@@ -296,7 +307,7 @@ export default function CrearOrden() {
       if (data.success) {
         showSuccessToast('Orden cerrada y enviada a caja');
         // Redirigir a la lista de órdenes
-        window.location.href = '/dashboardVendedor?tab=ordenes';
+        window.location.href = getDashboardUrl();
       } else {
         showErrorToast(data.error || 'Error al cerrar orden');
       }
@@ -326,7 +337,7 @@ export default function CrearOrden() {
 
       if (data.success) {
         showInfoToast('Orden cancelada');
-        window.location.href = '/dashboardVendedor?tab=ordenes';
+        window.location.href = getDashboardUrl();
       } else {
         showErrorToast(data.error || 'Error al cancelar orden');
       }
@@ -355,7 +366,7 @@ export default function CrearOrden() {
     <div className="space-y-6">
       {/* Botón Volver */}
       <button
-        onClick={() => window.location.href = '/dashboardVendedor?tab=ordenes'}
+        onClick={() => window.location.href = getDashboardUrl()}
         className="bg-dark-300 hover:bg-dark-400 dark:bg-dark-600 dark:hover:bg-dark-500 text-dark-900 dark:text-light-500 px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2"
       >
         ← Volver a Mis Órdenes
