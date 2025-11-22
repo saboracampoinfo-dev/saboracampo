@@ -75,7 +75,7 @@ export default function DashboardVendedor() {
   return (
     <div className="min-h-screen bg-base dark:bg-dark-900">
       <nav className="bg-dark-900 dark:bg-dark-950 shadow-md border-b-2 border-primary">
-        <div className="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo y título */}
             <div className="flex items-center">

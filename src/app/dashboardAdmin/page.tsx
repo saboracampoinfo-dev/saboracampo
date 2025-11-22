@@ -63,7 +63,7 @@ export default function DashboardAdmin() {
   return (
     <div className="min-h-screen bg-base dark:bg-dark-900">
       <nav className="bg-dark-900 dark:bg-dark-950 shadow-md border-b-2 border-primary">
-        <div className="max-w-7xl mx-auto px-1 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo y título */}
             <div className="flex items-center">
@@ -79,7 +79,7 @@ export default function DashboardAdmin() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4 justify-end">
               {/* <a href="/dashboardVendedor" className="text-light-500 hover:text-primary transition-colors font-medium text-sm">
                 Ver como Vendedor
               </a>
@@ -90,6 +90,13 @@ export default function DashboardAdmin() {
                 Ver como Cliente
               </a> */}
               <span className="text-white font-medium text-sm">{user?.name}</span>
+              
+              <button
+                onClick={handleLogout}
+                className="bg-secondary hover:bg-secondary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                Cerrar Sesión
+              </button>
               <button
                 onClick={() => setActiveTab('configuracion')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
@@ -99,12 +106,6 @@ export default function DashboardAdmin() {
                 }`}
               >
                 ⚙️ 
-              </button>
-              <button
-                onClick={handleLogout}
-                className="bg-secondary hover:bg-secondary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                Cerrar Sesión
               </button>
             </div>
 
