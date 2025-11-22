@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { showSuccessToast, showErrorToast } from '@/utils/toastHelpers';
+import Image from 'next/image';
 
 interface User {
   _id: string;
   name: string;
   email: string;
   role: string;
+  imgProfile?: string;
   telefono?: string;
-  direccion?: string;
-  ciudad?: string;
-  codigoPostal?: string;
+  domicilio?: string;
+  tipoDocumento?: string;
+  nroDocumento?: string;
   fechaNacimiento?: string;
 }
 
@@ -23,11 +25,14 @@ export default function MisDatosVendedor() {
     name: '',
     email: '',
     telefono: '',
-    direccion: '',
-    ciudad: '',
-    codigoPostal: '',
+    domicilio: '',
+    tipoDocumento: '',
+    nroDocumento: '',
     fechaNacimiento: '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -44,11 +49,12 @@ export default function MisDatosVendedor() {
           name: data.user.name || '',
           email: data.user.email || '',
           telefono: data.user.telefono || '',
-          direccion: data.user.direccion || '',
-          ciudad: data.user.ciudad || '',
-          codigoPostal: data.user.codigoPostal || '',
+          domicilio: data.user.domicilio || '',
+          tipoDocumento: data.user.tipoDocumento || '',
+          nroDocumento: data.user.nroDocumento || '',
           fechaNacimiento: data.user.fechaNacimiento || '',
         });
+        setImagePreview(data.user.imgProfile || '');
       }
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -58,16 +64,86 @@ export default function MisDatosVendedor() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showErrorToast('La imagen no debe superar los 5MB');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    if (user?.imgProfile) {
+      try {
+        const response = await fetch('/api/cloudinary/delete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageUrl: user.imgProfile }),
+        });
+
+        if (response.ok) {
+          setImagePreview('');
+          setImageFile(null);
+          showSuccessToast('Imagen eliminada correctamente');
+        }
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        showErrorToast('Error al eliminar la imagen');
+      }
+    } else {
+      setImagePreview('');
+      setImageFile(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUploading(true);
     
     try {
+      let imgProfileUrl = user?.imgProfile || '';
+
+      // Si hay una nueva imagen, subirla a Cloudinary
+      if (imageFile) {
+        const formDataImage = new FormData();
+        formDataImage.append('file', imageFile);
+
+        const uploadResponse = await fetch('/api/uploadImage', {
+          method: 'POST',
+          body: formDataImage,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (uploadData.success) {
+          imgProfileUrl = uploadData.url;
+        } else {
+          showErrorToast('Error al subir la imagen');
+          setUploading(false);
+          return;
+        }
+      }
+
+      // Actualizar datos del usuario
       const response = await fetch(`/api/users/${user?._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          imgProfile: imgProfileUrl,
+        }),
       });
 
       const data = await response.json();
@@ -75,6 +151,7 @@ export default function MisDatosVendedor() {
       if (data.success) {
         showSuccessToast('Datos actualizados correctamente');
         setIsEditing(false);
+        setImageFile(null);
         fetchUser();
       } else {
         showErrorToast(data.message || 'Error al actualizar datos');
@@ -82,6 +159,8 @@ export default function MisDatosVendedor() {
     } catch (error) {
       console.error('Error updating user:', error);
       showErrorToast('Error al actualizar datos');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -114,6 +193,45 @@ export default function MisDatosVendedor() {
 
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Foto de Perfil */}
+          <div className="flex flex-col items-center gap-4 pb-6 border-b border-dark-200 dark:border-dark-600">
+            <div className="relative">
+              {imagePreview ? (
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  width={150}
+                  height={150}
+                  className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-primary shadow-lg"
+                />
+              ) : (
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-dark-200 dark:bg-dark-600 flex items-center justify-center border-4 border-dark-300 dark:border-dark-500 shadow-lg">
+                  <span className="text-6xl text-dark-400">👤</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <label className="cursor-pointer bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg">
+                📷 Cambiar Foto
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+              {imagePreview && (
+                <button
+                  type="button"
+                  onClick={handleDeleteImage}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  🗑️ Eliminar
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nombre */}
             <div>
@@ -169,6 +287,37 @@ export default function MisDatosVendedor() {
               />
             </div>
 
+            {/* Tipo Documento */}
+            <div>
+              <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
+                Tipo de Documento
+              </label>
+              <select
+                value={formData.tipoDocumento}
+                onChange={(e) => setFormData({ ...formData, tipoDocumento: e.target.value })}
+                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
+              >
+                <option value="">Seleccionar...</option>
+                <option value="DNI">DNI</option>
+                <option value="CUIL">CUIL</option>
+                <option value="CUIT">CUIT</option>
+                <option value="Pasaporte">Pasaporte</option>
+              </select>
+            </div>
+
+            {/* Número Documento */}
+            <div>
+              <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
+                Número de Documento
+              </label>
+              <input
+                type="text"
+                value={formData.nroDocumento}
+                onChange={(e) => setFormData({ ...formData, nroDocumento: e.target.value })}
+                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
+              />
+            </div>
+
             {/* Dirección */}
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
@@ -176,34 +325,8 @@ export default function MisDatosVendedor() {
               </label>
               <input
                 type="text"
-                value={formData.direccion}
-                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
-              />
-            </div>
-
-            {/* Ciudad */}
-            <div>
-              <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Ciudad
-              </label>
-              <input
-                type="text"
-                value={formData.ciudad}
-                onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
-              />
-            </div>
-
-            {/* Código Postal */}
-            <div>
-              <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Código Postal
-              </label>
-              <input
-                type="text"
-                value={formData.codigoPostal}
-                onChange={(e) => setFormData({ ...formData, codigoPostal: e.target.value })}
+                value={formData.domicilio}
+                onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
                 className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
               />
             </div>
@@ -212,14 +335,16 @@ export default function MisDatosVendedor() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="bg-primary hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+              disabled={uploading}
+              className="bg-primary hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              💾 Guardar Cambios
+              {uploading ? '⏳ Guardando...' : '💾 Guardar Cambios'}
             </button>
             <button
               type="button"
               onClick={() => {
                 setIsEditing(false);
+                setImageFile(null);
                 fetchUser();
               }}
               className="bg-dark-300 hover:bg-dark-400 dark:bg-dark-600 dark:hover:bg-dark-500 text-dark-900 dark:text-light-500 px-6 py-2 rounded-lg font-semibold transition-all duration-300"
@@ -230,6 +355,23 @@ export default function MisDatosVendedor() {
         </form>
       ) : (
         <div className="bg-white dark:bg-dark-700 rounded-lg p-2 md:p-6 shadow-md border border-dark-200 dark:border-dark-600">
+          {/* Foto de Perfil */}
+          <div className="flex justify-center mb-6 pb-6 border-b border-dark-200 dark:border-dark-600">
+            {user?.imgProfile ? (
+              <Image
+                src={user.imgProfile}
+                alt={user.name}
+                width={150}
+                height={150}
+                className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-primary shadow-lg"
+              />
+            ) : (
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-dark-200 dark:bg-dark-600 flex items-center justify-center border-4 border-dark-300 dark:border-dark-500 shadow-lg">
+                <span className="text-4xl text-dark-400">👤</span>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -279,35 +421,35 @@ export default function MisDatosVendedor() {
                 </div>
               )}
 
-              {user?.direccion && (
+              {user?.tipoDocumento && (
+                <div>
+                  <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
+                    Tipo de Documento
+                  </span>
+                  <span className="text-dark-900 dark:text-light-500 text-lg">
+                    {user.tipoDocumento}
+                  </span>
+                </div>
+              )}
+
+              {user?.nroDocumento && (
+                <div>
+                  <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
+                    Número de Documento
+                  </span>
+                  <span className="text-dark-900 dark:text-light-500 text-lg">
+                    {user.nroDocumento}
+                  </span>
+                </div>
+              )}
+
+              {user?.domicilio && (
                 <div className="md:col-span-2">
                   <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
                     Dirección
                   </span>
                   <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {user.direccion}
-                  </span>
-                </div>
-              )}
-
-              {user?.ciudad && (
-                <div>
-                  <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                    Ciudad
-                  </span>
-                  <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {user.ciudad}
-                  </span>
-                </div>
-              )}
-
-              {user?.codigoPostal && (
-                <div>
-                  <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                    Código Postal
-                  </span>
-                  <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {user.codigoPostal}
+                    {user.domicilio}
                   </span>
                 </div>
               )}

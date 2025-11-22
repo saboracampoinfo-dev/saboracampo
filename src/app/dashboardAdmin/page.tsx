@@ -91,6 +91,16 @@ export default function DashboardAdmin() {
               </a> */}
               <span className="text-white font-medium text-sm">{user?.name}</span>
               <button
+                onClick={() => setActiveTab('configuracion')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'configuracion'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                ⚙️ 
+              </button>
+              <button
                 onClick={handleLogout}
                 className="bg-secondary hover:bg-secondary-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
               >
@@ -99,6 +109,8 @@ export default function DashboardAdmin() {
             </div>
 
             {/* Mobile menu button */}
+            <div className="flex justify-end">
+
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-white hover:text-primary focus:outline-none"
@@ -126,6 +138,18 @@ export default function DashboardAdmin() {
                 )}
               </svg>
             </button>
+            <button
+                onClick={() => setActiveTab('configuracion')}
+                className={`px-6 md:hidden py-3 rounded-lg font-semibold transition-all ${
+                  activeTab === 'configuracion'
+                    ? 'bg-primary-600 text-gray-200 shadow-md'
+                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
+                }`}
+              >
+                ⚙️
+              </button>
+            </div>
+
           </div>
 
           {/* Mobile menu */}
@@ -164,6 +188,7 @@ export default function DashboardAdmin() {
           )}
         </div>
       </nav>
+
 
       <main className="max-w-7xl mx-auto py-6 px-2 md:px-6">
         <div className="px-2 py-6 ">
@@ -250,16 +275,7 @@ export default function DashboardAdmin() {
               >
                 🔄 Transfer
               </button>
-              <button
-                onClick={() => setActiveTab('configuracion')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  activeTab === 'configuracion'
-                    ? 'bg-primary-600 text-gray-200 shadow-md'
-                    : 'text-dark-600 dark:text-dark-400 hover:bg-dark-50 dark:hover:bg-dark-700'
-                }`}
-              >
-                ⚙️ Conf
-              </button>
+
             </div>
           </div>
 
