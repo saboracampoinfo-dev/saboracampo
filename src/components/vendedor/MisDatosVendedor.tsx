@@ -210,7 +210,7 @@ export default function MisDatosVendedor() {
                 </div>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col md:flex-row gap-3">
               <label className="cursor-pointer bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg">
                 📷 Cambiar Foto
                 <input

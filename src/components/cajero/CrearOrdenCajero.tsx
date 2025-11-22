@@ -348,7 +348,7 @@ export default function CrearOrdenCajero() {
         <h3 className="text-lg font-semibold text-dark-900 dark:text-light-500 mb-4">
           📦 Escanear Código de Barras
         </h3>
-        <form onSubmit={handleCodigoBarrasSubmit} className="flex gap-3">
+        <form onSubmit={handleCodigoBarrasSubmit} className="flex flex-col md:flex-row gap-3">
           <input
             ref={inputRef}
             type="text"
