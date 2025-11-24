@@ -174,14 +174,14 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-center">
+          {/* <div className="text-center">
             <a
               href="/register"
               className="font-medium text-primary hover:text-primary-700 transition-colors"
             >
               ¿No tienes cuenta? Regístrate
             </a>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>

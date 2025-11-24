@@ -503,30 +503,32 @@ export default function CrearOrden() {
                     ${producto.precio.toFixed(2)} c/u
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => actualizarCantidad(producto.productoId, producto.cantidad - 1)}
-                    className="w-8 h-8 bg-error-light hover:bg-error-dark text-white rounded-lg font-bold transition-all duration-300"
-                  >
-                    -
-                  </button>
-                  <div className="w-16 text-center font-bold text-lg">
-                    {producto.cantidad}
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => actualizarCantidad(producto.productoId, producto.cantidad - 1)}
+                      className="w-8 h-8 bg-error-light hover:bg-error-dark text-white rounded-lg font-bold transition-all duration-300"
+                    >
+                      -
+                    </button>
+                    <div className="w-16 text-center font-bold text-lg">
+                      {producto.cantidad}
+                    </div>
+                    <button
+                      onClick={() => actualizarCantidad(producto.productoId, producto.cantidad + 1)}
+                      className="w-8 h-8 bg-success-light hover:bg-success-dark text-white rounded-lg font-bold transition-all duration-300"
+                    >
+                      +
+                    </button>
                   </div>
-                  <button
-                    onClick={() => actualizarCantidad(producto.productoId, producto.cantidad + 1)}
-                    className="w-8 h-8 bg-success-light hover:bg-success-dark text-white rounded-lg font-bold transition-all duration-300"
-                  >
-                    +
-                  </button>
+
+                  <div className="text-right w-24">
+                    <div className="text-lg font-bold text-primary">
+                      ${producto.subtotal.toFixed(2)}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-right w-24">
-                  <div className="text-lg font-bold text-primary">
-                    ${producto.subtotal.toFixed(2)}
-                  </div>
-                </div>
               </div>
             ))}
           </div>

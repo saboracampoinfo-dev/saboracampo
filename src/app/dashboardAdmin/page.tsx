@@ -13,16 +13,24 @@ const LiquidacionesManager = dynamic(() => import('@/components/admin/Liquidacio
 const ConfiguracionManager = dynamic(() => import('@/components/admin/ConfiguracionManager'), { ssr: false });
 const GestorTransferencias = dynamic(() => import('@/components/admin/GestorTransferencias'), { ssr: false });
 const OrdenesCajero = dynamic(() => import('@/components/cajero/OrdenesCajero'), { ssr: false });
+const CrearOrdenCajero = dynamic(() => import('@/components/cajero/CrearOrdenCajero'), { ssr: false });
 
 export default function DashboardAdmin() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion' | 'transferencias' | 'ordenes'>('liquidaciones');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'usuarios' | 'sucursales' | 'productos' | 'ventas' | 'liquidaciones' | 'configuracion' | 'transferencias' | 'ordenes' | 'crear_orden'>('liquidaciones');
 
   useEffect(() => {
     fetchUser();
+    
+    // Verificar si hay un tab en la URL
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['dashboard', 'usuarios', 'sucursales', 'productos', 'ventas', 'liquidaciones', 'configuracion', 'transferencias', 'ordenes', 'crear_orden'].includes(tab)) {
+      setActiveTab(tab as any);
+    }
   }, []);
 
   const fetchUser = async () => {
@@ -379,6 +387,12 @@ export default function DashboardAdmin() {
           {activeTab === 'ordenes' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
               <OrdenesCajero />
+            </div>
+          )}
+
+          {activeTab === 'crear_orden' && (
+            <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
+              <CrearOrdenCajero />
             </div>
           )}
 

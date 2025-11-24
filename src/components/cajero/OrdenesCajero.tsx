@@ -273,7 +273,7 @@ export default function OrdenesCajero() {
 
       {/* Selector de Sucursal y Botón Nueva Orden */}
       <div className="bg-white dark:bg-dark-700 rounded-lg p-4 mb-6 shadow-md border border-dark-200 dark:border-dark-600">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between h-24">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between md:h-24 h-36">
           {/* Selector de Sucursal */}
           <div className="flex-1 w-full md:w-auto align-top self-start">
             <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
@@ -470,15 +470,29 @@ export default function OrdenesCajero() {
                     </div>
 
                     {orden.estado === 'pendiente_cobro' && (
-                      <button
-                        onClick={() => {
-                          setOrdenACompletar(orden);
-                          setShowCompletarModal(true);
-                        }}
-                        className="cursor-pointer w-full bg-green-700 hover:bg-green-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-md hover:shadow-lg"
-                      >
-                        💰 Cobrar Orden
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            // Redirigir a editar orden
+                            const sucursalNombre = orden.sucursal?.nombre || '';
+                            localStorage.setItem('sucursalActiva', orden.sucursal?.id || '');
+                            localStorage.setItem('sucursalActivaNombre', sucursalNombre);
+                            window.location.href = `/dashboardCajero?tab=crear_orden&edit=${orden._id}`;
+                          }}
+                          className="cursor-pointer w-full bg-warning hover:bg-warning/80 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-md hover:shadow-lg"
+                        >
+                          ✏️ Editar Orden
+                        </button>
+                        <button
+                          onClick={() => {
+                            setOrdenACompletar(orden);
+                            setShowCompletarModal(true);
+                          }}
+                          className="cursor-pointer w-full bg-green-700 hover:bg-green-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap shadow-md hover:shadow-lg"
+                        >
+                          💰 Cobrar Orden
+                        </button>
+                      </>
                     )}
 
                     <button
@@ -598,16 +612,29 @@ export default function OrdenesCajero() {
                 </button>
               )}
               {selectedOrden.estado === 'pendiente_cobro' && (
-                <button
-                  onClick={() => {
-                    setOrdenACompletar(selectedOrden);
-                    setSelectedOrden(null);
-                    setShowCompletarModal(true);
-                  }}
-                  className="cursor-pointer bg-green-700 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300"
-                >
-                  💰 Cobrar Orden
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      const sucursalNombre = selectedOrden.sucursal?.nombre || '';
+                      localStorage.setItem('sucursalActiva', selectedOrden.sucursal?.id || '');
+                      localStorage.setItem('sucursalActivaNombre', sucursalNombre);
+                      window.location.href = `/dashboardCajero?tab=crear_orden&edit=${selectedOrden._id}`;
+                    }}
+                    className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300"
+                  >
+                    ✏️ Editar Orden
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOrdenACompletar(selectedOrden);
+                      setSelectedOrden(null);
+                      setShowCompletarModal(true);
+                    }}
+                    className="cursor-pointer bg-green-700 hover:bg-green-900 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300"
+                  >
+                    💰 Cobrar Orden
+                  </button>
+                </>
               )}
               <button
                 onClick={() => setSelectedOrden(null)}

@@ -195,7 +195,7 @@ export default function OrdenesVendedor() {
 
       {/* Selector de Sucursal y Botón Nueva Orden */}
       <div className="bg-white dark:bg-dark-700 rounded-lg p-4 mb-6 shadow-md border border-dark-200 dark:border-dark-600">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between md:h-24 h-36">
           {/* Selector de Sucursal */}
           <div className="flex-1 w-full md:w-auto">
             <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">

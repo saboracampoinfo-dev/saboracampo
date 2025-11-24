@@ -426,6 +426,7 @@ export default function VentasManager() {
                 <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Método Pago</th>
                 <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Total</th>
                 <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Estado</th>
+                <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-dark-800 divide-y divide-dark-200 dark:divide-dark-700">
@@ -487,6 +488,21 @@ export default function VentasManager() {
                       }`}>
                         {venta.estado === 'pendiente_cobro' ? 'Pend. Cobro' : venta.estado}
                       </span>
+                    </td>
+                    <td className="px-3 md:px-6 py-4 whitespace-nowrap text-xs md:text-sm">
+                      {(venta.estado === 'pendiente_cobro' || venta.estado === 'en_proceso') && (
+                        <button
+                          onClick={() => {
+                            const sucursalNombre = venta.sucursal?.nombre || '';
+                            localStorage.setItem('sucursalActiva', venta.sucursal?.id || '');
+                            localStorage.setItem('sucursalActivaNombre', sucursalNombre);
+                            window.location.href = `/dashboardAdmin?tab=crear_orden&edit=${venta._id}`;
+                          }}
+                          className="cursor-pointer bg-warning hover:bg-warning/80 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                          ✏️ Editar
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -627,7 +643,20 @@ export default function VentasManager() {
             </div>
 
             {/* Footer del Modal */}
-            <div className="bg-gray-50 dark:bg-dark-700 px-6 py-4 flex justify-end">
+            <div className="bg-gray-50 dark:bg-dark-700 px-6 py-4 flex justify-end gap-3">
+              {(ventaSeleccionada.estado === 'pendiente_cobro' || ventaSeleccionada.estado === 'en_proceso') && (
+                <button
+                  onClick={() => {
+                    const sucursalNombre = ventaSeleccionada.sucursal?.nombre || '';
+                    localStorage.setItem('sucursalActiva', ventaSeleccionada.sucursal?.id || '');
+                    localStorage.setItem('sucursalActivaNombre', sucursalNombre);
+                    window.location.href = `/dashboardAdmin?tab=crear_orden&edit=${ventaSeleccionada._id}`;
+                  }}
+                  className="cursor-pointer bg-warning hover:bg-warning/80 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                >
+                  ✏️ Editar Orden
+                </button>
+              )}
               <button
                 onClick={cerrarModal}
                 className="cursor-pointer bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"

@@ -46,6 +46,7 @@ export default function CrearOrdenCajero() {
   const [loading, setLoading] = useState(false);
   const [procesando, setProcesando] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [modoEdicion, setModoEdicion] = useState(false);
   
   // Estados para búsqueda por nombre
   const [busqueda, setBusqueda] = useState('');
@@ -54,7 +55,15 @@ export default function CrearOrdenCajero() {
   const [mostrarResultados, setMostrarResultados] = useState(false);
 
   useEffect(() => {
-    crearNuevaOrden();
+    // Verificar si hay un parámetro de edición en la URL
+    const params = new URLSearchParams(window.location.search);
+    const ordenId = params.get('edit');
+    
+    if (ordenId) {
+      cargarOrdenParaEditar(ordenId);
+    } else {
+      crearNuevaOrden();
+    }
   }, []);
 
   // Auto-focus en el input
@@ -63,6 +72,34 @@ export default function CrearOrdenCajero() {
       inputRef.current.focus();
     }
   }, [procesando, orden]);
+
+  const cargarOrdenParaEditar = async (ordenId: string) => {
+    setLoading(true);
+    setModoEdicion(true);
+    try {
+      const response = await fetch(`/api/ordenes?ordenId=${ordenId}`);
+      const data = await response.json();
+
+      if (data.success && data.orden) {
+        if (data.orden.estado !== 'pendiente_cobro' && data.orden.estado !== 'en_proceso') {
+          showErrorToast('Solo se pueden editar órdenes en estado "Pendiente de Cobro" o "En Proceso"');
+          window.location.href = '/dashboardCajero?tab=ordenes';
+          return;
+        }
+        
+        setOrden(data.orden);
+        showInfoToast(`Editando orden #${data.orden.numeroOrden}`);
+      } else {
+        showErrorToast('No se pudo cargar la orden');
+        window.location.href = '/dashboardCajero?tab=ordenes';
+      }
+    } catch (error) {
+      showErrorToast('Error al cargar orden');
+      window.location.href = '/dashboardCajero?tab=ordenes';
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const crearNuevaOrden = async () => {
     setLoading(true);
@@ -258,27 +295,33 @@ export default function CrearOrdenCajero() {
     }
 
     try {
-      const response = await fetch('/api/ordenes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'cambiar_estado',
-          ordenId: orden._id,
-          estado: 'pendiente_cobro'
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        showSuccessToast('Orden enviada a caja exitosamente');
-        // Redirigir a la lista de órdenes
+      if (modoEdicion && orden.estado === 'pendiente_cobro') {
+        // Si ya está en pendiente_cobro, solo guardar cambios
+        showSuccessToast('Cambios guardados exitosamente');
         window.location.href = '/dashboardCajero?tab=ordenes';
       } else {
-        showErrorToast(data.error || 'Error al enviar a caja');
+        // Cambiar estado a pendiente_cobro
+        const response = await fetch('/api/ordenes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'cambiar_estado',
+            ordenId: orden._id,
+            estado: 'pendiente_cobro'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showSuccessToast(modoEdicion ? 'Orden actualizada exitosamente' : 'Orden enviada a caja exitosamente');
+          window.location.href = '/dashboardCajero?tab=ordenes';
+        } else {
+          showErrorToast(data.error || 'Error al enviar a caja');
+        }
       }
     } catch (error) {
-      showErrorToast('Error al enviar a caja');
+      showErrorToast('Error al procesar la orden');
     }
   };
 
@@ -337,9 +380,16 @@ export default function CrearOrdenCajero() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-secondary">Crear Nueva Orden</h2>
+        <h2 className="text-3xl font-bold text-secondary">
+          {modoEdicion ? '✏️ Editar Orden' : 'Crear Nueva Orden'}
+        </h2>
         <p className="text-dark-600 dark:text-dark-400 mt-1">
           Orden #{orden.numeroOrden} {orden.sucursal && `- ${orden.sucursal.nombre}`}
+          {modoEdicion && (
+            <span className="ml-2 px-2 py-1 bg-warning/20 text-warning text-xs font-semibold rounded">
+              MODO EDICIÓN
+            </span>
+          )}
         </p>
       </div>
 
@@ -513,13 +563,21 @@ export default function CrearOrdenCajero() {
           disabled={orden.productos.length === 0}
           className="flex-1 bg-success-light hover:bg-success-dark text-white px-6 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
         >
-          ✅ Enviar a Caja
+          {modoEdicion ? '💾 Guardar Cambios' : '✅ Enviar a Caja'}
         </button>
+        {modoEdicion && (
+          <button
+            onClick={() => window.location.href = '/dashboardCajero?tab=ordenes'}
+            className="bg-dark-400 hover:bg-dark-500 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
+          >
+            ← Volver sin Guardar
+          </button>
+        )}
         <button
           onClick={cancelarOrden}
           className="bg-error-light hover:bg-error-dark text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg"
         >
-          ❌ Cancelar Orden
+          {modoEdicion ? '🗑️ Eliminar Orden' : '❌ Cancelar Orden'}
         </button>
       </div>
     </div>
