@@ -155,19 +155,28 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error('Reset password error:', err);
       let errorMessage = 'Error al enviar el email';
+      let showContactAdmin = false;
       
       if (err.code === 'auth/user-not-found') {
-        errorMessage = 'No existe una cuenta con este correo electrónico';
+        errorMessage = 'No existe una cuenta con este correo electrónico en Firebase';
+        showContactAdmin = true;
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = 'Correo electrónico inválido';
       } else if (err.code === 'auth/too-many-requests') {
         errorMessage = 'Demasiados intentos. Intenta más tarde';
-      } else if (err.message) {
+      } else if (err.code === 'auth/missing-continue-uri') {
+        errorMessage = 'Error de configuración. Por favor contacta al administrador';
+        showContactAdmin = true;
+      } else if (err.message && !err.message.includes('administrador')) {
         errorMessage = err.message;
       }
       
+      if (showContactAdmin) {
+        errorMessage += '. Si tu cuenta fue creada recientemente, contacta al administrador para sincronizar tu cuenta.';
+      }
+      
       updateToast(loadingToast, '❌ ' + errorMessage, 'error', {
-        autoClose: 4000,
+        autoClose: 6000,
       });
       setResetMessage(errorMessage);
     } finally {

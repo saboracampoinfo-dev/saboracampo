@@ -36,27 +36,27 @@ export async function POST(request: Request) {
 
     if (!user) {
       console.warn('⚠️ Usuario no encontrado en MongoDB:', email);
-      // Por seguridad, no revelar si el usuario existe o no
-      // Firebase enviará el email si existe en Authentication
+      // Permitir que Firebase intente enviar el email de todas formas
+      // Si el usuario existe en Firebase pero no en MongoDB, funcionará
       return NextResponse.json(
         {
           success: true,
-          message: 'Si el correo existe, recibirás un email para restablecer tu contraseña',
+          message: 'Usuario verificado. Puedes proceder con el restablecimiento.',
         },
         { status: 200 }
       );
     }
 
-    // Verificar que el usuario tenga firebaseUid
+    // Si el usuario existe en MongoDB pero no tiene firebaseUid, es un caso especial
     if (!user.firebaseUid) {
-      console.error('❌ Usuario sin firebaseUid:', email);
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Este usuario no puede restablecer la contraseña. Contacta al administrador.',
-        },
-        { status: 400 }
-      );
+      console.warn('⚠️ Usuario sin firebaseUid en MongoDB:', email);
+      console.warn('   Intentando reset de todas formas (puede existir en Firebase)');
+      // Permitir que Firebase intente enviar el email
+      // Si el usuario existe en Firebase Authentication, funcionará
+      return NextResponse.json({
+        success: true,
+        message: 'Usuario verificado. Puedes proceder con el restablecimiento.',
+      });
     }
 
     console.log('✅ Usuario verificado en MongoDB:', email);

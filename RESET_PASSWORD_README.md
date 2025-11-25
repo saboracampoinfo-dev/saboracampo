@@ -152,6 +152,23 @@ const handleConfirmReset = async (oobCode: string, newPassword: string) => {
 
 ## 🐛 Problemas Comunes
 
+### Error: "Este usuario no puede restablecer la contraseña"
+
+**Causa:** Usuario sin `firebaseUid` en MongoDB o no existe en Firebase
+
+**Solución:**
+```bash
+# Sincronizar todos los usuarios de MongoDB a Firebase
+node scripts/sync-users-to-firebase.js
+```
+
+Este script:
+- ✅ Encuentra usuarios sin `firebaseUid` en MongoDB
+- ✅ Verifica si existen en Firebase
+- ✅ Si existen: sincroniza el UID
+- ✅ Si no existen: los crea con contraseña temporal
+- ✅ Usuario debe usar "Olvidé mi contraseña" para establecer su contraseña
+
 ### Email no llega
 
 **Causas posibles:**
@@ -172,9 +189,13 @@ node scripts/verify-user-sync.js
 **Causa:** Usuario no existe en Firebase Authentication
 
 **Solución:**
-1. El usuario debe tener `firebaseUid` en MongoDB
-2. Debe existir en Firebase Authentication
-3. Usar el script de verificación para confirmar
+```bash
+# Opción 1: Sincronizar automáticamente
+node scripts/sync-users-to-firebase.js
+
+# Opción 2: Verificar manualmente
+node scripts/verify-user-sync.js
+```
 
 ### Error: "auth/invalid-email"
 
