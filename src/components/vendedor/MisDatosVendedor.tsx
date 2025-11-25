@@ -190,7 +190,7 @@ export default function MisDatosVendedor() {
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Foto de Perfil */}
-          <div className="flex flex-col items-center gap-4 pb-6 border-b border-dark-200 dark:border-dark-600">
+          {/* <div className="flex flex-col items-center gap-4 pb-6 border-b border-dark-200 dark:border-dark-600">
             <div className="relative">
               {imagePreview ? (
                 <Image
@@ -226,7 +226,7 @@ export default function MisDatosVendedor() {
                 </button>
               )}
             </div>
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nombre */}

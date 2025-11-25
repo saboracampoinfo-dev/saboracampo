@@ -147,7 +147,7 @@ export default function MisDatosAdmin() {
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Foto de Perfil */}
-          <div className="flex flex-col items-center mb-6">
+          {/* <div className="flex flex-col items-center mb-6">
             <div className="relative mb-4">
               {previewImage ? (
                 <img
@@ -171,7 +171,7 @@ export default function MisDatosAdmin() {
                 disabled={uploadingImage}
               />
             </label>
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nombre */}
