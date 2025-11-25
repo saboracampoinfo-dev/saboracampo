@@ -243,7 +243,10 @@ export default function UsersManager() {
 
       if (response.ok && data.success) {
         console.log('✅ Usuario guardado exitosamente');
-        showSuccessToast(editingUser ? 'Usuario actualizado' : 'Usuario creado');
+        const mensaje = editingUser 
+          ? (formData.password ? 'Usuario y contraseña actualizados correctamente' : 'Usuario actualizado')
+          : 'Usuario creado';
+        showSuccessToast(mensaje);
         fetchUsers();
         handleCloseModal();
       } else if (response.status === 401) {
@@ -254,6 +257,7 @@ export default function UsersManager() {
         showErrorToast('No tienes permisos para gestionar usuarios.');
       } else {
         console.log('❌ Error al guardar:', data.error || 'Error desconocido');
+        console.log('❌ Response completo:', data);
         showErrorToast(data.error || 'Error al guardar usuario');
       }
     } catch (error) {
@@ -626,6 +630,11 @@ export default function UsersManager() {
                 <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                   Contraseña {editingUser && '(dejar vacío para no cambiar)'}
                 </label>
+                {editingUser && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+                    ⚠️ Al cambiar la contraseña, se actualizará en Firebase. El usuario deberá usar la nueva contraseña para iniciar sesión.
+                  </p>
+                )}
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -633,6 +642,8 @@ export default function UsersManager() {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full px-2 md:px-3 py-1.5 md:py-2 pr-10 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
                     required={!editingUser}
+                    minLength={6}
+                    placeholder={editingUser ? "Dejar vacío para no cambiar" : "Mínimo 6 caracteres"}
                   />
                   <button
                     type="button"
@@ -651,6 +662,11 @@ export default function UsersManager() {
                     )}
                   </button>
                 </div>
+                {formData.password && formData.password.length > 0 && formData.password.length < 6 && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    La contraseña debe tener al menos 6 caracteres
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">Rol</label>

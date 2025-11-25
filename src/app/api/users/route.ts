@@ -166,20 +166,37 @@ export async function PUT(request: Request) {
     // Si se proporciona contraseña, actualizar en Firebase
     if (password && user.firebaseUid) {
       try {
-        await adminAuth().updateUser(user.firebaseUid, {
+        console.log('🔑 Intentando actualizar contraseña en Firebase para:', user.email);
+        const auth = adminAuth();
+        await auth.updateUser(user.firebaseUid, {
           password,
           displayName: name || user.name,
         });
+        console.log('✅ Contraseña actualizada en Firebase para:', user.email);
       } catch (firebaseError: any) {
-        console.error('Error updating Firebase user:', firebaseError);
+        console.error('❌ Error actualizando contraseña en Firebase:', {
+          email: user.email,
+          firebaseUid: user.firebaseUid,
+          error: firebaseError.message,
+          code: firebaseError.code,
+        });
         return NextResponse.json(
           {
             success: false,
-            error: `Error al actualizar contraseña en Firebase: ${firebaseError.message}`,
+            error: `Error al actualizar contraseña en Firebase: ${firebaseError.message}. Código: ${firebaseError.code}`,
           },
           { status: 400 }
         );
       }
+    } else if (password && !user.firebaseUid) {
+      console.warn('⚠️ Usuario sin firebaseUid, no se puede actualizar contraseña:', user.email);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Este usuario no tiene cuenta en Firebase. Contacte al administrador.',
+        },
+        { status: 400 }
+      );
     }
 
     // Actualizar usuario en MongoDB
