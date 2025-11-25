@@ -21,6 +21,8 @@ export default function ProfileEditor() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     telefono: '',
@@ -47,6 +49,7 @@ export default function ProfileEditor() {
           tipoDocumento: data.user.tipoDocumento || '',
           nroDocumento: data.user.nroDocumento || ''
         });
+        setPreviewImage(data.user.imgProfile || null);
       }
     } catch (error) {
       showErrorToast('Error al cargar perfil');
@@ -55,15 +58,49 @@ export default function ProfileEditor() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/uploadImage', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setPreviewImage(data.url);
+        showSuccessToast('Imagen subida correctamente');
+      } else {
+        showErrorToast('Error al subir imagen');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      showErrorToast('Error al subir imagen');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
+      const updateData = {
+        ...formData,
+        ...(previewImage && { imgProfile: previewImage }),
+      };
+
       const response = await fetch(`/api/users?id=${profile?._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(updateData)
       });
 
       const data = await response.json();
@@ -102,9 +139,17 @@ export default function ProfileEditor() {
       {/* Header */}
       <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-6 border border-dark-200 dark:border-dark-700">
         <div className="flex items-center space-x-4">
-          <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-            <FiUser className="w-10 h-10 text-primary" />
-          </div>
+          {previewImage || profile.imgProfile ? (
+            <img
+              src={previewImage || profile.imgProfile}
+              alt="Perfil"
+              className="w-20 h-20 rounded-full object-cover border-4 border-primary"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+              <FiUser className="w-10 h-10 text-primary" />
+            </div>
+          )}
           <div>
             <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">{profile.name}</h2>
             <p className="text-dark-600 dark:text-dark-400">{profile.email}</p>
@@ -124,6 +169,33 @@ export default function ProfileEditor() {
         </h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Foto de Perfil */}
+          <div className="flex flex-col items-center mb-6 pb-6 border-b border-dark-200 dark:border-dark-700">
+            <div className="relative mb-4">
+              {previewImage || profile.imgProfile ? (
+                <img
+                  src={previewImage || profile.imgProfile}
+                  alt="Preview"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-primary"
+                />
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-dark-200 dark:bg-dark-600 flex items-center justify-center border-4 border-primary">
+                  <FiUser className="text-5xl text-dark-400" />
+                </div>
+              )}
+            </div>
+            <label className="cursor-pointer bg-primary hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2">
+              <span>{uploadingImage ? '⏳ Subiendo...' : '📸 Cambiar Foto de Perfil'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploadingImage}
+              />
+            </label>
+          </div>
+
           {/* Nombre */}
           <div>
             <label className="flex items-center text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">

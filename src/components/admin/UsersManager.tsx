@@ -27,6 +27,9 @@ export default function UsersManager() {
   const usersPerPage = 50;
   const [sortField, setSortField] = useState<'name' | 'email' | 'role' | 'createdAt'>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [syncInfo, setSyncInfo] = useState<{ count: number; users: any[] } | null>(null);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,7 +45,46 @@ export default function UsersManager() {
 
   useEffect(() => {
     fetchUsers();
+    checkSyncStatus();
   }, []);
+
+  const checkSyncStatus = async () => {
+    try {
+      const response = await fetch('/api/users/sync-firebase', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success && data.needsSync) {
+        setSyncInfo({ count: data.count, users: data.users });
+      }
+    } catch (error) {
+      console.error('Error checking sync status:', error);
+    }
+  };
+
+  const handleSyncUsers = async () => {
+    setSyncLoading(true);
+    try {
+      const response = await fetch('/api/users/sync-firebase', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        showSuccessToast(data.message);
+        setShowSyncModal(false);
+        setSyncInfo(null);
+        fetchUsers(); // Recargar usuarios
+      } else {
+        showErrorToast(data.error || 'Error al sincronizar usuarios');
+      }
+    } catch (error) {
+      showErrorToast('Error al sincronizar usuarios');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -413,6 +455,15 @@ export default function UsersManager() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 md:w-64 px-3 md:px-4 py-1.5 md:py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary text-sm md:text-base"
           />
+          {syncInfo && syncInfo.count > 0 && (
+            <button
+              onClick={() => setShowSyncModal(true)}
+              className="bg-amber-600 hover:bg-amber-700 text-white px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base whitespace-nowrap flex items-center justify-center gap-2"
+              title={`${syncInfo.count} usuarios necesitan sincronización con Firebase`}
+            >
+              🔄 Sincronizar ({syncInfo.count})
+            </button>
+          )}
           <button
             onClick={handleExportToExcel}
             className="bg-green-600 hover:bg-green-700 text-white px-3 md:px-6 py-1.5 md:py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg text-sm md:text-base whitespace-nowrap flex items-center justify-center gap-2"
@@ -776,6 +827,86 @@ export default function UsersManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Sincronización con Firebase */}
+      {showSyncModal && syncInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-xl max-w-2xl w-full p-6 border border-dark-200 dark:border-dark-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-dark-900 dark:text-light-500">
+                🔄 Sincronizar Usuarios con Firebase
+              </h3>
+              <button
+                onClick={() => setShowSyncModal(false)}
+                className="text-dark-500 hover:text-dark-700 dark:text-dark-400 dark:hover:text-dark-200 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-4 mb-4">
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  <strong>⚠️ Importante:</strong> Se encontraron <strong>{syncInfo.count}</strong> usuarios que no están sincronizados con Firebase Authentication.
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                  Estos usuarios no pueden usar "Olvidé mi contraseña" hasta que se sincronicen.
+                </p>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                <p className="text-sm font-medium text-dark-700 dark:text-dark-300 mb-2">
+                  Usuarios a sincronizar:
+                </p>
+                {syncInfo.users.map((user, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-dark-50 dark:bg-dark-700 rounded border border-dark-200 dark:border-dark-600">
+                    <div>
+                      <p className="text-sm font-medium text-dark-900 dark:text-light-500">{user.name}</p>
+                      <p className="text-xs text-dark-600 dark:text-dark-400">{user.email}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
+                      {user.role}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <strong>📝 Qué hará este proceso:</strong>
+              </p>
+              <ul className="text-xs text-blue-700 dark:text-blue-400 mt-2 space-y-1 list-disc list-inside">
+                <li>Verificará si cada usuario existe en Firebase Authentication</li>
+                <li>Si existe: actualizará MongoDB con el UID de Firebase</li>
+                <li>Si no existe: creará el usuario en Firebase con contraseña temporal</li>
+                <li>Los usuarios con contraseña temporal deberán usar "Olvidé mi contraseña"</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowSyncModal(false)}
+                disabled={syncLoading}
+                className="flex-1 px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSyncUsers}
+                disabled={syncLoading}
+                className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {syncLoading ? 'Sincronizando...' : `🔄 Sincronizar ${syncInfo.count} usuarios`}
+              </button>
+            </div>
           </div>
         </div>
       )}

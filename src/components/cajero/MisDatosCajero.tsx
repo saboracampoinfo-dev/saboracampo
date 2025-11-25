@@ -7,12 +7,11 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: string;
   telefono?: string;
-  direccion?: string;
-  ciudad?: string;
-  codigoPostal?: string;
-  fechaNacimiento?: string;
+  domicilio?: string;
+  tipoDocumento?: string;
+  nroDocumento?: string;
+  imgProfile?: string;
 }
 
 export default function MisDatosCajero() {
@@ -21,13 +20,13 @@ export default function MisDatosCajero() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     telefono: '',
-    direccion: '',
-    ciudad: '',
-    codigoPostal: '',
-    fechaNacimiento: '',
+    domicilio: '',
+    tipoDocumento: '',
+    nroDocumento: '',
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUser();
@@ -42,13 +41,12 @@ export default function MisDatosCajero() {
         setUser(data.user);
         setFormData({
           name: data.user.name || '',
-          email: data.user.email || '',
           telefono: data.user.telefono || '',
-          direccion: data.user.direccion || '',
-          ciudad: data.user.ciudad || '',
-          codigoPostal: data.user.codigoPostal || '',
-          fechaNacimiento: data.user.fechaNacimiento || '',
+          domicilio: data.user.domicilio || '',
+          tipoDocumento: data.user.tipoDocumento || '',
+          nroDocumento: data.user.nroDocumento || '',
         });
+        setPreviewImage(data.user.imgProfile || null);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -58,16 +56,50 @@ export default function MisDatosCajero() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/uploadImage', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setPreviewImage(data.url);
+        showSuccessToast('Imagen subida correctamente');
+      } else {
+        showErrorToast('Error al subir imagen');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      showErrorToast('Error al subir imagen');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const response = await fetch(`/api/users/${user?._id}`, {
+      const updateData = {
+        ...formData,
+        ...(previewImage && { imgProfile: previewImage }),
+      };
+
+      const response = await fetch(`/api/users?id=${user?._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       });
 
       const data = await response.json();
@@ -114,6 +146,33 @@ export default function MisDatosCajero() {
 
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Foto de Perfil */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative mb-4">
+              {previewImage ? (
+                <img
+                  src={previewImage}
+                  alt="Preview"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-secondary"
+                />
+              ) : (
+                <div className="w-32 h-32 rounded-full bg-dark-200 dark:bg-dark-600 flex items-center justify-center border-4 border-secondary">
+                  <span className="text-4xl text-dark-400">📷</span>
+                </div>
+              )}
+            </div>
+            <label className="cursor-pointer bg-secondary hover:bg-secondary-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-300">
+              {uploadingImage ? '⏳ Subiendo...' : '📸 Cambiar Foto'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploadingImage}
+              />
+            </label>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Nombre */}
             <div>
@@ -129,19 +188,20 @@ export default function MisDatosCajero() {
               />
             </div>
 
-            {/* Email */}
+            {/* Email - Read Only */}
             <div>
               <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Email *
+                Email
               </label>
               <input
                 type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
-                required
+                value={user?.email || ''}
+                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-gray-100 dark:bg-dark-800 text-dark-600 dark:text-dark-400 cursor-not-allowed"
                 disabled
               />
+              <p className="text-xs text-dark-500 dark:text-dark-400 mt-1">
+                El email no se puede modificar
+              </p>
             </div>
 
             {/* Teléfono */}
@@ -157,54 +217,46 @@ export default function MisDatosCajero() {
               />
             </div>
 
-            {/* Fecha de Nacimiento */}
+            {/* Domicilio */}
             <div>
               <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Fecha de Nacimiento
+                Domicilio
               </label>
               <input
-                type="date"
-                value={formData.fechaNacimiento}
-                onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
+                type="text"
+                value={formData.domicilio}
+                onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
                 className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
               />
             </div>
 
-            {/* Dirección */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Dirección
-              </label>
-              <input
-                type="text"
-                value={formData.direccion}
-                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
-              />
-            </div>
-
-            {/* Ciudad */}
+            {/* Tipo de Documento */}
             <div>
               <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Ciudad
+                Tipo de Documento
               </label>
-              <input
-                type="text"
-                value={formData.ciudad}
-                onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+              <select
+                value={formData.tipoDocumento}
+                onChange={(e) => setFormData({ ...formData, tipoDocumento: e.target.value })}
                 className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
-              />
+              >
+                <option value="">Seleccionar</option>
+                <option value="DNI">DNI</option>
+                <option value="CUIT">CUIT</option>
+                <option value="CUIL">CUIL</option>
+                <option value="Pasaporte">Pasaporte</option>
+              </select>
             </div>
 
-            {/* Código Postal */}
+            {/* Número de Documento */}
             <div>
               <label className="block text-sm font-semibold text-dark-700 dark:text-dark-300 mb-2">
-                Código Postal
+                Número de Documento
               </label>
               <input
                 type="text"
-                value={formData.codigoPostal}
-                onChange={(e) => setFormData({ ...formData, codigoPostal: e.target.value })}
+                value={formData.nroDocumento}
+                onChange={(e) => setFormData({ ...formData, nroDocumento: e.target.value })}
                 className="w-full px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
               />
             </div>
@@ -231,6 +283,17 @@ export default function MisDatosCajero() {
         </form>
       ) : (
         <div className="bg-white dark:bg-dark-700 rounded-lg p-2 md:p-6 shadow-md border border-dark-200 dark:border-dark-600">
+          {/* Foto de Perfil */}
+          {user?.imgProfile && (
+            <div className="flex justify-center mb-6">
+              <img
+                src={user.imgProfile}
+                alt="Perfil"
+                className="w-32 h-32 rounded-full object-cover border-4 border-secondary"
+              />
+            </div>
+          )}
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -260,55 +323,35 @@ export default function MisDatosCajero() {
                 </span>
               </div>
 
-              <div>
-                <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                  Rol
-                </span>
-                <span className="px-3 py-1 bg-secondary-100 dark:bg-secondary-800 text-secondary dark:text-secondary-400 rounded-full text-sm font-medium inline-block">
-                  {user?.role}
-                </span>
-              </div>
-
-              {user?.fechaNacimiento && (
+              {user?.domicilio && (
                 <div>
                   <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                    Fecha de Nacimiento
+                    Domicilio
                   </span>
                   <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {new Date(user.fechaNacimiento).toLocaleDateString('es-ES')}
+                    {user.domicilio}
                   </span>
                 </div>
               )}
 
-              {user?.direccion && (
-                <div className="md:col-span-2">
+              {user?.tipoDocumento && (
+                <div>
                   <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                    Dirección
+                    Tipo de Documento
                   </span>
                   <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {user.direccion}
+                    {user.tipoDocumento}
                   </span>
                 </div>
               )}
 
-              {user?.ciudad && (
+              {user?.nroDocumento && (
                 <div>
                   <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                    Ciudad
+                    Número de Documento
                   </span>
                   <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {user.ciudad}
-                  </span>
-                </div>
-              )}
-
-              {user?.codigoPostal && (
-                <div>
-                  <span className="block text-sm font-semibold text-dark-500 dark:text-dark-400 mb-1">
-                    Código Postal
-                  </span>
-                  <span className="text-dark-900 dark:text-light-500 text-lg">
-                    {user.codigoPostal}
+                    {user.nroDocumento}
                   </span>
                 </div>
               )}

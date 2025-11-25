@@ -14,6 +14,7 @@ const ConfiguracionManager = dynamic(() => import('@/components/admin/Configurac
 const GestorTransferencias = dynamic(() => import('@/components/admin/GestorTransferencias'), { ssr: false });
 const OrdenesCajero = dynamic(() => import('@/components/cajero/OrdenesCajero'), { ssr: false });
 const CrearOrdenCajero = dynamic(() => import('@/components/cajero/CrearOrdenCajero'), { ssr: false });
+const MisDatosAdmin = dynamic(() => import('@/components/admin/MisDatosAdmin'), { ssr: false });
 
 export default function DashboardAdmin() {
   const router = useRouter();
@@ -291,22 +292,7 @@ export default function DashboardAdmin() {
           {/* Content */}
           {activeTab === 'dashboard' && (
             <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-xl p-1 md:p-8 border border-dark-200 dark:border-dark-700">
-              <h2 className="text-3xl font-bold mb-2 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">Panel de Administración</h2>
-              <p className="text-dark-600 dark:text-dark-400 mb-6">Mis Datos</p>
-              <div className="space-y-3 mb-8">
-                <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Nombre:</span>
-                  <span className="text-dark-900 dark:text-light-500">{user?.name}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Email:</span>
-                  <span className="text-dark-900 dark:text-light-500">{user?.email}</span>
-                </div>
-                <div className="flex items-start">
-                  <span className="text-primary font-semibold w-32">Rol:</span>
-                  <span className="px-3 py-1 bg-dark-100 dark:bg-dark-700 text-dark-900 dark:text-light-500 rounded-full text-sm font-medium inline-block">{user?.role}</span>
-                </div>
-              </div>
+              <MisDatosAdmin />
 {/* 
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <button
