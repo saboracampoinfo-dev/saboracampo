@@ -8,34 +8,46 @@ cloudinary.config({
 })
 
 export async function POST (request) {
-    const data = await request.formData()
-    const image = data.get('file')
-    //console.log(image,'data aca')
+    try {
+        const data = await request.formData()
+        const image = data.get('file')
 
-    if(!image){
-        return NextResponse.json('no se ha subido la imagen', { status: 400 })
-    }
+        if(!image){
+            return NextResponse.json(
+                { success: false, error: 'No se ha subido la imagen' }, 
+                { status: 400 }
+            )
+        }
 
-    const bytes = await image.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+        const bytes = await image.arrayBuffer()
+        const buffer = Buffer.from(bytes)
 
-    const response = await new Promise ((resolve, reject) => {
-        cloudinary.uploader.upload_stream({folder: 'Products'},(err,result) => {
-            if (err) {
-                reject(err)
-            }
-            resolve(result)
+        const response = await new Promise ((resolve, reject) => {
+            cloudinary.uploader.upload_stream({folder: 'Products'},(err,result) => {
+                if (err) {
+                    reject(err)
+                }
+                resolve(result)
+            })
+            .end(buffer)
         })
-        .end(buffer)
-    })
-    // console.log({
-    //     preview:response.secure_url.toString(),
-    //     name:response.display_name.toString(),
-    //     isURL:true
-    // },'response cloudinary')
-    return NextResponse.json({
-        preview:response.secure_url.toString(),
-        name:response.display_name.toString(),
-        isURL:true
-    })
+
+        return NextResponse.json({
+            success: true,
+            url: response.secure_url,
+            // Mantener retrocompatibilidad
+            preview: response.secure_url,
+            name: response.display_name || response.public_id,
+            isURL: true
+        })
+    } catch (error) {
+        console.error('Error uploading to Cloudinary:', error)
+        return NextResponse.json(
+            { 
+                success: false, 
+                error: error.message || 'Error al subir la imagen' 
+            }, 
+            { status: 500 }
+        )
     }
+}

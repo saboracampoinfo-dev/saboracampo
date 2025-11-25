@@ -163,7 +163,17 @@ export default function UploadImage({ imagenes, updateImages, handleRemoveImage 
        body: formData
      })
       const data = await res.json()
-      //console.log(data,'data')
+      
+      // Mantener retrocompatibilidad con la respuesta
+      if (data.success && !data.preview) {
+        return {
+          ...data,
+          preview: data.url,
+          isURL: true,
+          name: data.name || file.name
+        }
+      }
+      
       return data
     }
   
