@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import { auth } from '@/lib/firebase-admin';
+import { adminAuth } from '@/lib/firebase-admin';
 import { generateToken } from '@/lib/jwt';
 
 // POST - Register nuevo usuario
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Crear usuario en Firebase Auth
     let firebaseUser;
     try {
-      firebaseUser = await auth.createUser({
+      firebaseUser = await adminAuth().createUser({
         email: email.toLowerCase(),
         password: password,
         displayName: name,

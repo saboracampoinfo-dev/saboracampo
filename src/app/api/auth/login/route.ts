@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import { auth } from '@/lib/firebase-admin';
+import { adminAuth } from '@/lib/firebase-admin';
 import { generateToken } from '@/lib/jwt';
 
 // POST - Login de usuario
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Verificar el token de Firebase
     let decodedToken;
     try {
-      decodedToken = await auth.verifyIdToken(idToken);
+      decodedToken = await adminAuth().verifyIdToken(idToken);
     } catch (firebaseError: any) {
       console.error('Error verifying Firebase token:', firebaseError);
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     // Si el usuario no existe en MongoDB, crearlo (sync con Firebase)
     if (!user) {
       // Obtener información adicional de Firebase
-      const firebaseUser = await auth.getUser(uid);
+      const firebaseUser = await adminAuth().getUser(uid);
       
       user = await User.create({
         firebaseUid: uid,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-import { auth } from '@/lib/firebase-admin';
+import { adminAuth } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     // Crear usuario en Firebase
     let firebaseUser;
     try {
-      firebaseUser = await auth.createUser({
+      firebaseUser = await adminAuth().createUser({
         email: email.toLowerCase(),
         password,
         displayName: name,
@@ -166,7 +166,7 @@ export async function PUT(request: Request) {
     // Si se proporciona contraseña, actualizar en Firebase
     if (password && user.firebaseUid) {
       try {
-        await auth.updateUser(user.firebaseUid, {
+        await adminAuth().updateUser(user.firebaseUid, {
           password,
           displayName: name || user.name,
         });
@@ -238,7 +238,7 @@ export async function DELETE(request: Request) {
     // Eliminar usuario de Firebase si existe
     if (user.firebaseUid) {
       try {
-        await auth.deleteUser(user.firebaseUid);
+        await adminAuth().deleteUser(user.firebaseUid);
       } catch (firebaseError: any) {
         console.error('Error deleting Firebase user:', firebaseError);
         // Continuar con la eliminación en MongoDB aunque falle en Firebase

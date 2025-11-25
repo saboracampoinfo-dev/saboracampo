@@ -25,6 +25,20 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  // Transpilar solo paquetes de Firebase que tienen problemas de parsing
+  transpilePackages: [
+    'firebase',
+    '@firebase/firestore',
+    '@firebase/auth',
+  ],
+  // Marcar paquetes grandes como externos para server-side (evitar bundling)
+  serverExternalPackages: [
+    'firebase-admin',
+    'pdfkit',
+    'cloudinary',
+    'mongodb',
+    'mongoose',
+  ],
 };
 
 export default nextConfig;
