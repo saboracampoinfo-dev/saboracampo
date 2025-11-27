@@ -20,7 +20,7 @@
   "categories": ["shopping", "food"],
   "theme_color": "#22c55e",
   "background_color": "#ffffff",
-  "start_url": "./",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "lang": "es"
