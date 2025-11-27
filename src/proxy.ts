@@ -14,6 +14,7 @@ import { quickValidateToken } from '@/lib/jwt-edge';
 // Rutas públicas que no requieren autenticación
 const publicRoutes = [
   '/',
+  '/iconos',
   '/manifest.json',
   '/login',
   '/register',
