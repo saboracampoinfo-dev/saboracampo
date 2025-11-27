@@ -5,14 +5,20 @@
   "description": "Productos frescos, naturales y de calidad. Carnes, frutas, verduras y más.",
   "icons": [
     {
-      "src": "/iconos/icon-192.png",
-      "sizes": "192x192",
+      "src": "/iconos/icono-144.png",
+      "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/iconos/icon-512.png",
+      "src": "/iconos/icono-512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/iconos/icono-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any maskable"
     }
