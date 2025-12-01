@@ -97,6 +97,9 @@ export default function GestorTransferencias() {
   const [filtroFechaDesde, setFiltroFechaDesde] = useState<string>('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState<string>('');
   const [busquedaProductoHistorial, setBusquedaProductoHistorial] = useState<string>('');
+  
+  // Estados para selección de transferencias para impresión
+  const [transferenciasSeleccionadas, setTransferenciasSeleccionadas] = useState<Set<string>>(new Set());
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -464,6 +467,146 @@ export default function GestorTransferencias() {
     return stock?.cantidad || 0;
   }
 
+  // Generar PDF de orden de transferencia MASIVA (una única orden con todos los productos)
+  const generarPDFOrdenMasiva = async (transferenciasValidas: TransferenciaInput[]) => {
+    try {
+      // Agrupar items por sucursal origen y destino
+      const gruposPorSucursales = new Map<string, {
+        sucursalOrigen: Sucursal;
+        sucursalDestino: Sucursal;
+        items: any[];
+      }>();
+
+      transferenciasValidas.forEach(t => {
+        const key = `${t.sucursalOrigenId}-${t.sucursalDestinoId}`;
+        const producto = productos?.find(p => p._id === t.productoId);
+        const stockOrigen = producto?.stockPorSucursal.find(s => s.sucursalId === t.sucursalOrigenId);
+        const stockDestino = producto?.stockPorSucursal.find(s => s.sucursalId === t.sucursalDestinoId);
+
+        const itemDetallado = {
+          productoId: t.productoId,
+          nombreProducto: producto?.nombre || 'Producto',
+          cantidad: t.cantidad,
+          stockOrigenAntes: stockOrigen?.cantidad || 0,
+          stockOrigenDespues: (stockOrigen?.cantidad || 0) - t.cantidad,
+          stockDestinoAntes: stockDestino?.cantidad || 0,
+          stockDestinoDespues: (stockDestino?.cantidad || 0) + t.cantidad,
+          sucursalOrigenNombre: sucursales.find(s => s._id === t.sucursalOrigenId)?.nombre || '',
+          sucursalDestinoNombre: sucursales.find(s => s._id === t.sucursalDestinoId)?.nombre || '',
+        };
+
+        if (!gruposPorSucursales.has(key)) {
+          const sucursalOrigen = sucursales.find(s => s._id === t.sucursalOrigenId);
+          const sucursalDestino = sucursales.find(s => s._id === t.sucursalDestinoId);
+          
+          if (sucursalOrigen && sucursalDestino) {
+            gruposPorSucursales.set(key, {
+              sucursalOrigen,
+              sucursalDestino,
+              items: []
+            });
+          }
+        }
+
+        gruposPorSucursales.get(key)?.items.push(itemDetallado);
+      });
+
+      // Convertir a array para enviar al backend
+      const grupos = Array.from(gruposPorSucursales.values()).map(grupo => ({
+        sucursalOrigen: {
+          _id: grupo.sucursalOrigen._id,
+          nombre: grupo.sucursalOrigen.nombre,
+          direccion: grupo.sucursalOrigen.direccion,
+          telefono: grupo.sucursalOrigen.telefono
+        },
+        sucursalDestino: {
+          _id: grupo.sucursalDestino._id,
+          nombre: grupo.sucursalDestino.nombre,
+          direccion: grupo.sucursalDestino.direccion,
+          telefono: grupo.sucursalDestino.telefono
+        },
+        items: grupo.items
+      }));
+
+      const totalProductos = transferenciasValidas.length;
+      const totalUnidades = transferenciasValidas.reduce((sum, t) => sum + t.cantidad, 0);
+
+      console.log('📤 Enviando datos para generar PDF masivo...');
+      
+      const response = await fetch('/api/transferencias/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          transferencia: {
+            notas: `Transferencia masiva - ${totalProductos} productos, ${totalUnidades} unidades`,
+            esMasiva: true
+          },
+          grupos,
+          totalProductos,
+          totalUnidades
+        })
+      });
+
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', response.headers.get('content-type'));
+
+      if (response.ok) {
+        const blob = await response.blob();
+        console.log('📦 Blob recibido:', blob.size, 'bytes', blob.type);
+        
+        if (blob.size === 0) {
+          console.error('❌ El blob está vacío');
+          showErrorToast('El PDF generado está vacío');
+          return;
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        console.log('🔗 URL creada:', url);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orden_transferencia_masiva_${Date.now()}.pdf`;
+        a.style.display = 'none';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        
+        console.log('🖱️ Iniciando descarga...');
+        
+        try {
+          a.click();
+          console.log('✅ Click ejecutado');
+        } catch (clickError) {
+          console.error('❌ Error en click, intentando alternativa:', clickError);
+          // Alternativa: abrir en nueva pestaña
+          window.open(url, '_blank');
+        }
+        
+        // Esperar un poco antes de limpiar
+        setTimeout(() => {
+          try {
+            window.URL.revokeObjectURL(url);
+            if (document.body.contains(a)) {
+              document.body.removeChild(a);
+            }
+            console.log('✅ Descarga completada y limpieza realizada');
+          } catch (cleanupError) {
+            console.error('⚠️ Error en limpieza:', cleanupError);
+          }
+        }, 1000);
+        
+        showSuccessToast('Orden de transferencia masiva descargada');
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Error del servidor:', response.status, errorText);
+        showErrorToast('Error al generar el PDF de la orden');
+      }
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      showErrorToast('Error al generar el PDF de la orden');
+    }
+  };
+
   // Validar y ejecutar transferencias masivas
   const ejecutarTransferenciasMasivas = async () => {
     const transferenciasValidas = Object.values(transferenciasInput).filter(t => 
@@ -560,6 +703,10 @@ export default function GestorTransferencias() {
 
       if (exitosas > 0) {
         showSuccessToast(`${exitosas} transferencia(s) ejecutada(s) exitosamente`);
+        
+        // Generar UNA ÚNICA orden de transferencia con todos los productos
+        await generarPDFOrdenMasiva(transferenciasValidas);
+
         setTransferenciasInput({});
         // Limpiar caché y recargar página actual
         setProductCache(new Map());
@@ -574,6 +721,104 @@ export default function GestorTransferencias() {
       showErrorToast('Error al procesar transferencias');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Generar PDF para transferencia del historial
+  const generarPDFHistorial = async (transferencia: Transferencia) => {
+    try {
+      const sucursalOrigen = sucursales.find(s => s._id === transferencia.sucursalOrigenId) || {
+        _id: transferencia.sucursalOrigenId,
+        nombre: transferencia.sucursalOrigenNombre,
+        direccion: {},
+        telefono: ''
+      };
+
+      const sucursalDestino = sucursales.find(s => s._id === transferencia.sucursalDestinoId) || {
+        _id: transferencia.sucursalDestinoId,
+        nombre: transferencia.sucursalDestinoNombre,
+        direccion: {},
+        telefono: ''
+      };
+
+      console.log('📤 Generando PDF del historial para transferencia:', transferencia._id);
+      
+      const response = await fetch('/api/transferencias/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          transferencia: {
+            _id: transferencia._id,
+            estado: transferencia.estado,
+            fechaCreacion: transferencia.fechaCreacion,
+            fechaAprobacion: transferencia.fechaAprobacion,
+            notas: transferencia.notas,
+            creadoPorNombre: transferencia.creadoPorNombre,
+            aprobadoPorNombre: transferencia.aprobadoPorNombre
+          },
+          sucursalOrigen,
+          sucursalDestino,
+          items: transferencia.items
+        })
+      });
+
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Content-Type:', response.headers.get('content-type'));
+
+      if (response.ok) {
+        const blob = await response.blob();
+        console.log('📦 Blob recibido:', blob.size, 'bytes', blob.type);
+        
+        if (blob.size === 0) {
+          console.error('❌ El blob está vacío');
+          showErrorToast('El PDF generado está vacío');
+          return;
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        console.log('🔗 URL creada:', url);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orden_transferencia_${transferencia._id}.pdf`;
+        a.style.display = 'none';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        
+        console.log('🖱️ Iniciando descarga...');
+        
+        try {
+          a.click();
+          console.log('✅ Click ejecutado');
+        } catch (clickError) {
+          console.error('❌ Error en click, intentando alternativa:', clickError);
+          // Alternativa: abrir en nueva pestaña
+          window.open(url, '_blank');
+        }
+        
+        // Esperar un poco antes de limpiar
+        setTimeout(() => {
+          try {
+            window.URL.revokeObjectURL(url);
+            if (document.body.contains(a)) {
+              document.body.removeChild(a);
+            }
+            console.log('✅ Descarga completada y limpieza realizada');
+          } catch (cleanupError) {
+            console.error('⚠️ Error en limpieza:', cleanupError);
+          }
+        }, 1000);
+        
+        showSuccessToast('PDF de orden de transferencia descargado');
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Error del servidor:', response.status, errorText);
+        showErrorToast('Error al generar el PDF');
+      }
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      showErrorToast('Error al generar el PDF');
     }
   };
 
@@ -676,6 +921,172 @@ export default function GestorTransferencias() {
   };
 
   const transferenciasCount = Object.keys(transferenciasInput).length;
+
+  // Funciones para selección de transferencias
+  const toggleSeleccionTransferencia = (id: string) => {
+    setTransferenciasSeleccionadas(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const seleccionarTodas = () => {
+    const ids = transferenciasFiltradas
+      .filter(t => t.estado === 'completada') // Solo completadas
+      .map(t => t._id);
+    setTransferenciasSeleccionadas(new Set(ids));
+  };
+
+  const deseleccionarTodas = () => {
+    setTransferenciasSeleccionadas(new Set());
+  };
+
+  // Generar PDF agrupado con las transferencias seleccionadas
+  const generarPDFAgrupado = async () => {
+    if (transferenciasSeleccionadas.size === 0) {
+      showErrorToast('Selecciona al menos una transferencia para imprimir');
+      return;
+    }
+
+    try {
+      // Obtener las transferencias seleccionadas
+      const transferenciasParaImprimir = transferencias.filter(t => 
+        transferenciasSeleccionadas.has(t._id)
+      );
+
+      // Agrupar por sucursal origen -> destino
+      const grupos = new Map<string, {
+        sucursalOrigen: { _id: string; nombre: string; direccion?: any; telefono?: string };
+        sucursalDestino: { _id: string; nombre: string; direccion?: any; telefono?: string };
+        items: any[];
+        transferenciasIds: string[];
+      }>();
+
+      transferenciasParaImprimir.forEach(t => {
+        const key = `${t.sucursalOrigenId}-${t.sucursalDestinoId}`;
+        
+        if (!grupos.has(key)) {
+          const sucursalOrigen = sucursales.find(s => s._id === t.sucursalOrigenId) || {
+            _id: t.sucursalOrigenId,
+            nombre: t.sucursalOrigenNombre,
+            direccion: {},
+            telefono: ''
+          };
+
+          const sucursalDestino = sucursales.find(s => s._id === t.sucursalDestinoId) || {
+            _id: t.sucursalDestinoId,
+            nombre: t.sucursalDestinoNombre,
+            direccion: {},
+            telefono: ''
+          };
+
+          grupos.set(key, {
+            sucursalOrigen: {
+              _id: sucursalOrigen._id,
+              nombre: sucursalOrigen.nombre,
+              direccion: sucursalOrigen.direccion,
+              telefono: sucursalOrigen.telefono
+            },
+            sucursalDestino: {
+              _id: sucursalDestino._id,
+              nombre: sucursalDestino.nombre,
+              direccion: sucursalDestino.direccion,
+              telefono: sucursalDestino.telefono
+            },
+            items: [],
+            transferenciasIds: []
+          });
+        }
+
+        // Agregar todos los items de esta transferencia
+        const grupo = grupos.get(key)!;
+        grupo.transferenciasIds.push(t._id);
+        t.items.forEach(item => {
+          grupo.items.push({
+            ...item,
+            fechaTransferencia: t.fechaCreacion,
+            estadoTransferencia: t.estado
+          });
+        });
+      });
+
+      // Convertir a array para enviar
+      const gruposArray = Array.from(grupos.values()).map(grupo => ({
+        sucursalOrigen: grupo.sucursalOrigen,
+        sucursalDestino: grupo.sucursalDestino,
+        items: grupo.items,
+        transferenciasIds: grupo.transferenciasIds
+      }));
+
+      const totalProductos = gruposArray.reduce((sum, g) => sum + g.items.length, 0);
+      const totalUnidades = gruposArray.reduce((sum, g) => 
+        sum + g.items.reduce((s: number, i: any) => s + i.cantidad, 0), 0
+      );
+
+      console.log('📤 Generando PDF agrupado con', gruposArray.length, 'grupos');
+      
+      const response = await fetch('/api/transferencias/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          transferencia: {
+            notas: `Orden de picking agrupada - ${transferenciasSeleccionadas.size} transferencias, ${totalProductos} productos`,
+            esAgrupada: true
+          },
+          grupos: gruposArray,
+          totalProductos,
+          totalUnidades
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        
+        if (blob.size === 0) {
+          showErrorToast('El PDF generado está vacío');
+          return;
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orden_picking_agrupada_${Date.now()}.pdf`;
+        a.style.display = 'none';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        
+        try {
+          a.click();
+        } catch (clickError) {
+          window.open(url, '_blank');
+        }
+        
+        setTimeout(() => {
+          try {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          } catch (cleanupError) {
+            console.error('Error en limpieza:', cleanupError);
+          }
+        }, 1000);
+        
+        showSuccessToast(`PDF generado con ${transferenciasSeleccionadas.size} transferencias agrupadas`);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Error del servidor:', response.status, errorText);
+        showErrorToast('Error al generar el PDF agrupado');
+      }
+    } catch (error) {
+      console.error('Error al generar PDF agrupado:', error);
+      showErrorToast('Error al generar el PDF agrupado');
+    }
+  };
 
   return (
     <div className="space-y-3 md:space-y-6 px-1 md:px-0">
@@ -1031,8 +1442,32 @@ export default function GestorTransferencias() {
 
         {vista === 'historial' && (
           <div className="space-y-4">
-            {/* Botón de Exportar Excel */}
-            <div className="flex justify-end">
+            {/* Botones de Acción */}
+            <div className="flex justify-between items-center flex-wrap gap-3">
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={seleccionarTodas}
+                  disabled={transferenciasFiltradas.filter(t => t.estado === 'completada').length === 0}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  ✓ Seleccionar Todas (Completadas)
+                </button>
+                <button
+                  onClick={deseleccionarTodas}
+                  disabled={transferenciasSeleccionadas.size === 0}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  ✗ Deseleccionar Todas
+                </button>
+                {transferenciasSeleccionadas.size > 0 && (
+                  <button
+                    onClick={generarPDFAgrupado}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  >
+                    📄 Imprimir Seleccionadas ({transferenciasSeleccionadas.size})
+                  </button>
+                )}
+              </div>
               <button
                 onClick={handleExportarHistorial}
                 disabled={transferenciasFiltradas.length === 0}
@@ -1182,21 +1617,33 @@ export default function GestorTransferencias() {
                 {transferenciasFiltradas.map(t => (
                   <div key={t._id} className="bg-surface dark:bg-dark-800 border border-dark-200 dark:border-dark-700 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="font-semibold text-lg text-dark-900 dark:text-light-500">
-                          {t.sucursalOrigenNombre} → {t.sucursalDestinoNombre}
-                        </h3>
-                        <p className="text-sm text-dark-600 dark:text-dark-400">
-                          {t.totalItems} producto(s) - {t.totalCantidad} unidades
-                        </p>
-                        <p className="text-xs text-dark-500 dark:text-dark-500">
-                          Creado: {new Date(t.fechaCreacion).toLocaleString()} por {t.creadoPorNombre}
-                        </p>
-                        {t.fechaAprobacion && (
-                          <p className="text-xs text-dark-500 dark:text-dark-500">
-                            {t.estado === 'completada' ? 'Aprobado' : 'Cancelado'}: {new Date(t.fechaAprobacion).toLocaleString()} por {t.aprobadoPorNombre}
-                          </p>
+                      <div className="flex gap-3 items-start flex-1">
+                        {/* Checkbox para selección (solo para completadas) */}
+                        {t.estado === 'completada' && (
+                          <input
+                            type="checkbox"
+                            checked={transferenciasSeleccionadas.has(t._id)}
+                            onChange={() => toggleSeleccionTransferencia(t._id)}
+                            className="mt-1 w-5 h-5 cursor-pointer accent-purple-600"
+                            title="Seleccionar para impresión agrupada"
+                          />
                         )}
+                        <div>
+                          <h3 className="font-semibold text-lg text-dark-900 dark:text-light-500">
+                            {t.sucursalOrigenNombre} → {t.sucursalDestinoNombre}
+                          </h3>
+                          <p className="text-sm text-dark-600 dark:text-dark-400">
+                            {t.totalItems} producto(s) - {t.totalCantidad} unidades
+                          </p>
+                          <p className="text-xs text-dark-500 dark:text-dark-500">
+                            Creado: {new Date(t.fechaCreacion).toLocaleString()} por {t.creadoPorNombre}
+                          </p>
+                          {t.fechaAprobacion && (
+                            <p className="text-xs text-dark-500 dark:text-dark-500">
+                              {t.estado === 'completada' ? 'Aprobado' : 'Cancelado'}: {new Date(t.fechaAprobacion).toLocaleString()} por {t.aprobadoPorNombre}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
@@ -1208,22 +1655,33 @@ export default function GestorTransferencias() {
                           {t.estado.toUpperCase()}
                         </span>
 
-                        {t.estado === 'pendiente' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => aprobarTransferencia(t._id)}
-                              className="bg-success-600 hover:bg-success-700 text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md"
-                            >
-                              ✓ Aprobar
-                            </button>
-                            <button
-                              onClick={() => cancelarTransferencia(t._id)}
-                              className="bg-error hover:bg-error-dark text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md"
-                            >
-                              ✗ Cancelar
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-2 justify-end">
+                          {/* Botón para descargar PDF */}
+                          <button
+                            onClick={() => generarPDFHistorial(t)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md flex items-center gap-1"
+                            title="Descargar orden de transferencia en PDF"
+                          >
+                            📄 PDF
+                          </button>
+
+                          {t.estado === 'pendiente' && (
+                            <>
+                              <button
+                                onClick={() => aprobarTransferencia(t._id)}
+                                className="bg-success-600 hover:bg-success-700 text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md"
+                              >
+                                ✓ Aprobar
+                              </button>
+                              <button
+                                onClick={() => cancelarTransferencia(t._id)}
+                                className="bg-error hover:bg-error-dark text-white px-3 py-1 rounded-lg text-sm font-semibold transition-colors shadow-md"
+                              >
+                                ✗ Cancelar
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
