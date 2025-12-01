@@ -19,12 +19,12 @@ export default function Hero() {
             >
               Ver Nuestros Locales
             </Link> */}
-            <Link
+            {/* <Link
               href="/register"
               className="bg-surface dark:bg-dark-800 text-primary px-8 py-3 rounded-full font-semibold hover:bg-light-600 dark:hover:bg-dark-700 transition-all duration-300 shadow-lg border-2 border-primary hover:scale-105"
             >
               Crear Cuenta
-            </Link>
+            </Link> */}
           </div>
         </div>
         {/* Feature Cards */}

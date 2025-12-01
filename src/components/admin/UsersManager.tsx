@@ -36,6 +36,7 @@ export default function UsersManager() {
     password: '',
     role: 'user',
     precioHora: 0,
+    montoIncentivo: 0,
     telefono: '',
     domicilio: '',
     tipoDocumento: '',
@@ -186,6 +187,7 @@ export default function UsersManager() {
         password: '',
         role: user.role,
         precioHora: user.precioHora || 0,
+        montoIncentivo: (user as any).montoIncentivo || 0,
         telefono: (user as any).telefono || '',
         domicilio: (user as any).domicilio || '',
         tipoDocumento: (user as any).tipoDocumento || '',
@@ -200,6 +202,7 @@ export default function UsersManager() {
         password: '',
         role: 'user',
         precioHora: 0,
+        montoIncentivo: 0,
         telefono: '',
         domicilio: '',
         tipoDocumento: '',
@@ -220,6 +223,7 @@ export default function UsersManager() {
       password: '',
       role: 'user',
       precioHora: 0,
+      montoIncentivo: 0,
       telefono: '',
       domicilio: '',
       tipoDocumento: '',
@@ -248,6 +252,7 @@ export default function UsersManager() {
             name: formData.name, 
             role: formData.role,
             precioHora: formData.precioHora,
+            montoIncentivo: formData.montoIncentivo,
             telefono: formData.telefono,
             domicilio: formData.domicilio,
             tipoDocumento: formData.tipoDocumento,
@@ -261,6 +266,7 @@ export default function UsersManager() {
             password: formData.password,
             role: formData.role,
             precioHora: formData.precioHora,
+            montoIncentivo: formData.montoIncentivo,
             telefono: formData.telefono,
             domicilio: formData.domicilio,
             tipoDocumento: formData.tipoDocumento,
@@ -793,6 +799,22 @@ export default function UsersManager() {
                       min="0"
                       step="0.01"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                      Monto por Incentivo Diario (AR$)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.montoIncentivo}
+                      onChange={(e) => setFormData({ ...formData, montoIncentivo: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                      min="0"
+                      step="0.01"
+                    />
+                    <p className="text-xs text-dark-600 dark:text-dark-400 mt-1">
+                      💡 Se paga por cada día que cumpla con el incentivo
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">

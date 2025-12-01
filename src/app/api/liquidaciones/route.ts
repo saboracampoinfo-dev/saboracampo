@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { userId, horas, fecha, notas } = body;
+    const { userId, horas, fecha, horaEntrada, horaSalida, cumplioIncentivo, notas } = body;
 
     if (!userId || !horas) {
       return NextResponse.json(
@@ -136,6 +136,12 @@ export async function POST(request: NextRequest) {
 
     // Agregar horas al acumulado
     user.horasAcumuladas = (user.horasAcumuladas || 0) + parseFloat(horas);
+    
+    // Si cumplió el incentivo, incrementar contador de incentivos
+    if (cumplioIncentivo) {
+      user.incentivosAcumulados = (user.incentivosAcumulados || 0) + 1;
+    }
+    
     await user.save();
 
     return NextResponse.json({
@@ -144,6 +150,9 @@ export async function POST(request: NextRequest) {
         userId: user._id,
         horasAcumuladas: user.horasAcumuladas,
         horasAgregadas: horas,
+        incentivosAcumulados: user.incentivosAcumulados || 0,
+        cumplioIncentivo,
+        horario: horaEntrada && horaSalida ? `${horaEntrada} - ${horaSalida}` : undefined,
       }
     });
 
@@ -274,8 +283,11 @@ export async function PUT(request: NextRequest) {
     const horasAcumuladas = user.horasAcumuladas || 0;
     const precioHora = user.precioHora || 0;
     const comprasAcumuladas = user.comprasAcumuladas || 0;
+    const incentivosAcumulados = user.incentivosAcumulados || 0;
+    const montoIncentivo = user.montoIncentivo || 0;
     const montoBruto = horasAcumuladas * precioHora;
-    const montoTotal = montoBruto - comprasAcumuladas;
+    const montoIncentivos = incentivosAcumulados * montoIncentivo;
+    const montoTotal = montoBruto - comprasAcumuladas + montoIncentivos;
 
     if (horasAcumuladas === 0) {
       return NextResponse.json(
@@ -314,6 +326,7 @@ export async function PUT(request: NextRequest) {
     // Reiniciar contadores y actualizar fecha de liquidación
     user.horasAcumuladas = 0;
     user.comprasAcumuladas = 0;
+    user.incentivosAcumulados = 0;
     user.ultimaLiquidacion = new Date();
     
     await user.save();
@@ -326,6 +339,8 @@ export async function PUT(request: NextRequest) {
         montoPagado: montoTotal,
         montoBruto,
         comprasDescontadas: comprasAcumuladas,
+        incentivosAplicados: montoIncentivos,
+        diasIncentivo: incentivosAcumulados,
         horasTrabajadas: horasAcumuladas,
         precioHora,
         periodo: {

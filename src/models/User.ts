@@ -37,6 +37,8 @@ export interface IUser {
   precioHora?: number;
   horasAcumuladas?: number;
   comprasAcumuladas?: number;
+  incentivosAcumulados?: number;
+  montoIncentivo?: number;
   ultimaLiquidacion?: Date;
   historialPagos?: IPaymentRecord[];
   historialCompras?: ICompra[];
@@ -113,6 +115,16 @@ const UserSchema = new Schema<IUser>(
       min: 0,
     },
     comprasAcumuladas: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    incentivosAcumulados: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    montoIncentivo: {
       type: Number,
       default: 0,
       min: 0,

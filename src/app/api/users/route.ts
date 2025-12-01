@@ -85,9 +85,10 @@ export async function POST(request: Request) {
     if (tipoDocumento) userData.tipoDocumento = tipoDocumento;
     if (nroDocumento) userData.nroDocumento = nroDocumento;
 
-    // Agregar precioHora y porcentajeComision si el rol es seller o cashier
+    // Agregar precioHora, montoIncentivo y porcentajeComision si el rol es seller o cashier
     if ((role === 'seller' || role === 'cashier')) {
       if (precioHora !== undefined) userData.precioHora = precioHora;
+      if (body.montoIncentivo !== undefined) userData.montoIncentivo = body.montoIncentivo;
       if (porcentajeComision !== undefined) userData.porcentajeComision = porcentajeComision;
     }
 
@@ -155,9 +156,12 @@ export async function PUT(request: Request) {
     if (tipoDocumento !== undefined) updateData.tipoDocumento = tipoDocumento;
     if (nroDocumento !== undefined) updateData.nroDocumento = nroDocumento;
 
-    // Si el rol es seller o cashier, actualizar precioHora y porcentajeComision
+    // Si el rol es seller o cashier, actualizar precioHora, montoIncentivo y porcentajeComision
     if ((role === 'seller' || role === 'cashier') && precioHora !== undefined) {
       updateData.precioHora = precioHora;
+    }
+    if ((role === 'seller' || role === 'cashier') && body.montoIncentivo !== undefined) {
+      updateData.montoIncentivo = body.montoIncentivo;
     }
     if ((role === 'seller' || role === 'cashier') && porcentajeComision !== undefined) {
       updateData.porcentajeComision = porcentajeComision;

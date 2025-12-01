@@ -14,6 +14,8 @@ interface User {
   horasAcumuladas?: number;
   comprasAcumuladas?: number;
   ultimaLiquidacion?: string;
+  incentivosAcumulados?: number;
+  montoIncentivo?: number;
 }
 
 interface Compra {
@@ -51,8 +53,10 @@ export default function LiquidacionesManager() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   const [horasForm, setHorasForm] = useState({
-    horas: 0,
     fecha: new Date().toISOString().split('T')[0],
+    horaEntrada: '08:00',
+    horaSalida: '17:00',
+    cumplioIncentivo: false,
     notas: ''
   });
 
@@ -82,6 +86,12 @@ export default function LiquidacionesManager() {
         const trabajadores = data.data.filter((u: User) => 
           u.role === 'vendedor' || u.role === 'cajero' || u.role === 'seller' || u.role === 'cashier'
         );
+        console.log('📊 Usuarios cargados:', trabajadores.map((u: User) => ({
+          nombre: u.name,
+          horas: u.horasAcumuladas,
+          incentivos: u.incentivosAcumulados,
+          montoIncentivo: u.montoIncentivo
+        })));
         setUsers(trabajadores);
       }
     } catch (error) {
@@ -275,34 +285,75 @@ export default function LiquidacionesManager() {
     }
   };
 
+  const calcularHorasTrabajadas = (horaEntrada: string, horaSalida: string): number => {
+    const [horaE, minE] = horaEntrada.split(':').map(Number);
+    const [horaS, minS] = horaSalida.split(':').map(Number);
+    
+    const minutosEntrada = horaE * 60 + minE;
+    const minutosSalida = horaS * 60 + minS;
+    
+    let minutosTrabajos = minutosSalida - minutosEntrada;
+    
+    // Si la salida es menor que la entrada, asumimos que cruzó la medianoche
+    if (minutosTrabajos < 0) {
+      minutosTrabajos += 24 * 60;
+    }
+    
+    // Convertir a horas decimales y redondear a múltiplos de 0.5
+    const horasDecimales = minutosTrabajos / 60;
+    return Math.round(horasDecimales * 2) / 2; // Redondea a 0.5
+  };
+
   const handleRegistrarHoras = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedUser) return;
 
+    const horasTrabajadas = calcularHorasTrabajadas(horasForm.horaEntrada, horasForm.horaSalida);
+
+    if (horasTrabajadas <= 0) {
+      showErrorToast('La hora de salida debe ser posterior a la hora de entrada');
+      return;
+    }
+
     try {
+      const requestBody = {
+        userId: selectedUser._id,
+        horas: horasTrabajadas,
+        fecha: horasForm.fecha,
+        horaEntrada: horasForm.horaEntrada,
+        horaSalida: horasForm.horaSalida,
+        cumplioIncentivo: horasForm.cumplioIncentivo,
+        notas: horasForm.notas
+      };
+      
+      console.log('📤 Enviando registro de horas:', requestBody);
+      
       const response = await fetch('/api/liquidaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: selectedUser._id,
-          horas: horasForm.horas,
-          fecha: horasForm.fecha,
-          notas: horasForm.notas
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
+      console.log('📥 Respuesta del servidor:', data);
 
       if (data.success) {
-        showSuccessToast(`${horasForm.horas}h registradas correctamente`);
+        showSuccessToast(`${horasTrabajadas}h registradas correctamente ${horasForm.cumplioIncentivo ? '✓ Con incentivo' : ''}`);
         setShowRegistrarHoras(false);
-        setHorasForm({ horas: 0, fecha: new Date().toISOString().split('T')[0], notas: '' });
+        setHorasForm({ 
+          fecha: new Date().toISOString().split('T')[0], 
+          horaEntrada: '08:00',
+          horaSalida: '17:00',
+          cumplioIncentivo: false,
+          notas: '' 
+        });
         fetchUsers();
       } else {
         showErrorToast(data.error || 'Error al registrar horas');
       }
     } catch (error) {
+      console.error('❌ Error al registrar horas:', error);
       showErrorToast('Error al registrar horas');
     }
   };
@@ -314,11 +365,26 @@ export default function LiquidacionesManager() {
 
     const montoBruto = (selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0);
     const compras = selectedUser.comprasAcumuladas || 0;
-    const montoNeto = montoBruto - compras;
+    const incentivos = (selectedUser.incentivosAcumulados || 0) * (selectedUser.montoIncentivo || 0);
+    const montoNeto = montoBruto - compras + incentivos;
 
-    const confirmed = await confirmDelete(
-      `¿Procesar liquidación de ${selectedUser.name}?<br><br>Horas trabajadas: ${selectedUser.horasAcumuladas || 0}h × AR$ ${selectedUser.precioHora || 0}<br>Monto Bruto: AR$ ${montoBruto.toFixed(2)}<br>${compras > 0 ? `Compras: -AR$ ${compras.toFixed(2)}<br>` : ''}<strong>Total Neto a Pagar: AR$ ${montoNeto.toFixed(2)}</strong>`
-    );
+    let mensaje = `
+      <div style="text-align:left;">
+        <strong>¿Procesar liquidación de ${selectedUser.name}?</strong><br><br>
+
+        <strong>Horas trabajadas:</strong> ${selectedUser.horasAcumuladas || 0}h × AR$ ${selectedUser.precioHora || 0}<br>
+        <strong>Monto Bruto:</strong> AR$ ${montoBruto.toFixed(2)}<br>
+        ${compras > 0 ? `<strong>Compras:</strong> -AR$ ${compras.toFixed(2)}<br>` : ''}
+        ${(selectedUser.incentivosAcumulados || 0) > 0
+          ? `<strong>Incentivos:</strong> ${selectedUser.incentivosAcumulados} días × AR$ ${selectedUser.montoIncentivo || 0} = +AR$ ${incentivos.toFixed(2)}<br>`
+          : ''
+        }
+        <br>
+        <strong style="font-size:18px;">Total Neto a Pagar: AR$ ${montoNeto.toFixed(2)}</strong>
+      </div>
+    `;
+
+    const confirmed = await confirmDelete(mensaje);
     
     if (!confirmed) return;
 
@@ -338,7 +404,17 @@ export default function LiquidacionesManager() {
       const data = await response.json();
 
       if (data.success) {
-        showSuccessToast(`Liquidación procesada: AR$ ${data.data.montoPagado.toFixed(2)} (Bruto: AR$ ${data.data.montoBruto.toFixed(2)} - Compras: AR$ ${data.data.comprasDescontadas.toFixed(2)})`);
+        let mensajeExito = `Liquidación procesada: AR$ ${data.data.montoPagado.toFixed(2)}`;
+        mensajeExito += ` (Bruto: AR$ ${data.data.montoBruto.toFixed(2)}`;
+        if (data.data.comprasDescontadas > 0) {
+          mensajeExito += ` - Compras: AR$ ${data.data.comprasDescontadas.toFixed(2)}`;
+        }
+        if (data.data.incentivosAplicados > 0) {
+          mensajeExito += ` + Incentivos: AR$ ${data.data.incentivosAplicados.toFixed(2)}`;
+        }
+        mensajeExito += ')';
+        
+        showSuccessToast(mensajeExito);
         setShowLiquidar(false);
         setLiquidacionForm({ periodo: '7', notas: '', metodoPago: 'efectivo', nroComprobante: '' });
         fetchUsers();
@@ -374,8 +450,8 @@ export default function LiquidacionesManager() {
           comparison = (a.horasAcumuladas || 0) - (b.horasAcumuladas || 0);
           break;
         case 'total':
-          const totalA = ((a.horasAcumuladas || 0) * (a.precioHora || 0)) - (a.comprasAcumuladas || 0);
-          const totalB = ((b.horasAcumuladas || 0) * (b.precioHora || 0)) - (b.comprasAcumuladas || 0);
+          const totalA = ((a.horasAcumuladas || 0) * (a.precioHora || 0)) - (a.comprasAcumuladas || 0) + ((a.incentivosAcumulados || 0) * (a.montoIncentivo || 0));
+          const totalB = ((b.horasAcumuladas || 0) * (b.precioHora || 0)) - (b.comprasAcumuladas || 0) + ((b.incentivosAcumulados || 0) * (b.montoIncentivo || 0));
           comparison = totalA - totalB;
           break;
         case 'ultimaLiq':
@@ -481,6 +557,7 @@ export default function LiquidacionesManager() {
                 </th>
                 <th className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Precio/H</th>
                 <th className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Compras</th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider">Incentivos</th>
                 <th 
                   className="px-3 py-3 text-center text-xs font-medium text-dark-700 dark:text-dark-400 uppercase tracking-wider cursor-pointer hover:bg-dark-200 dark:hover:bg-dark-800 transition-colors select-none"
                   onClick={() => handleSort('total')}
@@ -500,7 +577,8 @@ export default function LiquidacionesManager() {
               {filteredAndSortedUsers.map((user) => {
                 const montoBruto = (user.horasAcumuladas || 0) * (user.precioHora || 0);
                 const compras = user.comprasAcumuladas || 0;
-                const totalNeto = montoBruto - compras;
+                const incentivos = (user.incentivosAcumulados || 0) * (user.montoIncentivo || 0);
+                const totalNeto = montoBruto - compras + incentivos;
                 return (
                   <tr key={user._id} className="hover:bg-dark-600 dark:hover:bg-dark-600 transition-colors text-center">
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-dark-900 dark:text-light-500">
@@ -522,6 +600,18 @@ export default function LiquidacionesManager() {
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm text-error dark:text-error-400 font-semibold text-center">
                       {compras > 0 ? `-AR$ ${compras.toFixed(2)}` : '-'}
+                    </td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-success dark:text-success-400 font-semibold text-center">
+                      {(user.incentivosAcumulados || 0) > 0 ? (
+                        <span title={`${user.incentivosAcumulados} días × AR$ ${user.montoIncentivo || 0}`}>
+                          ✓ {user.incentivosAcumulados} 
+                          {incentivos > 0 ? (
+                            <span className="text-xs ml-1">(+AR$ {incentivos.toFixed(2)})</span>
+                          ) : (
+                            <span className="text-xs ml-1 text-warning" title="Configure el monto de incentivo en el perfil del usuario">⚠️ AR$ 0</span>
+                          )}
+                        </span>
+                      ) : '-'}
                     </td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-bold text-primary">
                       AR$ {totalNeto.toFixed(2)}
@@ -597,20 +687,6 @@ export default function LiquidacionesManager() {
             <form onSubmit={handleRegistrarHoras} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
-                  Horas Trabajadas
-                </label>
-                <input
-                  type="number"
-                  value={horasForm.horas}
-                  onChange={(e) => setHorasForm({ ...horasForm, horas: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
-                  min="0"
-                  step="0.5"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                   Fecha
                 </label>
                 <input
@@ -621,6 +697,56 @@ export default function LiquidacionesManager() {
                   required
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Hora de Entrada
+                  </label>
+                  <input
+                    type="time"
+                    value={horasForm.horaEntrada}
+                    onChange={(e) => setHorasForm({ ...horasForm, horaEntrada: e.target.value })}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
+                    Hora de Salida
+                  </label>
+                  <input
+                    type="time"
+                    value={horasForm.horaSalida}
+                    onChange={(e) => setHorasForm({ ...horasForm, horaSalida: e.target.value })}
+                    className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+                <div className="text-sm text-dark-700 dark:text-dark-300">
+                  <strong>Horas a registrar:</strong> {calcularHorasTrabajadas(horasForm.horaEntrada, horasForm.horaSalida)}h
+                </div>
+                <div className="text-xs text-dark-600 dark:text-dark-400 mt-1">
+                  💡 Las horas se redondean a múltiplos de 0.5h (ej: 9.3h → 9.5h)
+                </div>
+              </div>
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={horasForm.cumplioIncentivo}
+                    onChange={(e) => setHorasForm({ ...horasForm, cumplioIncentivo: e.target.checked })}
+                    className="w-5 h-5 text-primary border-dark-300 dark:border-dark-600 rounded focus:ring-2 focus:ring-primary cursor-pointer"
+                  />
+                  <span className="text-sm font-medium text-dark-700 dark:text-dark-300">
+                    ✓ Cumplió con el incentivo del día
+                  </span>
+                </label>
+                <div className="text-xs text-dark-600 dark:text-dark-400 mt-1 ml-7">
+                  Se sumará un bono adicional al momento de liquidar
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-dark-700 dark:text-dark-300 mb-1">
                   Notas (opcional)
@@ -630,6 +756,7 @@ export default function LiquidacionesManager() {
                   onChange={(e) => setHorasForm({ ...horasForm, notas: e.target.value })}
                   className="w-full px-3 py-2 border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500 focus:ring-2 focus:ring-primary"
                   rows={3}
+                  placeholder="Ej: Turno mañana, dobló turno, etc."
                 />
               </div>
               <div className="flex justify-end space-x-3 pt-4">
@@ -637,7 +764,13 @@ export default function LiquidacionesManager() {
                   type="button"
                   onClick={() => {
                     setShowRegistrarHoras(false);
-                    setHorasForm({ horas: 0, fecha: new Date().toISOString().split('T')[0], notas: '' });
+                    setHorasForm({ 
+                      fecha: new Date().toISOString().split('T')[0], 
+                      horaEntrada: '08:00',
+                      horaSalida: '17:00',
+                      cumplioIncentivo: false,
+                      notas: '' 
+                    });
                   }}
                   className="px-4 py-2 border border-dark-300 dark:border-dark-600 rounded-lg text-dark-700 dark:text-dark-300 hover:bg-dark-50 dark:hover:bg-dark-700 transition-colors"
                 >
@@ -760,11 +893,29 @@ export default function LiquidacionesManager() {
                     </span>
                   </div>
                 )}
+                {(selectedUser.incentivosAcumulados || 0) > 0 && (
+                  <div className="flex justify-between flex-col gap-1">
+                    <div className="flex justify-between">
+                      <span className="text-success dark:text-success-400">Incentivos cumplidos:</span>
+                      <span className={`font-bold ${(selectedUser.montoIncentivo || 0) > 0 ? 'text-success dark:text-success-400' : 'text-warning'}`}>
+                        +AR$ {((selectedUser.incentivosAcumulados || 0) * (selectedUser.montoIncentivo || 0)).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-dark-600 dark:text-dark-400">
+                      ({selectedUser.incentivosAcumulados} días × AR$ {selectedUser.montoIncentivo || 0})
+                    </div>
+                    {!(selectedUser.montoIncentivo || 0) && (
+                      <div className="bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 rounded p-2 text-xs text-warning-700 dark:text-warning-400">
+                        ⚠️ El monto de incentivo está en AR$ 0. Configure el monto en la gestión de usuarios.
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="border-t-2 border-primary-300 dark:border-primary-700 pt-2 mt-2">
                   <div className="flex justify-between text-lg">
                     <span className="text-dark-700 dark:text-dark-300 font-semibold">Total Neto a pagar:</span>
                     <span className="font-bold text-primary">
-                      AR$ {(((selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0)) - (selectedUser.comprasAcumuladas || 0)).toFixed(2)}
+                      AR$ {(((selectedUser.horasAcumuladas || 0) * (selectedUser.precioHora || 0)) - (selectedUser.comprasAcumuladas || 0) + ((selectedUser.incentivosAcumulados || 0) * (selectedUser.montoIncentivo || 0))).toFixed(2)}
                     </span>
                   </div>
                 </div>

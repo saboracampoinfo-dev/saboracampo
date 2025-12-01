@@ -63,7 +63,7 @@ export const confirmDelete = async (message: string = '¿Estás seguro de elimin
   const result = await Swal.fire({
     icon: 'warning',
     title: '¿Estás seguro?',
-    text: message,
+    html: message,
     showCancelButton: true,
     confirmButtonText: 'Sí, eliminar',
     cancelButtonText: 'Cancelar',
