@@ -200,7 +200,7 @@ export default function DashboardAdmin() {
       </nav>
 
 
-      <main className="max-w-7xl mx-auto py-6 px-2 md:px-6">
+      <main className="max-w-7xl mx-auto py-2 md:py-6 px-1 md:px-6">
         <div className="px-2 py-6 ">
           {/* Tabs Navigation */}
           <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg mb-6 border border-dark-200 dark:border-dark-700 overflow-x-auto">

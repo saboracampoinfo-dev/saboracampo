@@ -312,7 +312,7 @@ export default function Navbar() {
               className="block px-3 py-2 rounded-md text-dark-700 dark:text-dark-300 hover:bg-primary-50 hover:text-primary font-medium transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
-              Nuestros Locales
+              Locales
             </Link>
             <Link
               href="#contacto"
@@ -355,11 +355,11 @@ export default function Navbar() {
                       className="block px-3 py-2 rounded-md text-primary hover:bg-primary-50 font-semibold transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Iniciar Sesión
+                      Login
                     </Link>
                     <Link
                       href="/register"
-                      className="block px-3 py-2 rounded-md bg-primary text-white hover:bg-primary-700 text-center font-semibold transition-colors shadow-md"
+                      className="hidden px-3 py-2 rounded-md bg-primary text-white hover:bg-primary-700 text-center font-semibold transition-colors shadow-md"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Registrarse

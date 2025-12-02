@@ -1090,7 +1090,7 @@ export default function GestorTransferencias() {
 
   return (
     <div className="space-y-3 md:space-y-6 px-1 md:px-0">
-      <div className="bg-surface dark:bg-dark-800 rounded-lg shadow-lg p-6 border border-dark-200 dark:border-dark-700">
+      <div className="bg-surface dark:bg-dark-800 rounded-lg p-1 ">
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
           <h2 className="text-2xl font-bold text-dark-900 dark:text-light-500">
             Transferencias de Stock
@@ -1311,7 +1311,7 @@ export default function GestorTransferencias() {
                   <button
                     onClick={() => cargarProductos(1)}
                     disabled={currentPage === 1 || loading}
-                    className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-2 py-2 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
                     title="Primera página"
                   >
                     ⏮️
@@ -1321,9 +1321,16 @@ export default function GestorTransferencias() {
                   <button
                     onClick={() => cargarProductos(currentPage - 1)}
                     disabled={currentPage === 1 || loading}
-                    className="px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                    className="hidden md:blockpx-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
                   >
                     ← Anterior
+                  </button>
+                  <button
+                    onClick={() => cargarProductos(currentPage - 1)}
+                    disabled={currentPage === 1 || loading}
+                    className="block md:hidden px-2 py-2 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                  >
+                    ←
                   </button>
 
                   {/* Números de página */}
@@ -1345,7 +1352,7 @@ export default function GestorTransferencias() {
                           <button
                             key={1}
                             onClick={() => cargarProductos(1)}
-                            className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 transition-all"
+                            className="px-2 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 transition-all"
                           >
                             1
                           </button>
@@ -1362,7 +1369,7 @@ export default function GestorTransferencias() {
                             key={i}
                             onClick={() => cargarProductos(i)}
                             disabled={i === currentPage || loading}
-                            className={`px-3 py-2 rounded-lg border transition-all ${
+                            className={`px-2 py-1 rounded-lg border transition-all ${
                               i === currentPage
                                 ? 'bg-secondary text-white border-secondary font-bold shadow-md'
                                 : 'bg-white dark:bg-dark-700 border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600'
@@ -1394,7 +1401,7 @@ export default function GestorTransferencias() {
                   </div>
 
                   {/* Input para ir a página específica (móvil) */}
-                  <div className="sm:hidden flex items-center gap-2">
+                  <div className="sm:hidden flex items-center gap-1">
                     <input
                       type="number"
                       min="1"
@@ -1406,25 +1413,32 @@ export default function GestorTransferencias() {
                           cargarProductos(page);
                         }
                       }}
-                      className="w-16 px-2 py-2 text-center border border-dark-300 dark:border-dark-600 rounded-lg bg-white dark:bg-dark-700 text-dark-900 dark:text-light-500"
+                      className=" px-1 py-1 text-center  text-dark-900 dark:text-light-500"
                     />
-                    <span className="text-sm text-dark-600 dark:text-dark-400">/ {totalPages}</span>
+                    <span className="w-8 text-sm text-dark-600 dark:text-dark-400">/ {totalPages}</span>
                   </div>
 
                   {/* Botón Siguiente */}
                   <button
                     onClick={() => cargarProductos(currentPage + 1)}
                     disabled={currentPage === totalPages || loading}
-                    className="px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                    className="hidden md:block px-4 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
                   >
                     Siguiente →
+                  </button>
+                                    <button
+                    onClick={() => cargarProductos(currentPage + 1)}
+                    disabled={currentPage === totalPages || loading}
+                    className="block md:hidden px-2 py-2 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                  >
+                     →
                   </button>
 
                   {/* Botón Última página */}
                   <button
                     onClick={() => cargarProductos(totalPages)}
                     disabled={currentPage === totalPages || loading}
-                    className="px-3 py-2 rounded-lg bg-white dark:bg-dark-700 border border-dark-300 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-2 py-2 dark:border-dark-600 text-dark-700 dark:text-light-500 hover:bg-dark-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
                     title="Última página"
                   >
                     ⏭️
