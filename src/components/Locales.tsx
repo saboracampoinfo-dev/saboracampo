@@ -90,7 +90,7 @@ export default function Locales() {
 
   if (loading) {
     return (
-      <section id="locales" className="py-20 bg-base dark:bg-dark-900">
+      <section id="locales" className="py-20 ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="text-xl text-primary font-semibold animate-pulse">Cargando sucursales...</div>
         </div>
@@ -99,7 +99,7 @@ export default function Locales() {
   }
 
   return (
-    <section id="locales" className="py-20 bg-base dark:bg-dark-900">
+    <section id="locales" className="py-20 ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-2xl md:text-4xl font-bold text-dark-900 dark:text-light-500 mb-6 animate-fade-in">
@@ -120,7 +120,7 @@ export default function Locales() {
                 className="bg-surface dark:bg-dark-800 border-2 border-primary-200 dark:border-primary-900 rounded-lg p-6 hover:shadow-2xl hover:border-primary transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-primary dark:text-primary-400 mb-2">
+                  <h3 className="text-2xl font-bold text-primary dark:text-primary-400 mb-2 uppercase text-center">
                     {sucursal.nombre}
                   </h3>
                   <div className="w-16 h-1 bg-linear-to-r from-primary to-secondary rounded-full"></div>
@@ -240,7 +240,7 @@ export default function Locales() {
                   href={urlMapa}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-6 block w-full text-center bg-primary text-white py-3 rounded-lg hover:bg-primary-700 transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:scale-105"
+                  className="mt-6 block w-full text-center bg-primary text-white py-3 rounded-lg hover:bg-primary-500 transition-all duration-300 font-semibold shadow-md hover:shadow-lg hover:scale-105"
                 >
                   Ver en Mapa
                 </a>

@@ -140,12 +140,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`
-        fixed w-full top-0 z-50
-        border-b border-dark-200 dark:border-dark-800
-        transition-colors duration-300 backdrop-blur
-        ${isScrolled
-          ? 'bg-surface/95 dark:bg-dark-900 shadow-md'
+      className={`fixed w-full top-0 z-50 transition-colors duration-300 backdrop-blur ${isScrolled
+          ? ' dark:bg-dark-800 shadow-md border-b border-dark-200 dark:border-dark-800'
           : 'bg-transparent dark:bg-transparent border-transparent'
         }
       `}

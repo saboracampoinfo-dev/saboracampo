@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import Locales from './Locales';
 
 export default function Hero() {
   return (
-    <section className="relative bg-linear-to-br from-primary-50 via-light-500 to-secondary-50 pt-24 pb-20 dark:from-dark-900 dark:via-dark-800 dark:to-secondary-900">
+    <section className="relative bg-linear-to-br pt-24 pb-20 dark:from-dark-800 dark:via-dark-600 dark:to-secondary-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-dark-900 dark:text-light-500 mb-6 animate-fade-in">
@@ -79,6 +80,8 @@ export default function Hero() {
         </div>
 
       </div>
+      <Locales />
+      
     </section>
   );
 }
