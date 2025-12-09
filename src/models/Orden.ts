@@ -8,6 +8,8 @@ export interface IProductoOrden {
   precio: number;
   subtotal: number;
   imagen?: string;
+  unidadMedida?: string; // 'kg', 'unidad', 'litro', etc.
+  gramos?: number; // Para productos vendidos por kg (100, 250, 500, 750, etc.)
 }
 
 export interface IOrden extends Document {
@@ -68,6 +70,13 @@ const ProductoOrdenSchema = new Schema({
   },
   imagen: { 
     type: String 
+  },
+  unidadMedida: {
+    type: String
+  },
+  gramos: {
+    type: Number,
+    min: 0
   }
 }, { _id: false });
 

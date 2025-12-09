@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { showSuccessToast, showErrorToast, showInfoToast } from '@/utils/toastHelpers';
+import SelectorPesoKg from '@/components/SelectorPesoKg';
 
 interface ProductoOrden {
   productoId: string;
@@ -11,6 +12,8 @@ interface ProductoOrden {
   precio: number;
   subtotal: number;
   imagen?: string;
+  unidadMedida?: string;
+  gramos?: number;
 }
 
 interface Orden {
@@ -38,6 +41,7 @@ interface ProductoBusqueda {
   precio: number;
   stock: number;
   imagen: string | null;
+  unidadMedida?: string;
 }
 
 export default function CrearOrdenCajero() {
@@ -53,6 +57,16 @@ export default function CrearOrdenCajero() {
   const [productosBusqueda, setProductosBusqueda] = useState<ProductoBusqueda[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [mostrarResultados, setMostrarResultados] = useState(false);
+
+  // Estados para selector de peso (productos por kg)
+  const [mostrarSelectorPeso, setMostrarSelectorPeso] = useState(false);
+  const [productoParaPeso, setProductoParaPeso] = useState<{
+    _id: string;
+    nombre: string;
+    precio: number;
+    codigoBarras?: string;
+    imagen?: string | null;
+  } | null>(null);
 
   useEffect(() => {
     // Verificar si hay un parámetro de edición en la URL
@@ -161,9 +175,16 @@ export default function CrearOrdenCajero() {
       const data = await response.json();
 
       if (data.success) {
-        setOrden(data.orden);
-        showSuccessToast(data.message);
-        setCodigoBarras('');
+        // Si el producto requiere selección de peso (es por kg)
+        if (data.requiereSeleccionPeso && data.producto) {
+          setProductoParaPeso(data.producto);
+          setMostrarSelectorPeso(true);
+          setCodigoBarras('');
+        } else {
+          setOrden(data.orden);
+          showSuccessToast(data.message);
+          setCodigoBarras('');
+        }
       } else {
         showErrorToast(data.error || 'Error al agregar producto');
       }
@@ -241,11 +262,20 @@ export default function CrearOrdenCajero() {
       const data = await response.json();
 
       if (data.success) {
-        setOrden(data.orden);
-        showSuccessToast(data.message);
-        setBusqueda('');
-        setMostrarResultados(false);
-        setProductosBusqueda([]);
+        // Si el producto requiere selección de peso (es por kg)
+        if (data.requiereSeleccionPeso && data.producto) {
+          setProductoParaPeso(data.producto);
+          setMostrarSelectorPeso(true);
+          setBusqueda('');
+          setProductosBusqueda([]);
+          setMostrarResultados(false);
+        } else {
+          setOrden(data.orden);
+          showSuccessToast(data.message);
+          setBusqueda('');
+          setMostrarResultados(false);
+          setProductosBusqueda([]);
+        }
       } else {
         showErrorToast(data.error || 'Error al agregar producto');
       }
@@ -253,6 +283,37 @@ export default function CrearOrdenCajero() {
       showErrorToast('Error al agregar producto');
     } finally {
       setProcesando(false);
+    }
+  };
+
+  // Función para agregar producto por kg con gramos especificados
+  const agregarProductoKg = async (gramos: number, subtotal: number) => {
+    if (!orden || !productoParaPeso) return;
+
+    try {
+      const response = await fetch('/api/ordenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'agregar_producto_kg',
+          ordenId: orden._id,
+          productoId: productoParaPeso._id,
+          gramos
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOrden(data.orden);
+        showSuccessToast(data.message);
+        setMostrarSelectorPeso(false);
+        setProductoParaPeso(null);
+      } else {
+        showErrorToast(data.error || 'Error al agregar producto');
+      }
+    } catch (error) {
+      showErrorToast('Error al agregar producto');
     }
   };
 
@@ -506,6 +567,11 @@ export default function CrearOrdenCajero() {
                 <div className="flex-1">
                   <div className="font-semibold text-dark-900 dark:text-light-500">
                     {producto.nombre}
+                    {producto.unidadMedida === 'kg' && producto.gramos && (
+                      <span className="ml-2 text-sm bg-secondary/20 text-secondary px-2 py-1 rounded">
+                        {producto.gramos}gr
+                      </span>
+                    )}
                   </div>
                   {producto.codigoBarras && (
                     <div className="text-xs text-dark-500 dark:text-dark-400">
@@ -513,26 +579,35 @@ export default function CrearOrdenCajero() {
                     </div>
                   )}
                   <div className="text-sm text-dark-600 dark:text-dark-400">
-                    ${producto.precio.toFixed(2)} c/u
+                    {producto.unidadMedida === 'kg' && producto.gramos
+                      ? `$${producto.precio.toFixed(2)} por ${producto.gramos}gr`
+                      : `$${producto.precio.toFixed(2)} c/u`
+                    }
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => actualizarCantidad(producto.productoId, producto.cantidad - 1)}
-                    className="bg-error-light hover:bg-error-dark text-white w-8 h-8 rounded-full font-bold transition-all"
-                  >
-                    -
-                  </button>
-                  <span className="font-bold text-dark-900 dark:text-light-500 min-w-8 text-center">
-                    {producto.cantidad}
-                  </span>
-                  <button
-                    onClick={() => actualizarCantidad(producto.productoId, producto.cantidad + 1)}
-                    className="bg-success-light hover:bg-success-dark text-white w-8 h-8 rounded-full font-bold transition-all"
-                  >
-                    +
-                  </button>
-                </div>
+                {producto.unidadMedida === 'kg' ? (
+                  <div className="text-sm text-dark-600 dark:text-dark-400 italic">
+                    Producto por kg
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => actualizarCantidad(producto.productoId, producto.cantidad - 1)}
+                      className="bg-error-light hover:bg-error-dark text-white w-8 h-8 rounded-full font-bold transition-all"
+                    >
+                      -
+                    </button>
+                    <span className="font-bold text-dark-900 dark:text-light-500 min-w-8 text-center">
+                      {producto.cantidad}
+                    </span>
+                    <button
+                      onClick={() => actualizarCantidad(producto.productoId, producto.cantidad + 1)}
+                      className="bg-success-light hover:bg-success-dark text-white w-8 h-8 rounded-full font-bold transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
                 <div className="text-right">
                   <div className="font-bold text-lg text-secondary">
                     ${producto.subtotal.toFixed(2)}
@@ -580,6 +655,19 @@ export default function CrearOrdenCajero() {
           {modoEdicion ? '🗑️ Eliminar Orden' : '❌ Cancelar Orden'}
         </button>
       </div>
+
+      {/* Selector de peso para productos por kg */}
+      {mostrarSelectorPeso && productoParaPeso && (
+        <SelectorPesoKg
+          precioKilo={productoParaPeso.precio}
+          nombreProducto={productoParaPeso.nombre}
+          onConfirm={agregarProductoKg}
+          onCancel={() => {
+            setMostrarSelectorPeso(false);
+            setProductoParaPeso(null);
+          }}
+        />
+      )}
     </div>
   );
 }

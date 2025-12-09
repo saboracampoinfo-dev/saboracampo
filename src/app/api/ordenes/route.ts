@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // Si pide una orden específica
     if (ordenId) {
-      const orden = await Orden.findById(ordenId);
+      const orden = await Orden.findById(ordenId).lean();
       
       if (!orden) {
         return NextResponse.json(
@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
 
     const ordenes = await Orden.find(query)
       .sort({ fechaCreacion: -1 })
-      .limit(100);
+      .limit(100)
+      .lean();
 
     return NextResponse.json({
       success: true,
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const { action, ordenId, codigoBarras, estado, metodoPago, cajeroInfo, sucursalId, sucursalNombre } = body;
+    const { action, ordenId, codigoBarras, estado, metodoPago, cajeroInfo, sucursalId, sucursalNombre, gramos } = body;
 
     // CREAR NUEVA ORDEN
     if (action === 'crear') {
@@ -235,6 +236,23 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Si es producto por kg, retornar información para mostrar el selector
+      if (producto.unidadMedida === 'kg') {
+        return NextResponse.json({
+          success: true,
+          requiereSeleccionPeso: true,
+          producto: {
+            _id: producto._id,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            codigoBarras: producto.codigoBarras,
+            imagen: producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0] : null,
+            unidadMedida: producto.unidadMedida
+          },
+          message: 'Producto requiere selección de peso'
+        });
+      }
+
       if (productoExistente) {
         // Aumentar cantidad
         productoExistente.cantidad += 1;
@@ -246,7 +264,8 @@ export async function POST(request: NextRequest) {
           nombre: producto.nombre,
           cantidad: 1,
           precio: producto.precio,
-          subtotal: producto.precio
+          subtotal: producto.precio,
+          unidadMedida: producto.unidadMedida
         };
         
         // Solo agregar codigoBarras si existe y no está vacío
@@ -295,7 +314,7 @@ export async function POST(request: NextRequest) {
         activo: true
       })
       .limit(10)
-      .select('_id nombre codigoBarras precio stock stockPorSucursal imagenes');
+      .select('_id nombre codigoBarras precio stock stockPorSucursal imagenes unidadMedida');
 
       return NextResponse.json({
         success: true,
@@ -315,7 +334,8 @@ export async function POST(request: NextRequest) {
             codigoBarras: p.codigoBarras,
             precio: p.precio,
             stock: stockDisponible,
-            imagen: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null
+            imagen: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : null,
+            unidadMedida: p.unidadMedida
           };
         }).filter(p => p.stock > 0) // Solo productos con stock disponible
       });
@@ -432,6 +452,24 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Si es producto por kg, retornar información para mostrar el selector
+      if (producto.unidadMedida === 'kg') {
+        console.log('🟢 Producto por kg, requiere selección de peso');
+        return NextResponse.json({
+          success: true,
+          requiereSeleccionPeso: true,
+          producto: {
+            _id: producto._id,
+            nombre: producto.nombre,
+            precio: producto.precio,
+            codigoBarras: producto.codigoBarras,
+            imagen: producto.imagenes && producto.imagenes.length > 0 ? producto.imagenes[0] : null,
+            unidadMedida: producto.unidadMedida
+          },
+          message: 'Producto requiere selección de peso'
+        });
+      }
+
       if (productoExistente) {
         console.log('🟢 Actualizando cantidad de producto existente');
         // Aumentar cantidad
@@ -446,7 +484,8 @@ export async function POST(request: NextRequest) {
           nombre: producto.nombre,
           cantidad: 1,
           precio: producto.precio,
-          subtotal: producto.precio
+          subtotal: producto.precio,
+          unidadMedida: producto.unidadMedida
         };
         
         // Solo agregar codigoBarras si existe y no está vacío
@@ -484,6 +523,125 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response);
       } catch (error) {
         console.error('❌ [API] Error en agregar_producto_por_id:', error);
+        return NextResponse.json(
+          { error: 'Error al agregar producto: ' + (error instanceof Error ? error.message : 'Error desconocido') },
+          { status: 500 }
+        );
+      }
+    }
+
+    // AGREGAR PRODUCTO POR KG CON GRAMOS
+    if (action === 'agregar_producto_kg') {
+      try {
+        const { productoId, gramos: gramosEspecificados } = body;
+
+        if (!ordenId || !productoId || !gramosEspecificados) {
+          return NextResponse.json(
+            { error: 'Faltan datos requeridos' },
+            { status: 400 }
+          );
+        }
+
+        const orden = await Orden.findById(ordenId);
+        if (!orden) {
+          return NextResponse.json(
+            { error: 'Orden no encontrada' },
+            { status: 404 }
+          );
+        }
+
+        // Verificar permisos
+        if (user.role === 'seller' && orden.vendedor.id.toString() !== user.userId) {
+          return NextResponse.json(
+            { error: 'No tienes permiso para modificar esta orden' },
+            { status: 403 }
+          );
+        }
+
+        // Verificar que la orden esté en proceso o pendiente_cobro
+        if (orden.estado !== 'en_proceso' && orden.estado !== 'pendiente_cobro') {
+          return NextResponse.json(
+            { error: 'Solo se pueden modificar órdenes en proceso o pendiente de cobro' },
+            { status: 400 }
+          );
+        }
+
+        // Buscar producto
+        const producto = await Product.findById(productoId);
+        if (!producto) {
+          return NextResponse.json(
+            { error: 'Producto no encontrado' },
+            { status: 404 }
+          );
+        }
+
+        // Verificar que sea producto por kg
+        if (producto.unidadMedida !== 'kg') {
+          return NextResponse.json(
+            { error: 'Este producto no se vende por kilogramo' },
+            { status: 400 }
+          );
+        }
+
+        // Verificar stock según sucursal
+        let stockDisponible = producto.stock;
+        if (orden.sucursal && orden.sucursal.id && producto.stockPorSucursal && Array.isArray(producto.stockPorSucursal)) {
+          const sucursalIdStr = typeof orden.sucursal.id === 'string' 
+            ? orden.sucursal.id 
+            : orden.sucursal.id.toString();
+          const stockSucursal = producto.stockPorSucursal.find(
+            (s: any) => s.sucursalId === sucursalIdStr
+          );
+          stockDisponible = stockSucursal ? stockSucursal.cantidad : 0;
+        }
+
+        if (stockDisponible <= 0) {
+          return NextResponse.json(
+            { error: `Producto sin stock disponible en ${orden.sucursal?.nombre || 'esta sucursal'}` },
+            { status: 400 }
+          );
+        }
+
+        // Calcular precio proporcional según gramos
+        // Precio del producto es por kilo (1000 gramos)
+        const precioUnitario = (producto.precio * gramosEspecificados) / 1000;
+        const subtotal = precioUnitario;
+
+        // Agregar producto a la orden
+        const nuevoProducto: any = {
+          productoId: producto._id,
+          nombre: producto.nombre,
+          cantidad: 1, // Siempre 1 para productos por kg
+          precio: precioUnitario,
+          subtotal: subtotal,
+          unidadMedida: producto.unidadMedida,
+          gramos: gramosEspecificados
+        };
+
+        // Agregar codigoBarras si existe
+        if (producto.codigoBarras && producto.codigoBarras.trim() !== '') {
+          nuevoProducto.codigoBarras = producto.codigoBarras.trim();
+        }
+
+        // Agregar imagen si existe
+        if (producto.imagenes && producto.imagenes.length > 0) {
+          nuevoProducto.imagen = producto.imagenes[0];
+        }
+
+        orden.productos.push(nuevoProducto);
+
+        // Recalcular total
+        (orden as any).calcularTotal();
+        await orden.save();
+
+        return NextResponse.json({
+          success: true,
+          orden,
+          producto: nuevoProducto,
+          message: `${gramosEspecificados}gr agregados`
+        });
+      } catch (error) {
+        console.error('Error al agregar producto por kg:', error);
         return NextResponse.json(
           { error: 'Error al agregar producto: ' + (error instanceof Error ? error.message : 'Error desconocido') },
           { status: 500 }
