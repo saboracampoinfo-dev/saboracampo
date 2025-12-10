@@ -386,6 +386,36 @@ export default function CrearOrdenCajero() {
     }
   };
 
+  const eliminarProducto = async (productoId: string) => {
+    if (!orden) return;
+
+    const confirmar = confirm('¿Deseas eliminar este producto de la orden?');
+    if (!confirmar) return;
+
+    try {
+      const response = await fetch('/api/ordenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'eliminar_producto',
+          ordenId: orden._id,
+          productoId
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOrden(data.orden);
+        showSuccessToast('Producto eliminado');
+      } else {
+        showErrorToast(data.error || 'Error al eliminar producto');
+      }
+    } catch (error) {
+      showErrorToast('Error al eliminar producto');
+    }
+  };
+
   const cancelarOrden = async () => {
     if (!orden) return;
 
@@ -586,8 +616,10 @@ export default function CrearOrdenCajero() {
                   </div>
                 </div>
                 {producto.unidadMedida === 'kg' ? (
-                  <div className="text-sm text-dark-600 dark:text-dark-400 italic">
-                    Producto por kg
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm text-dark-600 dark:text-dark-400 italic">
+                      Cant: {producto.cantidad}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -608,10 +640,17 @@ export default function CrearOrdenCajero() {
                     </button>
                   </div>
                 )}
-                <div className="text-right">
+                <div className="text-right flex items-center gap-3">
                   <div className="font-bold text-lg text-secondary">
                     ${producto.subtotal.toFixed(2)}
                   </div>
+                  <button
+                    onClick={() => eliminarProducto(producto.productoId)}
+                    className="bg-error-light hover:bg-error-dark text-white w-8 h-8 rounded-full font-bold transition-all flex items-center justify-center"
+                    title="Eliminar producto"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}
