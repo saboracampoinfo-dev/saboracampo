@@ -324,6 +324,36 @@ export default function CrearOrden() {
     }
   };
 
+  const eliminarProducto = async (productoId: string) => {
+    if (!orden) return;
+
+    const confirmar = confirm('¿Deseas eliminar este producto de la orden?');
+    if (!confirmar) return;
+
+    try {
+      const response = await fetch('/api/ordenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'eliminar_producto',
+          ordenId: orden._id,
+          productoId
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setOrden(data.orden);
+        showSuccessToast('Producto eliminado');
+      } else {
+        showErrorToast(data.error || 'Error al eliminar producto');
+      }
+    } catch (error) {
+      showErrorToast('Error al eliminar producto');
+    }
+  };
+
   const cerrarOrden = async () => {
     if (!orden) return;
 
@@ -570,8 +600,10 @@ export default function CrearOrden() {
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
                   {producto.unidadMedida === 'kg' ? (
-                    <div className="text-sm text-dark-600 dark:text-dark-400 italic">
-                      Producto por kg
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm text-dark-600 dark:text-dark-400 italic">
+                        Cant: {producto.cantidad}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -593,10 +625,17 @@ export default function CrearOrden() {
                     </div>
                   )}
 
-                  <div className="text-right w-24">
-                    <div className="text-lg font-bold text-primary">
+                  <div className="flex items-center gap-3">
+                    <div className="text-lg font-bold text-primary w-24 text-right">
                       ${producto.subtotal.toFixed(2)}
                     </div>
+                    <button
+                      onClick={() => eliminarProducto(producto.productoId)}
+                      className="w-8 h-8 bg-error-light hover:bg-error-dark text-white rounded-lg font-bold transition-all duration-300 flex items-center justify-center"
+                      title="Eliminar producto"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 </div>
 

@@ -734,6 +734,99 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // ELIMINAR PRODUCTO INDIVIDUAL
+    if (action === 'eliminar_producto') {
+      const { productoId } = body;
+      
+      if (!ordenId || !productoId) {
+        return NextResponse.json(
+          { error: 'Faltan datos requeridos' },
+          { status: 400 }
+        );
+      }
+
+      const orden = await Orden.findById(ordenId);
+      if (!orden) {
+        return NextResponse.json(
+          { error: 'Orden no encontrada' },
+          { status: 404 }
+        );
+      }
+
+      // Verificar permisos
+      if (user.role === 'seller' && orden.vendedor.id.toString() !== user.userId) {
+        return NextResponse.json(
+          { error: 'No tienes permiso para modificar esta orden' },
+          { status: 403 }
+        );
+      }
+
+      // Permitir eliminar en estado 'en_proceso' y 'pendiente_cobro' (para cajeros)
+      if (orden.estado !== 'en_proceso' && orden.estado !== 'pendiente_cobro') {
+        return NextResponse.json(
+          { error: 'Solo se pueden modificar órdenes en proceso o pendiente de cobro' },
+          { status: 400 }
+        );
+      }
+
+      const producto = orden.productos.find(
+        (p: any) => p.productoId.toString() === productoId
+      );
+
+      if (!producto) {
+        return NextResponse.json(
+          { error: 'Producto no encontrado en la orden' },
+          { status: 404 }
+        );
+      }
+
+      // Si la orden está en pendiente_cobro, devolver el stock
+      if (orden.estado === 'pendiente_cobro') {
+        console.log('🔄 Devolviendo stock al eliminar producto...');
+        if (orden.sucursal && orden.sucursal.id) {
+          const productoDb = await Product.findById(productoId);
+          if (productoDb && productoDb.stockPorSucursal && Array.isArray(productoDb.stockPorSucursal)) {
+            const stockSucursalIndex = productoDb.stockPorSucursal.findIndex(
+              (s: any) => s.sucursalId === orden.sucursal?.id.toString()
+            );
+            
+            if (stockSucursalIndex !== -1) {
+              console.log(`🔄 Devolviendo ${producto.cantidad} unidades de "${producto.nombre}" en ${orden.sucursal.nombre}`);
+              productoDb.stockPorSucursal[stockSucursalIndex].cantidad += producto.cantidad;
+              
+              productoDb.stock = productoDb.stockPorSucursal.reduce(
+                (total: number, s: any) => total + s.cantidad, 
+                0
+              );
+              
+              await productoDb.save();
+              console.log(`✅ Stock devuelto`);
+            }
+          }
+        } else {
+          console.log(`🔄 Devolviendo ${producto.cantidad} unidades de "${producto.nombre}" al stock general`);
+          await Product.findByIdAndUpdate(
+            productoId,
+            { $inc: { stock: producto.cantidad } }
+          );
+        }
+      }
+
+      // Eliminar producto del array
+      orden.productos = orden.productos.filter(
+        (p: any) => p.productoId.toString() !== productoId
+      );
+
+      (orden as any).calcularTotal();
+      await orden.save();
+
+      return NextResponse.json({
+        success: true,
+        orden,
+        message: 'Producto eliminado correctamente'
+      });
+    }
+
     // CAMBIAR SUCURSAL
     if (action === 'cambiar_sucursal') {
       if (!ordenId || !sucursalId || !sucursalNombre) {
